@@ -5,10 +5,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Dashboard</title>
+    <link rel="stylesheet" href="../../css/order_dashboard.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
 <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <button class="menu-toggle" id="menuToggle">
+            <i class="bi bi-list"></i>
+        </button>
+        <div class="navbar-brand">
+            <img src="../../assets/logo.png" alt="Grafix" class="logo" height="65" width="75">
+            <span class="brand-name">Grafix Print Hub</span>
+        </div>
+    </nav>
 
+    <!-- Sidebar Dropdown set -->
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5>Menu</h5>
+            <button class="close-btn" id="closeBtn">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="nav-item"><a href="../order_manager/order_dashboard.html" class="nav-link"><i
+                        class="bi bi-card-checklist"></i>
+                    Order Admin</a></li>
+            <li class="nav-item"><a href="FinanceIndex.html" class="nav-link active"><i class="bi bi-cash-stack"></i>
+                    Financials</a></li>
+            <li class="nav-item"><a href="../resource/index.html" class="nav-link"><i class="bi bi-box-seam"></i>
+                    Resource Coord.</a></li>
+            <li class="nav-item"><a href="../crm/index.html" class="nav-link"><i class="bi bi-people"></i> CRM</a></li>
+            <li class="nav-item"><a href="../hr/index.html" class="nav-link"><i class="bi bi-person-badge"></i> Human
+                    Resources</a></li>
+            <li class="logout"><a href="../../index.html"><i class="bi bi-box-arrow-right"></i> Log Out</a></li>
+        </ul>
+    </div>
+
+
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1>Order Management</h1>
+    </div>
+
+    <!-- Body parts -->
+
+    <div class="container">
+        <div class="cards-container">
+
+            <!-- Create New Order set -->
+            <div class="card card-blue">
+                <div class="card-icon">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <h2 class="card-title">Create New Order</h2>
+                <p class="card-description">Create a new order or record an order transaction manually.</p>
+                <button class="btn btn-blue">Create Order</button>
+            </div>
+
+            <!-- Order List set -->
+            <div class="card card-green">
+                <div class="card-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h2 class="card-title">Order List</h2>
+                <p class="card-description">Get order details, edit and delete orders.</p>
+                <button class="btn btn-green">View Orders</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© Grafix Print Hub</p>
+    </footer>
+
+    <script src="../../js/order_dashboard.js"></script>
 </body>
 
 </html>
