@@ -1,0 +1,135 @@
+:root {
+    --primary-color: #ffe785;
+    --secondary-color: #fdfcf0;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar & Sidebar Styling */
+.navbar {
+    background-color: var(--primary-color);
+}
+
+.offcanvas {
+    background-color: var(--primary-color);
+    color: white;
+    width: 280px !important;
+}
+
+/* 1. Target the button in its normal state */
+.navbar .btn-outline-light {
+    transition: all 0.3s ease;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+    /* Darker border for visibility */
+}
+
+/* 2. The Hover State */
+.navbar .btn-outline-light:hover {
+    background-color: #34495e !important;
+    /* Calming dark slate on hover */
+    border-color: #34495e !important;
+}
+
+/* 3. Ensure the icon turns white when the background turns dark */
+.navbar .btn-outline-light:hover .bi-list {
+    color: #ffffff !important;
+}
+
+.nav-link {
+    color: #000000;
+    padding: 15px 20px;
+    border-left: 5px solid transparent;
+    transition: 0.3s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: rgb(255, 255, 255);
+    background: #34495e;
+    border-left: 5px solid var(--secondary-color);
+}
+
+.nav-link i {
+    margin-right: 15px;
+}
+
+/* Company name styling */
+.navbar-brand {
+    color: #000000 !important;
+    font-weight: 700;
+}
+
+/* Hamburger icon visibility */
+.bi-list {
+    color: #000000 !important;
+}
+
+/* Hamburger button border */
+.btn-outline-light {
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hero Styling */
+.hero-section {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 20px 0;
+    margin-bottom: 20px;
+}
+
+.hero-section h1 {
+    font-size: 2.3rem !important;
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+/* Add to your order_dashboard.css file */
+
+/* Card Styling */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-top: 4px solid transparent;
+}
+
+.card-hover:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-hover:nth-child(1) {
+    border-top-color: #0d6efd;
+}
+
+.card-hover:nth-child(2) {
+    border-top-color: #198754;
+}
+
+/* Icon Circle */
+.icon-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Button Styling */
+.btn-lg.rounded-pill {
+    padding: 12px 40px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary.rounded-pill:hover {
+    background-color: #0b5ed7;
+    transform: scale(1.05);
+}
+
+.btn-success.rounded-pill:hover {
+    background-color: #157347;
+    transform: scale(1.05);
+}
