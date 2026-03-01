@@ -5,10 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Dashboard | Grafix Print Hub</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
     <link rel="stylesheet" href="../../css/order_dashboard.css">
 </head>
 
@@ -21,7 +19,7 @@
                     data-bs-target="#sidebarMenu">
                     <i class="bi bi-list fs-4"></i>
                 </button>
-                <a class="navbar-brand d-flex align-items-center" href="#">
+                <a class="navbar-brand d-flex align-items-center" href="#" onclick="showView('dashboardView')">
                     <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
                     Grafix Print Hub
                 </a>
@@ -39,8 +37,7 @@
                 <li class="nav-item"><a href="../orders/index.html" class="nav-link active"><i
                             class="bi bi-card-checklist"></i> Order Admin</a></li>
                 <li class="nav-item"><a href="../financial_manager/financial_dashboard.html" class="nav-link"><i
-                            class="bi bi-cash-stack"></i>
-                        Financial Management</a></li>
+                            class="bi bi-cash-stack"></i> Financial Management</a></li>
                 <li class="nav-item"><a href="../resource/index.html" class="nav-link"><i class="bi bi-box-seam"></i>
                         Resource Coord.</a></li>
                 <li class="nav-item"><a href="../crm/index.html" class="nav-link"><i class="bi bi-people"></i> CRM</a>
@@ -48,70 +45,295 @@
                 <li class="nav-item"><a href="../hr/index.html" class="nav-link"><i class="bi bi-person-badge"></i>
                         Human Resources</a></li>
                 <li class="nav-item"><a href="#" onclick="logout()" class="nav-link"><i
-                            class="bi bi-box-arrow-right"></i>
-                        LogOut</a>
-                    <!-- <button onclick="logout()">Logout </button> -->
-                </li>
+                            class="bi bi-box-arrow-right"></i> LogOut</a></li>
             </ul>
         </div>
     </div>
 
     <header class="hero-section text-center">
         <div class="container">
-            <h1 class="display-4 fw-bold">Order Management</h1>
+            <h1 class="display-4 fw-bold" id="pageTitle">Order Management</h1>
         </div>
     </header>
 
-    <div class="container my-5">
-        <div class="row g-4 justify-content-center">
+    <!-- ..............DASHBOARD...................... -->
 
+    <div id="dashboardView" class="view-section">
+        <div class="container my-5">
+            <div class="row g-4 justify-content-center">
 
-            <!-- New Order Card sets -->
-            <div class="col-md-5">
-                <div class="card shadow-sm border-0 card-hover">
-                    <div class="card-body text-center p-5">
-                        <div class="icon-circle bg-primary bg-opacity-10 mx-auto mb-4">
-                            <i class="bi bi-plus-circle-fill text-primary" style="font-size: 3rem;"></i>
+                <div class="col-md-5">
+                    <div class="card shadow-sm border-0 card-hover">
+                        <div class="card-body text-center p-5">
+                            <div class="icon-circle bg-primary bg-opacity-10 mx-auto mb-4">
+                                <i class="bi bi-plus-circle-fill text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h3 class="card-title fw-bold mb-3">Create New Order</h3>
+                            <p class="text-muted mb-4">Add a new order to the system.</p>
+                            <button class="btn btn-primary btn-lg px-5 rounded-pill"
+                                onclick="showView('createOrderView')">Create Order</button>
                         </div>
-                        <h3 class="card-title fw-bold mb-3">Create New Order</h3>
-                        <p class="text-muted mb-4">Add a new order to the system. </p>
-                        <button class="btn btn-primary btn-lg px-5 rounded-pill">Create Order</button>
                     </div>
                 </div>
-            </div>
 
-            <!-- View Orders Card sets-->
-            <div class="col-md-5">
-                <div class="card shadow-sm border-0 card-hover">
-                    <div class="card-body text-center p-5">
-                        <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-4">
-                            <i class="bi bi-card-checklist text-success" style="font-size: 3rem;"></i>
+                <div class="col-md-5">
+                    <div class="card shadow-sm border-0 card-hover">
+                        <div class="card-body text-center p-5">
+                            <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-4">
+                                <i class="bi bi-card-checklist text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <h3 class="card-title fw-bold mb-3">View Orders</h3>
+                            <p class="text-muted mb-4">See all orders, edit and delete.</p>
+                            <button class="btn btn-success btn-lg px-5 rounded-pill"
+                                onclick="showView('viewOrdersView')">View Records</button>
                         </div>
-                        <h3 class="card-title fw-bold mb-3">View Orders</h3>
-                        <p class="text-muted mb-4">see all orders, edit and delete. </p>
-                        <button class="btn btn-success btn-lg px-5 rounded-pill">View Records</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 
+    <!-- ......................CREATE NEW ORDER........................ -->
+
+    <div id="createOrderView" style="display:none;">
+        <div class="container my-5">
+            <div class="order-form-wrapper">
+
+                <!-- Customer Info form ............ -->
+
+                <div id="step1" class="form-step">
+                    <div class="card border-0 p-4">
+                        <h5 class="fw-bold mb-4"><i class="bi bi-person-fill me-2"></i>Customer Information</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Customer Name</label>
+                            <input type="text" id="customerName" class="form-control" placeholder="Name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Contact Number</label>
+                            <input type="tel" id="contactNumber" class="form-control" placeholder="Mobile number">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email Address</label>
+                            <input type="email" id="emailAddress" class="form-control" placeholder="Email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Address</label>
+                            <input type="text" id="address" class="form-control"
+                                placeholder="Address to deliver the product">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Company Name</label>
+                            <input type="text" id="companyName" class="form-control"
+                                placeholder="Company name customer works for">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <div class="position-relative">
+                                <select id="paymentMethod" class="form-select pe-5">
+                                    <option value="" disabled selected>Select Full payment or Advanced payment</option>
+                                    <option>Full Payment</option>
+                                    <option>Advanced Payment</option>
+                                </select>
+                                <i class="bi bi-chevron-down position-absolute top-50 end-0 translate-middle-y me-3 text-muted"
+                                    style="pointer-events:none; font-size:0.85rem;"></i>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Amount Paid</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="currencyPrefix" style="display:none;">Rs.</span>
+                                <input type="number" id="amountPaid" class="form-control" placeholder="Amount"
+                                    onfocus="document.getElementById('currencyPrefix').style.display='flex'; this.placeholder='0.00';"
+                                    onblur="if(!this.value){ document.getElementById('currencyPrefix').style.display='none'; this.placeholder='Amount';}">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-back" onclick="confirmLeaveForm()">
+                                <i class="bi bi-arrow-left me-1"></i> Back
+                            </button>
+                            <button class="btn btn-next" onclick="goToStep2()">
+                                Next <span class="btn-arrow"><i class="bi bi-arrow-right"></i></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- .......Product Info form ............. -->
+
+                <div id="step2" class="form-step" style="display:none;">
+                    <div class="card border-0 p-4">
+                        <h5 class="fw-bold mb-4"><i class="bi bi-printer-fill me-2"></i>Product Details</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Product Height and Width</label>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="text" id="productHeight" class="form-control" placeholder="Height">
+                                </div>
+                                <div class="col">
+                                    <input type="text" id="productWidth" class="form-control" placeholder="Width">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Description About Design</label>
+                            <textarea id="designDescription" class="form-control" rows="5"
+                                placeholder="Briefly explain what customer really want"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Photo of the Sketch <span class="text-muted"
+                                    style="font-size:0.8rem;">(optional)</span></label>
+                            <input type="file" id="sketchPhoto" class="form-control" accept="image/*">
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-back" onclick="goToStep1()">
+                                <i class="bi bi-arrow-left me-1"></i> Back
+                            </button>
+                            <button class="btn btn-submit" onclick="submitOrder()">
+                                <i class="bi bi-check-circle me-1"></i> Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--  VIEW ORDERS page.............. -->
+
+    <div id="viewOrdersView" style="display:none;">
+        <div class="container my-5">
+            <button class="btn btn-outline-secondary mb-4" onclick="showView('dashboardView')">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </button>
+
+
+
+        </div>
+    </div>
+
+    <!-- Leave Form Modal -->
+    <div id="leaveFormModal" style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(30,27,75,0.45);
+        backdrop-filter:blur(4px);
+        z-index:9999;
+        align-items:center;
+        justify-content:center;">
+        <div style="
+            background:#fff;
+            border-radius:20px;
+            padding:40px 36px;
+            max-width:420px;
+            width:90%;
+            text-align:center;
+            box-shadow:0 24px 60px rgba(99,102,241,0.18);
+            animation: popIn 0.3s ease;">
+            <div style="
+                width:64px;height:64px;
+                background:linear-gradient(135deg,#ede9fe,#c7d2fe);
+                border-radius:50%;
+                display:flex;align-items:center;justify-content:center;
+                margin:0 auto 20px;">
+                <i class="bi bi-exclamation-triangle-fill" style="font-size:1.8rem;color:#6366f1;"></i>
+            </div>
+            <h5 style="font-weight:700;color:#22244a;margin-bottom:10px;">Leave the form?</h5>
+            <p style="color:#6b7280;font-size:0.95rem;margin-bottom:28px;">
+                Are you sure you want to leave? <br>Any unsaved data will be lost.
+            </p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button onclick="closeLeaveModal()" style="
+                    padding:10px 28px;
+                    border-radius:12px;
+                    border:1.5px solid #e0e3ef;
+                    background:#fff;
+                    color:#6366f1;
+                    font-weight:600;
+                    cursor:pointer;">
+                    No, Stay
+                </button>
+                <button onclick="leaveForm()" style="
+                    padding:10px 28px;
+                    border-radius:12px;
+                    border:none;
+                    background:linear-gradient(135deg,#6366f1,#818cf8);
+                    color:#fff;
+                    font-weight:600;
+                    cursor:pointer;
+                    box-shadow:0 4px 14px rgba(99,102,241,0.35);">
+                    Yes, Leave
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Modal -->
+    <div id="validationModal" style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(30,27,75,0.45);
+        backdrop-filter:blur(4px);
+        z-index:9999;
+        align-items:center;
+        justify-content:center;">
+        <div style="
+            background:#fff;
+            border-radius:20px;
+            padding:40px 36px;
+            max-width:420px;
+            width:90%;
+            text-align:center;
+            box-shadow:0 24px 60px rgba(99,102,241,0.18);
+            animation: popIn 0.3s ease;">
+            <div style="
+                width:64px;height:64px;
+                background:linear-gradient(135deg,#fee2e2,#fecaca);
+                border-radius:50%;
+                display:flex;align-items:center;justify-content:center;
+                margin:0 auto 20px;">
+                <i class="bi bi-x-circle-fill" style="font-size:1.8rem;color:#ef4444;"></i>
+            </div>
+            <h5 style="font-weight:700;color:#22244a;margin-bottom:10px;">Incomplete Form</h5>
+            <p id="validationMessage" style="color:#6b7280;font-size:0.95rem;margin-bottom:28px;">
+                Please fill all required fields.
+            </p>
+            <div style="display:flex;justify-content:center;">
+                <button onclick="closeValidationModal()" style="
+                    padding:10px 36px;
+                    border-radius:12px;
+                    border:none;
+                    background:linear-gradient(135deg,#ef4444,#f87171);
+                    color:#fff;
+                    font-weight:600;
+                    cursor:pointer;
+                    box-shadow:0 4px 14px rgba(239,68,68,0.35);">
+                    OK, Got it
+                </button>
+            </div>
+        </div>
+    </div>
 
     <footer class="text-center text-muted mt-5 py-3">
-        <small>&copy; Grafix Print Hub </small>
+        <small>&copy; Grafix Print Hub</small>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="../../js/order_dashboard.js"></script>
-
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
     <script src="../../js/firebase-config.js"></script>
-
     <script src="../../js/signin.js"></script>
+    <script src="../../js/order_dashboard.js"></script>
 
 </body>
 
