@@ -87,11 +87,17 @@ function navigateTo(viewId) {
 async function saveTransaction() {
     console.log("1. Save process started...");
 
+    // 1. Get the current count of bills to create the next number
+    const snapshot = await db.collection("Bills").get();
+    const nextNumber = snapshot.size + 1;
+    
+    // 2. Format it with leading zeros (e.g., BILL-005)
+    const autoID = "BILL-" + String(nextNumber).padStart(3, '0');
+
     const amount = document.getElementById('billAmount').value;
     const date = document.getElementById('billDate').value;
     const desc = document.getElementById('billDesc').value;
     const file = document.getElementById('billAttachment').files[0];
-    const autoID = "BILL-" + Date.now();
 
     try {
         let fileUrl = "none"; // Starting value
