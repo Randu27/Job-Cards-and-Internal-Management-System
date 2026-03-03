@@ -1,10 +1,10 @@
-const allowedRole = 'order_manager';
+// const allowedRole = 'order_manager';
 
-const storedRole = sessionStorage.getItem('userRole');
+// const storedRole = sessionStorage.getItem('userRole');
 
-if (!storedRole || storedRole !== allowedRole) {
-    window.location.href = '../../index.html';
-}
+// if (!storedRole || storedRole !== allowedRole) {
+//     window.location.href = '../../index.html';
+// }
 
 const views = ['dashboardView', 'createOrderView', 'viewOrdersView'];
 const titles = {
@@ -170,3 +170,17 @@ function orderSuccess() {
     goToStep1();
     setTimeout(() => showView('dashboardView'), 500);
 }
+
+
+
+// for now
+// DEMO MODE: Logout function 
+function logout() {
+    // Clear sessionStorage 
+    sessionStorage.clear();
+
+    // Redirect back to login page
+    window.location.href = '../../index.html';
+}
+//  END DEMO MODE 
+
