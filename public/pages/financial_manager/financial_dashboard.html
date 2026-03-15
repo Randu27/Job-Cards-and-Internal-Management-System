@@ -72,15 +72,15 @@
                         <div class="col-lg-3">
                             <div class="p-3 mb-2 bg-light rounded-3 border-start border-success border-4">
                                 <small class="text-uppercase fw-bold text-muted">Income</small>
-                                <h4 class="text-success mb-0">Rs. 540k</h4>
+                                <h4 id="totalIncomeDisplay" class="text-success mb-0">Rs. 0</h4>
                             </div>
                             <div class="p-3 mb-2 bg-light rounded-3 border-start border-danger border-4">
                                 <small class="text-uppercase fw-bold text-muted">Outgoings</small>
-                                <h4 class="text-danger mb-0">Rs. 185k</h4>
+                                <h4 id="totalOutgoingsDisplay" class="text-danger mb-0">Rs. 0</h4>
                             </div>
                             <div class="p-3 bg-white shadow-sm rounded-3 border-start border-primary border-4">
                                 <small class="text-uppercase fw-bold text-muted">Net Profit</small>
-                                <h4 class="text-primary mb-0">Rs. 355k</h4>
+                                <h4 id="netProfitDisplay" class="text-primary mb-0">Rs. 0</h4>
                             </div>
                         </div>
 
@@ -128,7 +128,6 @@
 
     <div id="add-bill-view" class="content-view d-none">
         <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
-            <h4 class="fw-bold mb-4">Record New Expenditure</h4>
             <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
     <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-receipt me-2"></i>Record New Bill</h4>
     
@@ -153,7 +152,7 @@
 
             <div class="col-md-6">
                 <label class="form-label fw-bold">Total Amount (Rs.)</label>
-                <input type="number" id="billAmount" class="form-control" placeholder="0.00" required>
+                <input type="number" id="billAmount" class="form-control" placeholder="0.00" min="1" step="0.01" required>
             </div>
 
             <div class="col-12">
@@ -174,26 +173,125 @@
     </div>
 
     <div id="history-view" class="content-view d-none">
-        <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
-            <h4 class="fw-bold mb-4">Transaction Records</h4>
-            <div class="alert alert-info">History Table Goes Here...</div>
-            <button class="btn btn-secondary" onclick="navigateTo('dashboard-view')">Back to Dashboard</button>
+    <div class="container-fluid p-4 bg-light rounded-4 shadow-sm">
+
+        <div class="row align-items-end mb-4">
+            <div class="col-lg-3">
+                <div class="card p-2 border-dark" style="background: #f8f9fa;">
+                    <div class="p-1 border-bottom border-dark small">Total Income: <span id="summaryIncome" class="fw-bold">Rs. 0</span></div>
+                    <div class="p-1 border-bottom border-dark small">Total Outgoings: <span id="summaryOutgoings" class="fw-bold">Rs. 0</span></div>
+                    <div class="p-1 small">Net Profit: <span id="summaryNet" class="fw-bold">Rs. 0</span></div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+        <div class="d-flex gap-2 justify-content-end align-items-center flex-wrap">
+            <input type="date" id="filterDateStart" class="form-control rounded-pill w-auto border-dark" onchange="applyFilters()">
+            <span class="fw-bold">to</span>
+         <input type="date" id="filterDateEnd" class="form-control rounded-pill w-auto border-dark" onchange="applyFilters()">
+        
+            <select class="form-select rounded-pill border-dark w-auto" id="filterType" onchange="applyFilters()">
+                <option value="All">All Types</option>
+                <option value="Bill">Bills Only</option>
+                <option value="Order">Orders Only</option>
+            </select>
+
+            <button class="btn btn-outline-dark rounded-pill" onclick="resetFilters()">Reset</button>
+            <button class="btn btn-dark rounded-pill" onclick="navigateTo('dashboard-view')">Dashboard</button>
+        </div>
+        </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered border-dark text-center align-middle">
+                <thead style="background-color: #e9ecef;">
+                    <tr>
+                        <th style="width: 80px;">TID</th>
+                        <th style="width: 100px;">Type</th>
+                        <th style="width: 120px;">Date</th>
+                        <th>Description</th>
+                        <th style="width: 150px;">Amount</th>
+                        <th style="width: 180px;">View Details, Edit Or Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="financeRecordsTableBody">
+                    </tbody>
+            </table>
         </div>
     </div>
+</div>
 
     <div id="print-view" class="content-view d-none">
-        <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
-            <h4 class="fw-bold mb-4">Report Generator</h4>
-            <div class="alert alert-info">Print Settings Go Here...</div>
-            <button class="btn btn-secondary" onclick="navigateTo('dashboard-view')">Back to Dashboard</button>
+    <div class="container d-flex justify-content-center">
+        <div class="card shadow-sm border-0 p-4" style="border-radius: 20px; max-width: 600px; width: 100%;">
+            <div class="text-center mb-4">
+                <div class="display-6 text-dark mb-2"><i class="bi bi-file-earmark-pdf"></i></div>
+                <h4 class="fw-bold">Generate Financial Report</h4>
+                <p class="text-muted small">Select the criteria for your PDF export</p>
+            </div>
+            
+            <form id="reportForm" class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-bold">Report Type</label>
+                    <select id="reportType" class="form-select border-dark">
+                        <option value="All">All Transactions (Summary)</option>
+                        <option value="Bill">Bills (Expenditure Only)</option>
+                        <option value="Order">Orders (Income Only)</option>
+                    </select>
+                </div>
+
+                <div class="col-12 mt-4">
+                    <label class="form-label fw-bold d-block">Time Period</label>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="small text-muted">From</label>
+                            <input type="date" id="reportDateStart" class="form-control border-dark">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">To</label>
+                            <input type="date" id="reportDateEnd" class="form-control border-dark">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-5">
+                    <button type="button" class="btn btn-dark w-100 py-2 fw-bold mb-2" onclick="generatePDF()">
+                        <i class="bi bi-download me-2"></i> CONVERT TO PDF
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="navigateTo('dashboard-view')">
+                        Cancel & Return
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 </main>
+
+
+
+
+<div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-dark shadow-lg">
+            <div class="modal-header bg-light border-bottom border-dark">
+                <h5 class="modal-title fw-bold" id="modalTitle">Transaction Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                </div>
+            <div class="modal-footer bg-light border-top border-dark" id="modalFooter">
+                </div>
+        </div>
+    </div>
+</div>
 
     <footer class="text-center text-muted mt-5 py-3">
         <small>&copy; Grafix Print Hub </small>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
