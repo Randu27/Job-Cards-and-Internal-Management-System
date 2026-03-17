@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Employee | Grafix Print Hub</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!--CSS -->
+  <link rel="stylesheet" href="../css/hr-style.css">
+  
+</head>
+<body>
+<nav class="navbar navbar-dark shadow-sm sticky-top">
+    <div class="container">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../assets/logo.png" alt="Logo" height="65" class="me-2">
+                Grafix Print Hub
+            </a>
+        </div>
+    </div>
+  </nav>
+
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+    <div class="offcanvas-header border-bottom border-secondary">
+      <h5 class="offcanvas-title fw-bold text-black">Main Menu</h5>
+      <button type="button" class="btn-close btn-close-black" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item"><a href="../orders/index.html" class="nav-link"><i class="bi bi-card-checklist"></i> Order Admin</a></li>
+        <li class="nav-item"><a href="FinanceIndex.html" class="nav-link"><i class="bi bi-cash-stack"></i> Financials</a></li>
+        <li class="nav-item"><a href="../resource/index.html" class="nav-link"><i class="bi bi-box-seam"></i> Resource Coord.</a></li>
+        <li class="nav-item"><a href="../crm/index.html" class="nav-link"><i class="bi bi-people"></i> CRM</a></li>
+        <li class="nav-item"><a href="hr-index.html" class="nav-link"><i class="bi bi-person-badge"></i> Human Resources</a></li>
+    </ul>
+</div>
+  </div>
+
+    <div class="hero-section">
+    <div class="container text-center">
+      <h1 class="display-4">Update Employee</h1>
+    </div>
+  </div>
+<div class="container mt-4">
+
+    <div class="form-box mb-4">
+   <!-- SEARCH -->
+  <div class="mb-4">
+    <label class="form-label">Search by Employee ID</label>
+    <div class="input-group">
+      <input type="text" id="employeeSearch" class="form-control" placeholder="Enter Employee ID (Try E001 or E002)">
+      <button id="searchBtn" class="btn btn-primary">Search</button>
+    </div>
+  </div>
+</div>
+
+  
+
+  <!-- FORM -->
+  <form id="employeeForm" style="display:none;">
+
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <input id="empName" class="form-control mb-2" placeholder="Employee Name">
+        <input id="empId" class="form-control mb-2" placeholder="Employee ID" disabled>
+        <input id="empStatus" class="form-control mb-2" placeholder="Status">
+        <select id="empDepartment" class="form-select mb-2">
+          <option value="">Select Department</option>
+          <option value="front office">Front Office</option>
+          <option value="Workshop">Workshop</option>
+        </select>
+        <input id="empJoinDate" type="date" class="form-control mb-2">
+        <input id="empNic" class="form-control mb-2" placeholder="NIC">
+        <input id="empAddress" class="form-control mb-2" placeholder="Address">
+      </div>
+
+      <div class="col-md-6">
+        <input id="empEmail" type="email" class="form-control mb-2" placeholder="Email">
+        <input id="empContact" class="form-control mb-2" placeholder="Contact Number">
+        <textarea id="empRemarks" class="form-control mb-2" rows="6" placeholder="Remarks"></textarea>
+      </div>
+
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button type="button" id="editBtn" class="btn btn-warning">Edit</button>
+      <button type="button" id="updateBtn" class="btn btn-success" disabled>Update</button>
+      <button type="button" id="deleteBtn" class="btn btn-danger">Delete</button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal fade" id="deleteModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this employee?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="successToast" class="toast text-bg-success border-0">
+    <div class="d-flex">
+      <div id="toastMessage" class="toast-body"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto"
+        data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JavaScript Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Link to your custom script.js -->
+  <script src="hr-script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Human Resources | Grafix Print Hub</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!--CSS -->
+  <link rel="stylesheet" href="../css/hr-style.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-dark shadow-sm sticky-top">
+    <div class="container">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../assets/logo.png" alt="Logo" height="65" class="me-2">
+                Grafix Print Hub
+            </a>
+        </div>
+    </div>
+  </nav>
+
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+    <div class="offcanvas-header border-bottom border-secondary">
+      <h5 class="offcanvas-title fw-bold text-black">Main Menu</h5>
+      <button type="button" class="btn-close btn-close-black" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item"><a href="../orders/index.html" class="nav-link"><i class="bi bi-card-checklist"></i> Order Admin</a></li>
+        <li class="nav-item"><a href="FinanceIndex.html" class="nav-link"><i class="bi bi-cash-stack"></i> Financials</a></li>
+        <li class="nav-item"><a href="../resource/index.html" class="nav-link"><i class="bi bi-box-seam"></i> Resource Coord.</a></li>
+        <li class="nav-item"><a href="../crm/index.html" class="nav-link"><i class="bi bi-people"></i> CRM</a></li>
+        <li class="nav-item"><a href="hr-index.html" class="nav-link"><i class="bi bi-person-badge"></i> Human Resources</a></li>
+    </ul>
+</div>
+  </div>
+
+    <div class="hero-section">
+    <div class="container text-center">
+      <h1 class="display-4">Add New Employee</h1>
+    </div>
+  </div>
+
+
+  <form id="addEmployeeForm" class="container form-container needs-validation" novalidate>
+
+    <div id="notificationArea"></div>
+
+
+  <div class="row g-4">
+
+    <!-- LEFT SIDE -->
+    <div class="col-md-6">
+      <div class="form-box">
+        <div class="mb-3">
+          <label class="form-label">Employee Name</label>
+          <input type="text" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Employee ID</label>
+          <input type="text" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <input type="text" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select class="form-select" required>
+                <option value="" selected disabled>Select Department</option>
+                <option value="Printing">front office</option>
+                <option value="Designing">Workshop</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Date of Joined</label>
+          <input type="date" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">NIC</label>
+          <input type="text" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Address</label>
+          <input type="text" class="form-control" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="col-md-6">
+      <div class="form-box">
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Contact Number</label>
+          <input type="text" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" required>Remarks</label>
+          <textarea class="form-control" rows="12"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Add Photo</label>
+          <input type="file" class="form-control" required>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- Button -->
+  <div class="text-center mt-4">
+    <button type="submit" class="btn add-btn">Add Member</button>
+  </div>
+
+</form>
+
+<!-- Bootstrap JavaScript Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Your Custom Script -->
+<script src="hr-script.js"></script>
+</body>
+</html>
