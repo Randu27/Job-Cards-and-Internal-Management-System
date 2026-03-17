@@ -112,7 +112,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Contact Number</label>
-                            <input type="tel" id="contactNumber" class="form-control" placeholder="Mobile number">
+                            <input type="tel" id="contactNumber" class="form-control" placeholder="Mobile number"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Email Address</label>
@@ -126,7 +127,9 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Company Name</label>
                             <input type="text" id="companyName" class="form-control"
-                                placeholder="Company name customer works for">
+                                placeholder="Company name customer works for" list="companySuggestions"
+                                autocomplete="off">
+                            <datalist id="companySuggestions"></datalist>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Payment Method</label>
@@ -144,7 +147,8 @@
                             <label class="form-label fw-semibold">Amount Paid</label>
                             <div class="input-group">
                                 <span class="input-group-text" id="currencyPrefix" style="display:none;">Rs.</span>
-                                <input type="number" id="amountPaid" class="form-control" placeholder="Amount"
+                                <input type="number" id="amountPaid" class="form-control" placeholder="Amount" min="0"
+                                    onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault();"
                                     onfocus="document.getElementById('currencyPrefix').style.display='flex'; this.placeholder='0.00';"
                                     onblur="if(!this.value){ document.getElementById('currencyPrefix').style.display='none'; this.placeholder='Amount';}">
                             </div>
@@ -171,10 +175,26 @@
                             <label class="form-label fw-semibold">Product Height and Width</label>
                             <div class="row g-2">
                                 <div class="col">
-                                    <input type="text" id="productHeight" class="form-control" placeholder="Height">
+                                    <div class="input-group">
+                                        <input type="number" id="productHeight" class="form-control"
+                                            placeholder="Height" min="0"
+                                            onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault();">
+                                        <select id="productHeightUnit" class="form-select" style="max-width: 80px;">
+                                            <option value="cm">cm</option>
+                                            <option value="m">m</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="col">
-                                    <input type="text" id="productWidth" class="form-control" placeholder="Width">
+                                    <div class="input-group">
+                                        <input type="number" id="productWidth" class="form-control" placeholder="Width"
+                                            min="0"
+                                            onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault();">
+                                        <select id="productWidthUnit" class="form-select" style="max-width: 80px;">
+                                            <option value="cm">cm</option>
+                                            <option value="m">m</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -184,7 +204,7 @@
                                 placeholder="Briefly explain what customer really want"></textarea>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Photo of the Sketch <span class="text-muted"
+                            <label class="form-label fw-semibold">Original Design<span class="text-muted"
                                     style="font-size:0.8rem;">(optional)</span></label>
                             <input type="file" id="sketchPhoto" class="form-control" accept="image/*">
                         </div>
