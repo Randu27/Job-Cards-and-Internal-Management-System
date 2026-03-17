@@ -29,7 +29,36 @@ function showView(viewId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// save company names for next time
+
+function loadCompanies() {
+    db.collection('orders').get()
+        .then(snapshot => {
+            const companies = new Set();
+            snapshot.forEach(doc => {
+                const name = doc.data().companyName;
+                if (name) companies.add(name);
+            });
+
+            const datalist = document.getElementById('companySuggestions');
+            datalist.innerHTML = '';
+            companies.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                datalist.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading companies:', error);
+        });
+}
+
+
+loadCompanies();
+
+
 // Step Navigation
+
 function goToStep2() {
     const step1 = document.getElementById('step1');
     const step2 = document.getElementById('step2');
@@ -93,8 +122,8 @@ function submitOrder() {
     const companyName = document.getElementById('companyName').value.trim();
     const paymentMethod = document.getElementById('paymentMethod').value;
     const amountPaid = document.getElementById('amountPaid').value.trim();
-    const productHeight = document.getElementById('productHeight').value.trim();
-    const productWidth = document.getElementById('productWidth').value.trim();
+    const productHeight = document.getElementById('productHeight').value.trim() + ' ' + document.getElementById('productHeightUnit').value;
+    const productWidth = document.getElementById('productWidth').value.trim() + ' ' + document.getElementById('productWidthUnit').value;
     const designDescription = document.getElementById('designDescription').value.trim();
 
     if (!customerName) { showValidationModal('Please enter the Customer Name.'); return; }
@@ -104,8 +133,8 @@ function submitOrder() {
     if (!companyName) { showValidationModal('Please enter the Company Name.'); return; }
     if (!paymentMethod) { showValidationModal('Please select a Payment Method.'); return; }
     if (!amountPaid) { showValidationModal('Please enter the Amount Paid.'); return; }
-    if (!productHeight) { showValidationModal('Please enter the Product Height.'); return; }
-    if (!productWidth) { showValidationModal('Please enter the Product Width.'); return; }
+    if (!document.getElementById('productHeight').value.trim()) { showValidationModal('Please enter the Product Height.'); return; }
+    if (!document.getElementById('productWidth').value.trim()) { showValidationModal('Please enter the Product Width.'); return; }
     if (!designDescription) { showValidationModal('Please enter the Design Description.'); return; }
 
     const orderData = {
@@ -161,10 +190,14 @@ function orderSuccess() {
             document.getElementById(id).value = '';
         });
     document.getElementById('paymentMethod').selectedIndex = 0;
+    document.getElementById('productHeightUnit').selectedIndex = 0;
+    document.getElementById('productWidthUnit').selectedIndex = 0;
     document.getElementById('sketchPhoto').value = '';
 
     // Reset currency prefix
     document.getElementById('currencyPrefix').style.display = 'none';
+
+    loadCompanies();
 
     // Go back to step 1 then dashboard
     goToStep1();
