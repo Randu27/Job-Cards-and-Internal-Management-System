@@ -10,7 +10,7 @@ const views = ['dashboardView', 'createOrderView', 'viewOrdersView'];
 const titles = {
     dashboardView: 'Order Management',
     createOrderView: 'Create New Order',
-    viewOrdersView: 'View Orders'
+    viewOrdersView: 'Order History'
 };
 
 function showView(viewId) {
@@ -27,6 +27,8 @@ function showView(viewId) {
 
     document.getElementById('pageTitle').textContent = titles[viewId];
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (viewId === 'viewOrdersView') loadOrders();
 }
 
 // save company names for next time
@@ -184,7 +186,6 @@ function submitOrder() {
 }
 
 function orderSuccess() {
-    // Clear all fields
     ['customerName', 'contactNumber', 'emailAddress', 'address', 'companyName',
         'amountPaid', 'productHeight', 'productWidth', 'designDescription'].forEach(id => {
             document.getElementById(id).value = '';
@@ -193,27 +194,251 @@ function orderSuccess() {
     document.getElementById('productHeightUnit').selectedIndex = 0;
     document.getElementById('productWidthUnit').selectedIndex = 0;
     document.getElementById('sketchPhoto').value = '';
-
-    // Reset currency prefix
     document.getElementById('currencyPrefix').style.display = 'none';
-
     loadCompanies();
-
-    // Go back to step 1 then dashboard
     goToStep1();
-    setTimeout(() => showView('dashboardView'), 500);
+    setTimeout(() => showSuccessModal(), 500);
 }
 
 
 
 // for now
 // DEMO MODE: Logout function 
-function logout() {
-    // Clear sessionStorage 
-    sessionStorage.clear();
+function confirmLogout() {
+    document.getElementById('logoutModal').style.display = 'flex';
+}
 
-    // Redirect back to login page
+function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+}
+
+function logout() {
+    sessionStorage.clear();
     window.location.href = '../../index.html';
 }
 //  END DEMO MODE 
 
+
+
+// ..............................VIEW ORDERS................................................
+
+let allOrders = [];
+
+function loadOrders() {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5">
+        <div class="spinner-border spinner-border-sm me-2"></div> Loading orders...
+    </td></tr>`;
+
+    // Set max date to today
+    const dateInput = document.getElementById('dateFilter');
+    if (dateInput) {
+        dateInput.max = new Date().toISOString().split('T')[0];
+    }
+
+    db.collection('orders').orderBy('createdAt', 'asc').get()
+        .then(snapshot => {
+            allOrders = [];
+            snapshot.forEach(doc => allOrders.push({ id: doc.id, ...doc.data() }));
+            renderOrdersTable([...allOrders].reverse());
+        })
+        .catch(err => {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="11" class="text-center text-danger py-4">
+                Failed to load orders.</td></tr>`;
+        });
+}
+
+// sort by calender...................// 
+function filterByDate() {
+    const selectedDate = document.getElementById('dateFilter').value;
+
+    if (!selectedDate) {
+        renderOrdersTable(allOrders);
+        return;
+    }
+
+    const filtered = allOrders.filter(order => {
+        if (!order.createdAt) return false;
+        const orderDate = new Date(order.createdAt.seconds * 1000);
+        const orderDateStr = orderDate.toISOString().split('T')[0];
+        return orderDateStr === selectedDate;
+    });
+
+    renderOrdersTable(filtered);
+}
+
+function renderOrdersTable(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    if (!orders.length) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>No orders found</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = orders.map((order, index) => {
+        const processBadge = getProcessBadge(order.orderProcess || 'Pending');
+        const amountDisplay = order.amountPaid ? `Rs. ${parseFloat(order.amountPaid).toLocaleString()}` : '—';
+        const orderNo = String(allOrders.findIndex(o => o.id === order.id) + 1).padStart(2, '0');
+        return `<tr>
+            <td class="ps-4 fw-semibold text-muted">${orderNo}</td>
+            <td class="fw-semibold">${order.customerName || '—'}</td>
+            <td>${order.contactNumber || '—'}</td>
+            <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                title="${order.address || ''}">${order.address || '—'}</td>
+            <td>${order.companyName || '—'}</td>
+            <td>${order.paymentMethod || '—'}</td>
+            <td>${amountDisplay}</td>
+            <td>${processBadge}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-light rounded-circle p-2" onclick="editOrder('${order.id}')">
+                    <i class="bi bi-pencil text-primary"></i>
+                </button>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-light rounded-circle p-2" onclick="viewOrderDetail('${order.id}')">
+                    <i class="bi bi-eye text-success"></i>
+                </button>
+            </td>
+            <td class="text-center pe-4">
+                <button class="btn btn-sm btn-light rounded-circle p-2" onclick="confirmDeleteOrder('${order.id}', '${order.customerName || 'this order'}')">
+                    <i class="bi bi-trash text-danger"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function getProcessBadge(status) {
+    const map = {
+        'Ongoing': { bg: '#fff3cd', color: '#856404', icon: 'bi-hourglass-split' },
+        'Finished': { bg: '#d1e7dd', color: '#0f5132', icon: 'bi-check-circle-fill' },
+        'Pending': { bg: '#e2e3e5', color: '#41464b', icon: 'bi-clock' },
+        'Cancelled': { bg: '#f8d7da', color: '#842029', icon: 'bi-x-circle-fill' },
+    };
+    const s = map[status] || map['Pending'];
+    return `<span style="background:${s.bg};color:${s.color};padding:4px 12px;
+        border-radius:20px;font-size:0.78rem;font-weight:600;display:inline-flex;
+        align-items:center;gap:5px;">
+        <i class="bi ${s.icon}"></i>${status}</span>`;
+}
+
+function filterOrders() {
+    const q = document.getElementById('orderSearchInput').value.toLowerCase().trim();
+    const filtered = allOrders.filter(o =>
+        (o.customerName || '').toLowerCase().includes(q) ||
+        (o.contactNumber || '').toLowerCase().includes(q) ||
+        (o.companyName || '').toLowerCase().includes(q) ||
+        (o.address || '').toLowerCase().includes(q)
+    );
+    renderOrdersTable(filtered);
+}
+
+function sortOrders(key) {
+    const sorted = [...allOrders].sort((a, b) =>
+        (a[key] || '').toString().toLowerCase().localeCompare((b[key] || '').toString().toLowerCase())
+    );
+    renderOrdersTable(sorted);
+}
+
+// ........Print Table only.............
+
+function printOrderTable() {
+    const tableHTML = document.getElementById('ordersTable').outerHTML;
+    const printWindow = window.open('', '', 'width=1000,height=700');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Order Table - Grafix Print Hub</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body { padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                    h4 { margin-bottom: 20px; color: #22244a; }
+                    table { border-collapse: collapse; width: 100%; }
+                    thead { background: #f1f3fb; display: table-header-group; }
+                    thead th { font-size: 0.84rem; font-weight: 700; padding: 12px 10px; color: #6c757d; }
+                    tbody td { font-size: 0.88rem; padding: 10px; }
+                    tr { page-break-inside: avoid; }
+                    @media print { body { padding: 10px; } }
+                </style>
+        </head>
+        <body>
+            <h4>Order History — Grafix Print Hub</h4>
+            ${tableHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+
+
+// ........................... DELETE ............................//
+
+let orderToDelete = null;
+
+function confirmDeleteOrder(id, name) {
+    orderToDelete = id;
+    document.getElementById('deleteOrderName').textContent = name;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    orderToDelete = null;
+}
+
+function executeDeleteOrder() {
+    if (!orderToDelete) return;
+    db.collection('orders').doc(orderToDelete).delete()
+        .then(() => { closeDeleteModal(); loadOrders(); })
+        .catch(err => { console.error(err); alert('Failed to delete order.'); });
+}
+
+// ..........................................VIEW DETAIL.......................................................//
+
+function viewOrderDetail(id) {
+    const order = allOrders.find(o => o.id === id);
+    if (!order) return;
+    document.getElementById('detailName').textContent = order.customerName || '—';
+    document.getElementById('detailContact').textContent = order.contactNumber || '—';
+    document.getElementById('detailEmail').textContent = order.emailAddress || '—';
+    document.getElementById('detailAddress').textContent = order.address || '—';
+    document.getElementById('detailCompany').textContent = order.companyName || '—';
+    document.getElementById('detailPayment').textContent = order.paymentMethod || '—';
+    document.getElementById('detailAmount').textContent = order.amountPaid
+        ? `Rs. ${parseFloat(order.amountPaid).toLocaleString()}` : '—';
+    document.getElementById('detailSize').textContent = (order.productHeight && order.productWidth)
+        ? `${order.productHeight} × ${order.productWidth}` : '—';
+    document.getElementById('detailDescription').textContent = order.designDescription || '—';
+    document.getElementById('detailProcess').innerHTML = getProcessBadge(order.orderProcess || 'Pending');
+    const imgEl = document.getElementById('detailSketchImg');
+    if (order.sketchPhotoURL) { imgEl.src = order.sketchPhotoURL; imgEl.style.display = 'block'; }
+    else { imgEl.style.display = 'none'; }
+    document.getElementById('viewDetailModal').style.display = 'flex';
+}
+
+function closeViewDetailModal() {
+    document.getElementById('viewDetailModal').style.display = 'none';
+}
+
+// ─── EDIT (wire up later) ───────────────────────────────────────
+function editOrder(id) {
+    alert('Edit order: ' + id);
+}
+
+
+// success orders//
+
+function showSuccessModal() {
+    document.getElementById('successModal').style.display = 'flex';
+}
+
+function closeSuccessModal() {
+    document.getElementById('successModal').style.display = 'none';
+    showView('dashboardView');
+}
