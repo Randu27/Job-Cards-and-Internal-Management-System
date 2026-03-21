@@ -115,6 +115,23 @@ function closeValidationModal() {
     document.getElementById('validationModal').style.display = 'none';
 }
 
+//Loading icon untill submite the order.............//
+
+function setSubmitLoading(isLoading) {
+    const btn = document.querySelector('.btn-submit');
+    if (!btn) return;
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Saving...
+        `;
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Submit`;
+    }
+}
+
 // Submit Order
 function submitOrder() {
     const customerName = document.getElementById('customerName').value.trim();
@@ -138,6 +155,8 @@ function submitOrder() {
     if (!document.getElementById('productHeight').value.trim()) { showValidationModal('Please enter the Product Height.'); return; }
     if (!document.getElementById('productWidth').value.trim()) { showValidationModal('Please enter the Product Width.'); return; }
     if (!designDescription) { showValidationModal('Please enter the Design Description.'); return; }
+
+    setSubmitLoading(true);
 
     const orderData = {
         customerName,
@@ -170,6 +189,7 @@ function submitOrder() {
                 orderSuccess();
             })
             .catch(error => {
+                setSubmitLoading(false);
                 showValidationModal('Something went wrong. Please try again.');
                 console.error('Firebase error:', error);
             });
@@ -179,6 +199,7 @@ function submitOrder() {
                 orderSuccess();
             })
             .catch(error => {
+                setSubmitLoading(false);
                 showValidationModal('Something went wrong. Please try again.');
                 console.error('Firestore error:', error);
             });
@@ -186,6 +207,7 @@ function submitOrder() {
 }
 
 function orderSuccess() {
+    setSubmitLoading(false);
     ['customerName', 'contactNumber', 'emailAddress', 'address', 'companyName',
         'amountPaid', 'productHeight', 'productWidth', 'designDescription'].forEach(id => {
             document.getElementById(id).value = '';
