@@ -1,14 +1,5 @@
-// Customer data array (simulating database)
-let customers = [
-    { id: 1, name: 'Nuwan Perera', company: 'Graphics Print Hub', email: 'nuwan@graphicsprint.lk', phone: '077 712 3456', orders: 12, feedback: '5 ★', avatar: 'NP', address: 'Colombo', type: 'VIP', notes: 'Regular customer', dateAdded: '2026-01-15' },
-    { id: 2, name: 'Shanika Fernando', company: 'Sunrise Advertising', email: 'shanika@sunrise.lk', phone: '076 588 2341', orders: 8, feedback: '4 ★', avatar: 'SF', address: 'Negombo', type: 'Corporate', notes: 'Bulk orders', dateAdded: '2026-02-01' },
-    { id: 3, name: 'Mohamed Ismail', company: 'Ismail Traders', email: 'm.ismail@itraders.com', phone: '077 311 7890', orders: 4, feedback: '5 ★', avatar: 'MI', address: 'Katana', type: 'Regular', notes: 'New customer', dateAdded: '2026-02-10' },
-    { id: 4, name: 'Dilrukshi Jayawardena', company: 'Dilru Design Studio', email: 'dilru@dds.lk', phone: '071 225 3344', orders: 15, feedback: '5 ★', avatar: 'DJ', address: 'Colombo', type: 'VIP', notes: 'Premium member', dateAdded: '2026-01-05' },
-    { id: 5, name: 'Thusitha Ekanayake', company: 'Ekanayake Printers', email: 'thusitha@eprint.lk', phone: '072 633 9900', orders: 6, feedback: '4 ★', avatar: 'TE', address: 'Gampaha', type: 'Regular', notes: 'Monthly orders', dateAdded: '2026-02-18' },
-    { id: 6, name: 'Kamal Perera', company: 'Kamal Designs', email: 'kamal@kdesigns.lk', phone: '077 123 4567', orders: 3, feedback: '5 ★', avatar: 'KP', address: 'Kandy', type: 'New', notes: 'First order', dateAdded: '2026-02-20' },
-    { id: 7, name: 'Nilmini Silva', company: 'Silva Printers', email: 'nilmini@silva.lk', phone: '071 987 6543', orders: 9, feedback: '4 ★', avatar: 'NS', address: 'Negombo', type: 'Corporate', notes: 'Regular client', dateAdded: '2026-01-25' },
-    { id: 8, name: 'Saman Wijesinghe', company: 'Saman Enterprises', email: 'saman@enterprises.lk', phone: '078 456 7890', orders: 7, feedback: '5 ★', avatar: 'SW', address: 'Colombo', type: 'VIP', notes: 'High value', dateAdded: '2026-02-05' }
-];
+// Customer data array (synced with Firestore)
+let customers = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the page
@@ -22,11 +13,8 @@ function initializePage() {
     // Set the Date Range Text
     setDateRange();
     
-    // Update stats
-    updateStats();
-    
-    // Render customers table
-    renderCustomersTable();
+    // Load customers from Firestore
+    loadCustomersFromFirestore();
 }
 
 function setDateRange() {
@@ -39,10 +27,25 @@ function setDateRange() {
     dateRangeElement.innerText = `Showing data from: ${thirtyDaysAgo.toLocaleDateString(undefined, options)} to ${today.toLocaleDateString(undefined, options)}`;
 }
 
+// LOAD FROM FIRESTORE
+function loadCustomersFromFirestore() {
+    db.collection('customers').get().then((snapshot) => {
+        customers = [];
+        snapshot.forEach(doc => {
+            customers.push({ id: doc.id, ...doc.data() });
+        });
+        updateStats();
+        renderCustomersTable();
+    }).catch((error) => {
+        console.error('Error loading customers:', error);
+        showToast('Error loading customers: ' + error.message, 'danger');
+    });
+}
+
 function updateStats() {
     // Calculate stats
     const totalCustomers = customers.length;
-    const newFeedbacks = customers.filter(c => c.feedback.includes('5')).length;
+    const newFeedbacks = customers.filter(c => c.feedback && c.feedback.includes('5')).length;
     const promotionsSent = 156; // Static for now
     
     // Animate the numbers
@@ -52,6 +55,7 @@ function updateStats() {
 }
 
 function animateValue(element, start, end, duration) {
+    if (!element) return;
     let startTimestamp = null;
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
@@ -115,8 +119,8 @@ function setupEventListeners() {
     }
 }
 
-// CREATE operation - Add new customer (MANUAL ENTRY)
-function saveCustomer() {
+// CREATE operation - Add new customer and SAVE TO FIRESTORE
+async function saveCustomer() {
     // Get form values
     const name = document.getElementById('customerName').value.trim();
     const company = document.getElementById('customerCompany').value.trim();
@@ -142,7 +146,6 @@ function saveCustomer() {
 
     // Create new customer object
     const newCustomer = {
-        id: customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1,
         name: name,
         company: company,
         email: email,
@@ -156,19 +159,23 @@ function saveCustomer() {
         dateAdded: new Date().toISOString().split('T')[0]
     };
 
-    // Add to customers array
-    customers.push(newCustomer);
+    try {
+        // Save to Firestore
+        await db.collection('customers').add(newCustomer);
 
-    // Update the UI
-    updateStats();
-    renderCustomersTable();
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+        modal.hide();
 
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
-    modal.hide();
+        // Show success message
+        showToast(`Customer "${name}" added successfully!`, 'success');
 
-    // Show success message
-    showToast(`Customer "${name}" added successfully!`, 'success');
+        // Reload customers from Firestore
+        loadCustomersFromFirestore();
+
+    } catch (error) {
+        showToast('Error saving customer: ' + error.message, 'danger');
+    }
 }
 
 function resetModalForm() {
