@@ -58,51 +58,87 @@
     </header>
 
     <div class="container mt-4">
+        <!-- Report Options Cards -->
         <div class="row g-4 mb-5">
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 20px; cursor: pointer; transition: transform 0.2s;" onclick="generateReport('pdf')">
+                <div class="card border-0 shadow-sm text-center p-4 report-card" onclick="generatePDF()" style="border-radius: 20px; cursor: pointer; transition: transform 0.2s;">
                     <i class="bi bi-file-pdf-fill text-danger fs-1"></i>
                     <h5 class="mt-3">PDF Report</h5>
                     <p class="text-muted small">Export customer summary as PDF</p>
+                    <button class="btn btn-outline-danger btn-sm mt-2">Generate PDF</button>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 20px; cursor: pointer; transition: transform 0.2s;" onclick="generateReport('excel')">
+                <div class="card border-0 shadow-sm text-center p-4 report-card" onclick="generateExcel()" style="border-radius: 20px; cursor: pointer; transition: transform 0.2s;">
                     <i class="bi bi-file-excel-fill text-success fs-1"></i>
                     <h5 class="mt-3">Excel Report</h5>
-                    <p class="text-muted small">Export order history as Excel</p>
+                    <p class="text-muted small">Export order history as Excel/CSV</p>
+                    <button class="btn btn-outline-success btn-sm mt-2">Generate Excel</button>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 20px; cursor: pointer; transition: transform 0.2s;" onclick="window.print()">
+                <div class="card border-0 shadow-sm text-center p-4 report-card" onclick="printReport()" style="border-radius: 20px; cursor: pointer; transition: transform 0.2s;">
                     <i class="bi bi-printer-fill text-primary fs-1"></i>
                     <h5 class="mt-3">Print Report</h5>
                     <p class="text-muted small">Print all customer records</p>
+                    <button class="btn btn-outline-primary btn-sm mt-2">Print Report</button>
                 </div>
             </div>
         </div>
 
+        <!-- Data Preview Section -->
         <div class="row">
             <div class="col-12">
                 <div class="card shadow-sm border-0" style="border-radius: 20px;">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-table me-2 text-primary"></i>Data Preview (Recent 10)</h5>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-table me-2 text-primary"></i>Data Preview (Recent 10 Customers)</h5>
                     </div>
                     <div class="card-body p-4">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
+                            <table class="table table-hover align-middle" id="previewTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Customer</th>
+                                        <th>Customer Name</th>
                                         <th>Company</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
                                         <th>Orders</th>
                                         <th>Feedback</th>
+                                        <th>Type</th>
                                     </tr>
                                 </thead>
                                 <tbody id="previewTableBody">
-                                    <tr><td colspan="4" class="text-center py-4">Loading...</td></tr>
+                                    <tr><td colspan="7" class="text-center py-4">Loading customers...</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0" style="border-radius: 20px; background: linear-gradient(135deg, #1a2c3e, #2c5f6e); color: white;">
+                    <div class="card-body p-4">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h3 id="totalCountStat">0</h3>
+                                <small>Total Customers</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h3 id="avgRatingStat">0.0</h3>
+                                <small>Average Rating</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h3 id="totalOrdersStat">0</h3>
+                                <small>Total Orders</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h3 id="vipCountStat">0</h3>
+                                <small>VIP Customers</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -114,6 +150,7 @@
         <small>&copy; Grafix Print Hub | CRM Module</small>
     </footer>
 
+    <!-- Toast Notification -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="successToast" class="toast align-items-center text-white bg-success border-0">
             <div class="d-flex">
