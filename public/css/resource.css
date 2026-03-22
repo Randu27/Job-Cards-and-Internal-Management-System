@@ -1,0 +1,55 @@
+/* Custom Properties */
+:root {
+    --primary-color: #ffe785;
+    --secondary-color: #fdfcf0;
+    --dark-bg: #2c3e50;
+}
+
+/* Table Row Update Animation */
+@keyframes highlightUpdate {
+    0% { background-color: rgba(255, 231, 133, 0.5); }
+    100% { background-color: transparent; }
+}
+
+.updated-row {
+    animation: highlightUpdate 1.5s ease-out;
+}
+
+/* Activity Log Styling */
+#activityLog {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom Scrollbar for Log */
+#activityLog::-webkit-scrollbar {
+    width: 5px;
+}
+
+#activityLog::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+/* UI Enhancements */
+.feature-card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.badge {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-dark {
+    background-color: var(--dark-bg);
+    border: none;
+}
+
+.btn-dark:hover {
+    background-color: #1a252f;
+}
