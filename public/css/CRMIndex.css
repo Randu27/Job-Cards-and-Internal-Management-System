@@ -1,10 +1,6 @@
 :root {
     --primary-color: #ffe785;
     --secondary-color: #fdfcf0;
-    --crm-primary: #0d6efd;
-    --crm-success: #198754;
-    --crm-warning: #ffc107;
-    --crm-info: #0dcaf0;
 }
 
 body {
@@ -12,11 +8,10 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Navbar & Sidebar Styling */
+/* Navbar & Sidebar */
 .navbar { background-color: var(--primary-color); }
-.offcanvas { background-color: var(--primary-color); color: white; width: 280px !important; }
+.offcanvas { background-color: var(--primary-color); width: 280px !important; }
 
-/* Button hover states */
 .navbar .btn-outline-light {
     transition: all 0.3s ease;
     border-color: rgba(0, 0, 0, 0.2) !important;
@@ -39,20 +34,18 @@ body {
 }
 
 .nav-link:hover, .nav-link.active {
-    color: rgb(255, 255, 255);
+    color: white;
     background: #34495e;
     border-left: 5px solid var(--secondary-color);
 }
 
 .nav-link i { margin-right: 15px; }
 
-/* Company name styling */
 .navbar-brand {
     color: #000000 !important;
     font-weight: 700;
 }
 
-/* Hamburger icon */
 .bi-list {
     color: #000000 !important;
 }
@@ -61,18 +54,17 @@ body {
 .hero-section {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
-    padding: 30px 0;
-    margin-bottom: 20px;
+    padding: 40px 0;
+    margin-bottom: 30px;
 }
 
 .hero-section h1 {
-    font-size: 2.5rem !important;
-    margin-bottom: 10px;
+    font-size: 2.2rem !important;
     font-weight: 600;
 }
 
 .hero-section .lead {
-    font-size: 1.1rem;
+    font-size: 1rem;
     opacity: 0.9;
 }
 
@@ -95,34 +87,6 @@ body {
     justify-content: center;
 }
 
-/* Function Cards */
-.function-card .card {
-    transition: all 0.3s ease;
-    border: 2px solid transparent !important;
-}
-
-.function-card .card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 30px rgba(0,0,0,0.15) !important;
-    border-color: currentColor !important;
-}
-
-.function-card .card-header {
-    background: linear-gradient(135deg, var(--bs-primary), #0056b3) !important;
-}
-
-.function-card:nth-child(2) .card-header {
-    background: linear-gradient(135deg, #198754, #0d5432) !important;
-}
-
-.function-card:nth-child(3) .card-header {
-    background: linear-gradient(135deg, #ffc107, #b18b0b) !important;
-}
-
-.function-card:nth-child(4) .card-header {
-    background: linear-gradient(135deg, #0dcaf0, #0a9bb9) !important;
-}
-
 /* Table Styling */
 .table {
     margin-bottom: 0;
@@ -132,14 +96,6 @@ body {
     font-weight: 600;
     color: #2c3e50;
     border-bottom-width: 2px;
-}
-
-.table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.table tbody tr:hover {
-    background-color: rgba(13, 110, 253, 0.05);
 }
 
 .customer-avatar {
@@ -167,11 +123,18 @@ body {
     gap: 4px;
 }
 
-.feedback-badge i {
-    font-size: 0.7rem;
+/* Buttons */
+.btn-sm {
+    border-radius: 8px;
+    padding: 0.25rem 0.6rem;
 }
 
-/* Custom Logout Button */
+.btn-sm:hover {
+    transform: translateY(-2px);
+    transition: all 0.2s;
+}
+
+/* Logout Button */
 .custom-logout-btn {
     display: inline-block;
     background-color: #0d6efd;
@@ -181,42 +144,29 @@ body {
     padding: 10px 20px;
     border-radius: 8px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .custom-logout-btn:hover {
     background-color: #dc3545;
     color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.custom-logout-btn i {
-    vertical-align: middle;
 }
 
 /* Modal Styling */
 .modal-content {
     border: none;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    border-radius: 20px;
 }
 
 .modal-header {
     border-bottom: none;
-    padding: 1.5rem;
-}
-
-.modal-footer {
-    border-top: none;
-    padding: 1.5rem;
+    border-radius: 20px 20px 0 0;
 }
 
 .modal .form-control,
 .modal .form-select {
-    border: 1px solid #dee2e6;
     border-radius: 10px;
     padding: 0.6rem 1rem;
-    transition: all 0.2s;
 }
 
 .modal .form-control:focus,
@@ -225,27 +175,18 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
 
-.modal .form-label {
-    font-size: 0.85rem;
-    margin-bottom: 0.3rem;
-    color: #495057;
-}
-
-/* Toast Styling */
+/* Toast */
 .toast-container {
     z-index: 1100;
 }
 
 .toast {
     border-radius: 10px;
-    font-weight: 500;
 }
 
-/* Quick Action Button */
+/* Add Customer Button */
 .btn-primary {
     border-radius: 50px;
-    padding: 0.5rem 1.5rem;
-    font-weight: 500;
     transition: all 0.3s;
 }
 
@@ -254,49 +195,14 @@ body {
     box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
 }
 
-/* Quick Action Section */
-.bg-white.rounded-4 {
-    transition: all 0.3s ease;
-}
-
-.bg-white.rounded-4:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
-}
-
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 768px) {
     .hero-section h1 {
-        font-size: 2rem !important;
-    }
-    
-    .function-card {
-        margin-bottom: 1rem;
+        font-size: 1.8rem !important;
     }
     
     .btn-primary.btn-lg {
-        padding: 0.8rem 1.5rem !important;
-        font-size: 1rem !important;
+        padding: 0.6rem 1.2rem !important;
+        font-size: 0.9rem !important;
     }
 }
-
-/* Animation for cards */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.function-card {
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-.function-card:nth-child(1) { animation-delay: 0.1s; }
-.function-card:nth-child(2) { animation-delay: 0.2s; }
-.function-card:nth-child(3) { animation-delay: 0.3s; }
-.function-card:nth-child(4) { animation-delay: 0.4s; }
