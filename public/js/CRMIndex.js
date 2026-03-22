@@ -1,21 +1,30 @@
 let customers = [];
+let db = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+        document.getElementById('recentCustomersTable').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Firebase not loaded<td></tr>';
+        return;
+    }
+    
+    db = firebase.firestore();
     loadCustomers();
 });
 
 function loadCustomers() {
-    const db = firebase.firestore();
-    db.collection('customers').orderBy('dateAdded', 'desc').get().then((snapshot) => {
-        customers = [];
-        snapshot.forEach(doc => {
-            customers.push({ id: doc.id, ...doc.data() });
+    db.collection('customers').orderBy('dateAdded', 'desc').get()
+        .then((snapshot) => {
+            customers = [];
+            snapshot.forEach(doc => {
+                customers.push({ id: doc.id, ...doc.data() });
+            });
+            updateDashboard();
+        })
+        .catch((error) => {
+            console.error('Error loading customers:', error);
+            document.getElementById('recentCustomersTable').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data<td></tr>';
         });
-        updateDashboard();
-    }).catch((error) => {
-        console.error('Error loading customers:', error);
-        document.getElementById('recentCustomersTable').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data</td></tr>';
-    });
 }
 
 function updateDashboard() {
@@ -54,7 +63,7 @@ function renderRecentCustomers() {
     const recentCustomers = customers.slice(0, 5);
     
     if (recentCustomers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No customers found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No customers found<td></tr>';
         return;
     }
     

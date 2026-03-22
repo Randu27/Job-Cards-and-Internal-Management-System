@@ -1,26 +1,52 @@
+// Wait for Firebase to load first
+let db = null;
 let customers = [];
 let currentDeleteId = null;
 
+// Wait for DOM and Firebase to be ready
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+        document.getElementById('customersTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Firebase not loaded. Please check your internet connection.<td></tr>';
+        return;
+    }
+    
+    // Check if Firestore is available
+    if (!firebase.firestore) {
+        document.getElementById('customersTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Firestore not available. Please check your Firebase configuration.<td></tr>';
+        return;
+    }
+    
+    // Initialize Firestore
+    db = firebase.firestore();
+    
+    // Check if db is ready
+    if (!db) {
+        document.getElementById('customersTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Database connection failed. Please check your configuration.<td></tr>';
+        return;
+    }
+    
+    // Load customers
     loadCustomers();
     setupEventListeners();
 });
 
 function loadCustomers() {
-    const db = firebase.firestore();
     const tableBody = document.getElementById('customersTableBody');
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading customers...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><br>Loading customers...<td></tr>';
     
-    db.collection('customers').orderBy('dateAdded', 'desc').get().then((snapshot) => {
-        customers = [];
-        snapshot.forEach(doc => {
-            customers.push({ id: doc.id, ...doc.data() });
+    db.collection('customers').orderBy('dateAdded', 'desc').get()
+        .then((snapshot) => {
+            customers = [];
+            snapshot.forEach(doc => {
+                customers.push({ id: doc.id, ...doc.data() });
+            });
+            renderCustomersTable();
+        })
+        .catch((error) => {
+            console.error('Error loading customers:', error);
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading customers: ' + error.message + '<td></tr>';
         });
-        renderCustomersTable();
-    }).catch((error) => {
-        console.error('Error loading customers:', error);
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading customers</td></tr>';
-    });
 }
 
 function renderCustomersTable() {
@@ -30,7 +56,7 @@ function renderCustomersTable() {
     tableBody.innerHTML = '';
     
     if (customers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No customers found. Click "ADD CUSTOMER" to add one.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No customers found. Click "ADD CUSTOMER" to add one.<td></tr>';
         return;
     }
     
@@ -84,8 +110,11 @@ function getAvatar(name) {
 }
 
 function setupEventListeners() {
-    document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
-    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteCustomer);
+    const saveBtn = document.getElementById('saveCustomerBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveCustomer);
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmBtn) confirmBtn.addEventListener('click', deleteCustomer);
     
     const modal = document.getElementById('addCustomerModal');
     if (modal) {
@@ -109,7 +138,6 @@ async function saveCustomer() {
         return;
     }
 
-    const db = firebase.firestore();
     const customerData = {
         name: name,
         company: company,
@@ -177,7 +205,6 @@ function openDeleteModal(id, name) {
 async function deleteCustomer() {
     if (!currentDeleteId) return;
     
-    const db = firebase.firestore();
     try {
         await db.collection('customers').doc(currentDeleteId).delete();
         showToast('Customer deleted successfully!', 'success');
