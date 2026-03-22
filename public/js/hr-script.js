@@ -626,4 +626,174 @@ document.addEventListener("DOMContentLoaded", function () {
 
   } // end UPDATE PAGE
 
+
+  // ================================================
+  // VIEW PAGE — only runs if employeeGrid exists
+  // ================================================
+  if (document.getElementById("employeeGrid")) {
+
+    const grid         = document.getElementById("employeeGrid");
+    const loading      = document.getElementById("viewLoading");
+    const empty        = document.getElementById("viewEmpty");
+    const searchInput  = document.getElementById("viewSearchInput");
+    const deptFilter   = document.getElementById("deptFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const totalCount   = document.getElementById("totalCount");
+    const activeCount  = document.getElementById("activeCount");
+    const inactiveCount= document.getElementById("inactiveCount");
+
+    let allEmployees = [];
+
+    // Get initials from name
+    function getInitials(name) {
+      return (name || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    // Render cards
+    function renderCards(employees) {
+      grid.innerHTML = "";
+
+      if (employees.length === 0) {
+        grid.style.display = "none";
+        empty.style.display = "block";
+        return;
+      }
+
+      empty.style.display = "none";
+      grid.style.display = "grid";
+
+      employees.forEach(emp => {
+        const isActive = (emp.status || "").toLowerCase() === "active";
+        const card = document.createElement("div");
+        card.className = `emp-card ${isActive ? "" : "inactive-card"}`;
+
+        const avatarContent = emp.image
+          ? `<img src="${emp.image}" alt="${emp.name}">`
+          : getInitials(emp.name);
+
+        card.innerHTML = `
+          <div class="emp-card-header">
+            <div class="emp-avatar">${avatarContent}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="emp-card-name">${emp.name || "—"}</div>
+              <div class="emp-card-id">${emp.id}</div>
+            </div>
+            <span class="emp-status-badge ${isActive ? "active" : "inactive"}">${emp.status || "—"}</span>
+          </div>
+          <div class="emp-card-body">
+            <div class="emp-card-row"><i class="bi bi-building"></i>${emp.department || "—"}</div>
+            <div class="emp-card-row"><i class="bi bi-envelope"></i>${emp.email || "—"}</div>
+            <div class="emp-card-row"><i class="bi bi-telephone"></i>${emp.contact || "—"}</div>
+            <div class="emp-card-row"><i class="bi bi-calendar3"></i>Joined: ${emp.joinDate || "—"}</div>
+          </div>
+          <div class="emp-card-footer">
+            <button class="emp-view-btn" data-id="${emp.id}"><i class="bi bi-eye me-1"></i>View Details</button>
+          </div>
+        `;
+
+        card.querySelector(".emp-view-btn").addEventListener("click", () => openDetail(emp));
+        card.addEventListener("click", (e) => { if (!e.target.closest(".emp-view-btn")) openDetail(emp); });
+        grid.appendChild(card);
+      });
+    }
+
+    // Open detail modal
+    function openDetail(emp) {
+      const isActive = (emp.status || "").toLowerCase() === "active";
+      const avatarContent = emp.image
+        ? `<img src="${emp.image}" alt="${emp.name}">`
+        : getInitials(emp.name);
+
+      document.getElementById("detailModalBody").innerHTML = `
+        <div class="detail-header">
+          <div class="detail-avatar">${avatarContent}</div>
+          <div>
+            <div class="detail-name">${emp.name || "—"}</div>
+            <div class="detail-sub">${emp.id} &bull; ${emp.department || "—"}</div>
+            <span class="emp-status-badge ${isActive ? "active" : "inactive"} mt-1 d-inline-block">${emp.status || "—"}</span>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title violet">● Personal Information</div>
+          <div class="detail-grid">
+            <div class="detail-item"><div class="detail-item-label">Employee ID</div><div class="detail-item-value">${emp.id}</div></div>
+            <div class="detail-item"><div class="detail-item-label">NIC</div><div class="detail-item-value">${emp.nic || "—"}</div></div>
+            <div class="detail-item"><div class="detail-item-label">Date Joined</div><div class="detail-item-value">${emp.joinDate || "—"}</div></div>
+            <div class="detail-item"><div class="detail-item-label">Department</div><div class="detail-item-value">${emp.department || "—"}</div></div>
+            <div class="detail-item" style="grid-column:1/-1;"><div class="detail-item-label">Address</div><div class="detail-item-value">${emp.address || "—"}</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title teal">● Contact Details</div>
+          <div class="detail-grid">
+            <div class="detail-item"><div class="detail-item-label">Email</div><div class="detail-item-value">${emp.email || "—"}</div></div>
+            <div class="detail-item"><div class="detail-item-label">Contact Number</div><div class="detail-item-value">${emp.contact || "—"}</div></div>
+            ${emp.remarks ? `<div class="detail-item" style="grid-column:1/-1;"><div class="detail-item-label">Remarks</div><div class="detail-item-value">${emp.remarks}</div></div>` : ""}
+          </div>
+        </div>
+      `;
+
+      new bootstrap.Modal(document.getElementById("detailModal")).show();
+    }
+
+    // Filter employees
+    function filterEmployees() {
+      const q    = searchInput.value.trim().toLowerCase();
+      const dept = deptFilter.value.toLowerCase();
+      const stat = statusFilter.value.toLowerCase();
+
+      const filtered = allEmployees.filter(emp => {
+        const matchSearch = !q ||
+          (emp.name     || "").toLowerCase().includes(q) ||
+          (emp.id       || "").toLowerCase().includes(q) ||
+          (emp.department || "").toLowerCase().includes(q) ||
+          (emp.email    || "").toLowerCase().includes(q) ||
+          (emp.nic      || "").toLowerCase().includes(q);
+        const matchDept = !dept || (emp.department || "").toLowerCase() === dept;
+        const matchStat = !stat || (emp.status     || "").toLowerCase() === stat;
+        return matchSearch && matchDept && matchStat;
+      });
+
+      renderCards(filtered);
+    }
+
+    // Load all employees from Firestore
+    async function loadEmployees() {
+      loading.style.display = "block";
+      grid.style.display    = "none";
+      empty.style.display   = "none";
+
+      try {
+        const snapshot = await firebase.firestore().collection("employees").orderBy("name").get();
+
+        allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Stats
+        const active   = allEmployees.filter(e => (e.status || "").toLowerCase() === "active").length;
+        const inactive = allEmployees.length - active;
+        totalCount.textContent    = allEmployees.length;
+        activeCount.textContent   = active;
+        inactiveCount.textContent = inactive;
+
+        loading.style.display = "none";
+        renderCards(allEmployees);
+
+      } catch (err) {
+        console.error(err);
+        loading.style.display = "none";
+        empty.style.display   = "block";
+        empty.querySelector("h5").textContent = "Failed to load records";
+        empty.querySelector("p").textContent  = "Could not connect to the database. Please try again.";
+      }
+    }
+
+    // Events
+    searchInput.addEventListener("input",  filterEmployees);
+    deptFilter.addEventListener("change",  filterEmployees);
+    statusFilter.addEventListener("change", filterEmployees);
+
+    loadEmployees();
+
+  } // end VIEW PAGE
+
 }); // end DOMContentLoaded
