@@ -87,6 +87,31 @@ body {
     justify-content: center;
 }
 
+/* Function Cards */
+.function-card .card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent !important;
+}
+
+.function-card .card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 30px rgba(0,0,0,0.15) !important;
+    border-color: currentColor !important;
+}
+
+.function-card .card-header {
+    background: linear-gradient(135deg, #0d6efd, #0056b3) !important;
+}
+
+.function-card:nth-child(2) .card-header {
+    background: linear-gradient(135deg, #198754, #0d5432) !important;
+}
+
+.function-card:nth-child(3) .card-header {
+    background: linear-gradient(135deg, #0dcaf0, #0a9bb9) !important;
+}
+
 /* Table Styling */
 .table {
     margin-bottom: 0;
@@ -184,7 +209,7 @@ body {
     border-radius: 10px;
 }
 
-/* Add Customer Button */
+/* Quick Action Button */
 .btn-primary {
     border-radius: 50px;
     transition: all 0.3s;
@@ -206,3 +231,23 @@ body {
         font-size: 0.9rem !important;
     }
 }
+
+/* Animation for cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.function-card {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.function-card:nth-child(1) { animation-delay: 0.1s; }
+.function-card:nth-child(2) { animation-delay: 0.2s; }
+.function-card:nth-child(3) { animation-delay: 0.3s; }
