@@ -12,7 +12,7 @@
 </head>
 <body>
 
-    <!-- Navbar (EXACTLY AS BEFORE) -->
+    <!-- Navbar -->
     <nav class="navbar navbar-dark shadow-sm sticky-top">
         <div class="container">
             <div class="d-flex align-items-center">
@@ -27,7 +27,7 @@
         </div>
     </nav>
 
-    <!-- Sidebar (EXACTLY AS BEFORE) -->
+    <!-- Sidebar -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
         <div class="offcanvas-header border-bottom border-secondary">
             <h5 class="offcanvas-title fw-bold text-black">Main Menu</h5>
@@ -49,7 +49,7 @@
         </div>
     </div>
 
-    <!-- Hero Section (EXACTLY AS BEFORE) -->
+    <!-- Hero Section - MATCHING ORDER MANAGEMENT STYLE -->
     <header class="hero-section text-center">
         <div class="container">
             <h1 class="display-4 fw-bold">Customer Relationship Management</h1>
@@ -59,7 +59,7 @@
 
     <!-- Main Content -->
     <div class="container mt-4">
-        <!-- Stats Cards Row - 2 Cards -->
+        <!-- Stats Cards Row -->
         <div class="row g-4 mb-5">
             <div class="col-md-6">
                 <div class="stats-card bg-white p-3 rounded-3 shadow-sm border-start border-primary border-4">
@@ -81,7 +81,7 @@
                             <i class="bi bi-star-fill text-success fs-3"></i>
                         </div>
                         <div>
-                            <small class="text-muted text-uppercase fw-bold">New Feedbacks (5★)</small>
+                            <small class="text-muted text-uppercase fw-bold">5★ Feedbacks</small>
                             <h3 class="mb-0 fw-bold" id="newFeedbacks">0</h3>
                         </div>
                     </div>
@@ -89,83 +89,74 @@
             </div>
         </div>
 
-        <!-- Function Cards Row - 3 Cards (LINKS TO SEPARATE PAGES) -->
+        <!-- Function Cards -->
         <div class="row g-4 mb-5">
-            <!-- Card 1: Customer Profiles -->
             <div class="col-md-4">
                 <a href="customer-profiles.html" class="text-decoration-none">
-                    <div class="function-card h-100">
-                        <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; overflow: hidden;">
-                            <div class="card-header bg-primary text-white p-3 border-0">
-                                <i class="bi bi-person-lines-fill fs-2"></i>
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; transition: transform 0.2s;">
+                        <div class="card-header bg-primary text-white p-3 border-0" style="border-radius: 20px 20px 0 0;">
+                            <i class="bi bi-person-lines-fill fs-2"></i>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">Customer Profiles</h5>
+                            <p class="card-text text-muted small">View, edit, and manage all customer profiles</p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-1" id="profileCount">0 profiles</span>
+                                <span class="badge bg-light text-dark" id="newProfileCount">0 new</span>
                             </div>
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold text-dark">Customer Profiles</h5>
-                                <p class="card-text text-muted small">View, edit, and manage all customer profiles</p>
-                                <div class="mt-3">
-                                    <span class="badge bg-light text-dark me-1" id="profileCount">0 profiles</span>
-                                    <span class="badge bg-light text-dark" id="newProfileCount">0 new</span>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-0 pb-3">
-                                <span class="text-primary">Manage Profiles <i class="bi bi-arrow-right"></i></span>
-                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <span class="text-primary">Manage Profiles <i class="bi bi-arrow-right"></i></span>
                         </div>
                     </div>
                 </a>
             </div>
 
-            <!-- Card 2: Customer Feedback -->
             <div class="col-md-4">
                 <a href="customer-feedback.html" class="text-decoration-none">
-                    <div class="function-card h-100">
-                        <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; overflow: hidden;">
-                            <div class="card-header bg-success text-white p-3 border-0">
-                                <i class="bi bi-chat-square-quote-fill fs-2"></i>
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; transition: transform 0.2s;">
+                        <div class="card-header bg-success text-white p-3 border-0" style="border-radius: 20px 20px 0 0;">
+                            <i class="bi bi-chat-square-quote-fill fs-2"></i>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">Customer Feedback</h5>
+                            <p class="card-text text-muted small">View and manage customer feedback and ratings</p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-1" id="feedbackCount">0 feedbacks</span>
+                                <span class="badge bg-light text-dark" id="avgRating">0 ★ avg</span>
                             </div>
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold text-dark">Customer Feedback</h5>
-                                <p class="card-text text-muted small">View and manage customer feedback and ratings</p>
-                                <div class="mt-3">
-                                    <span class="badge bg-light text-dark me-1" id="feedbackCount">0 feedbacks</span>
-                                    <span class="badge bg-light text-dark" id="avgRating">0 ★ avg</span>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-0 pb-3">
-                                <span class="text-success">View Feedback <i class="bi bi-arrow-right"></i></span>
-                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <span class="text-success">View Feedback <i class="bi bi-arrow-right"></i></span>
                         </div>
                     </div>
                 </a>
             </div>
 
-            <!-- Card 3: Reports Generation -->
             <div class="col-md-4">
                 <a href="customer-reports.html" class="text-decoration-none">
-                    <div class="function-card h-100">
-                        <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; overflow: hidden;">
-                            <div class="card-header bg-info text-white p-3 border-0">
-                                <i class="bi bi-file-bar-graph-fill fs-2"></i>
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; transition: transform 0.2s;">
+                        <div class="card-header bg-info text-white p-3 border-0" style="border-radius: 20px 20px 0 0;">
+                            <i class="bi bi-file-bar-graph-fill fs-2"></i>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">Reports Generation</h5>
+                            <p class="card-text text-muted small">Generate customer summaries and order history reports</p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-1">PDF</span>
+                                <span class="badge bg-light text-dark">Excel</span>
+                                <span class="badge bg-light text-dark">Print</span>
                             </div>
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold text-dark">Reports Generation</h5>
-                                <p class="card-text text-muted small">Generate customer summaries and order history reports</p>
-                                <div class="mt-3">
-                                    <span class="badge bg-light text-dark me-1">PDF</span>
-                                    <span class="badge bg-light text-dark">Excel</span>
-                                    <span class="badge bg-light text-dark">Print</span>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-0 pb-3">
-                                <span class="text-info">Generate Reports <i class="bi bi-arrow-right"></i></span>
-                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <span class="text-info">Generate Reports <i class="bi bi-arrow-right"></i></span>
                         </div>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- Quick Action Section -->
+        <!-- Quick Action -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="bg-white p-4 rounded-4 shadow-sm d-flex justify-content-between align-items-center">
@@ -182,7 +173,7 @@
             </div>
         </div>
 
-        <!-- Recent Customers Table (VIEW ONLY - No Actions) -->
+        <!-- Recent Customers Table -->
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card shadow-sm border-0" style="border-radius: 20px;">
@@ -208,7 +199,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="recentCustomersTable">
-                                    <!-- JS will populate recent 5 customers -->
+                                    <!-- JS will populate -->
                                 </tbody>
                             </table>
                         </div>

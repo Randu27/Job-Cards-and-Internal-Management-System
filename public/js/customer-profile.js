@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadCustomers() {
+    const db = firebase.firestore();
+    const tableBody = document.getElementById('customersTableBody');
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Loading customers...</td></tr>';
+    
     db.collection('customers').orderBy('dateAdded', 'desc').get().then((snapshot) => {
         customers = [];
         snapshot.forEach(doc => {
@@ -15,7 +19,7 @@ function loadCustomers() {
         renderCustomersTable();
     }).catch((error) => {
         console.error('Error loading customers:', error);
-        showToast('Error loading customers: ' + error.message);
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading customers</td></tr>';
     });
 }
 
@@ -26,7 +30,7 @@ function renderCustomersTable() {
     tableBody.innerHTML = '';
     
     if (customers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No customers found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No customers found. Click "ADD CUSTOMER" to add one.</td></tr>';
         return;
     }
     
@@ -37,26 +41,32 @@ function renderCustomersTable() {
                 <div class="d-flex align-items-center">
                     <div class="customer-avatar me-2">${getAvatar(c.name)}</div>
                     <div>
-                        <div class="fw-bold">${c.name}</div>
+                        <div class="fw-bold">${c.name || '—'}</div>
                         <small class="text-muted">${c.type || 'Regular'}</small>
                     </div>
                 </div>
             </td>
-            <td>${c.company}</td>
-            <td>${c.email}</td>
-            <td>${c.phone}</td>
+            <td>${c.company || '—'}</td>
+            <td>${c.email || '—'}</td>
+            <td>${c.phone || '—'}</td>
             <td><span class="badge bg-primary bg-opacity-10 text-primary">${c.orders || 0} orders</span></td>
             <td><span class="feedback-badge"><i class="bi bi-star-fill text-warning"></i> ${c.feedback || '5 ★'}</span></td>
             <td>
-                <button class="btn btn-sm btn-outline-info view-customer me-1" data-id="${c.id}" title="View"><i class="bi bi-eye"></i></button>
-                <button class="btn btn-sm btn-outline-primary edit-customer me-1" data-id="${c.id}" title="Edit"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-customer" data-id="${c.id}" data-name="${c.name}" title="Delete"><i class="bi bi-trash"></i></button>
+                <button class="btn btn-sm btn-info text-white view-customer me-1" data-id="${c.id}" style="background-color: #0dcaf0; border: none;">
+                    <i class="bi bi-eye me-1"></i>View
+                </button>
+                <button class="btn btn-sm btn-warning edit-customer me-1" data-id="${c.id}" style="color: #000;">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                </button>
+                <button class="btn btn-sm btn-danger delete-customer" data-id="${c.id}" data-name="${c.name}">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
             </td>
         `;
         tableBody.appendChild(row);
     });
     
-    // Attach events
+    // Attach event listeners
     document.querySelectorAll('.view-customer').forEach(btn => {
         btn.addEventListener('click', () => viewCustomer(btn.getAttribute('data-id')));
     });
@@ -76,7 +86,11 @@ function getAvatar(name) {
 function setupEventListeners() {
     document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
     document.getElementById('confirmDeleteBtn').addEventListener('click', deleteCustomer);
-    document.getElementById('addCustomerModal').addEventListener('show.bs.modal', resetModalForm);
+    
+    const modal = document.getElementById('addCustomerModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', resetModalForm);
+    }
 }
 
 async function saveCustomer() {
@@ -91,37 +105,47 @@ async function saveCustomer() {
     const type = document.getElementById('customerType').value;
 
     if (!name || !company || !email || !phone) {
-        showToast('Please fill all required fields!');
+        showToast('Please fill all required fields!', 'danger');
         return;
     }
 
+    const db = firebase.firestore();
     const customerData = {
-        name, company, email, phone,
+        name: name,
+        company: company,
+        email: email,
+        phone: phone,
         address: address || 'Not specified',
-        orders, type, feedback,
+        orders: orders,
+        type: type,
+        feedback: feedback,
         dateAdded: new Date().toISOString().split('T')[0]
     };
 
     try {
         if (id) {
             await db.collection('customers').doc(id).update(customerData);
-            showToast(`Customer "${name}" updated!`);
+            showToast(`Customer "${name}" updated successfully!`, 'success');
         } else {
             await db.collection('customers').add(customerData);
-            showToast(`Customer "${name}" added!`);
+            showToast(`Customer "${name}" added successfully!`, 'success');
         }
-        bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+        modal.hide();
         loadCustomers();
+        
     } catch (error) {
-        showToast('Error: ' + error.message);
+        console.error('Error saving customer:', error);
+        showToast('Error saving customer: ' + error.message, 'danger');
     }
 }
 
 function viewCustomer(id) {
     const customer = customers.find(c => c.id === id);
-    if (customer) {
-        alert(`📋 CUSTOMER DETAILS\n\nName: ${customer.name}\nCompany: ${customer.company}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nType: ${customer.type}\nOrders: ${customer.orders}\nFeedback: ${customer.feedback}`);
-    }
+    if (!customer) return;
+    
+    alert(`📋 CUSTOMER DETAILS\n\nName: ${customer.name}\nCompany: ${customer.company}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nAddress: ${customer.address || 'N/A'}\nType: ${customer.type || 'Regular'}\nOrders: ${customer.orders || 0}\nFeedback: ${customer.feedback || '5 ★'}`);
 }
 
 function openEditModal(id) {
@@ -139,24 +163,31 @@ function openEditModal(id) {
     document.getElementById('customerFeedback').value = customer.feedback || '5 ★';
     document.getElementById('customerType').value = customer.type || 'Regular';
     
-    new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
+    const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+    modal.show();
 }
 
 function openDeleteModal(id, name) {
     currentDeleteId = id;
-    document.getElementById('deleteCustomerName').innerText = name;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    document.getElementById('deleteCustomerName').innerHTML = name;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
 }
 
 async function deleteCustomer() {
     if (!currentDeleteId) return;
+    
+    const db = firebase.firestore();
     try {
         await db.collection('customers').doc(currentDeleteId).delete();
-        showToast('Customer deleted!');
-        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+        showToast('Customer deleted successfully!', 'success');
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+        modal.hide();
         loadCustomers();
     } catch (error) {
-        showToast('Error: ' + error.message);
+        console.error('Error deleting customer:', error);
+        showToast('Error deleting customer: ' + error.message, 'danger');
     }
 }
 
@@ -173,10 +204,15 @@ function resetModalForm() {
     document.getElementById('customerType').value = 'Regular';
 }
 
-function showToast(message) {
+function showToast(message, type = 'success') {
     const toast = document.getElementById('successToast');
     const toastMessage = document.getElementById('toastMessage');
+    
+    if (!toast || !toastMessage) return;
+    
     toastMessage.innerText = message;
+    toast.className = `toast align-items-center text-white bg-${type === 'danger' ? 'danger' : 'success'} border-0`;
+    
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
 }
