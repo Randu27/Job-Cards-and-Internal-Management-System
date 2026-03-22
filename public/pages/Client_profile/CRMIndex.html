@@ -55,13 +55,13 @@
     <header class="hero-section text-center">
         <div class="container">
             <h1 class="display-4 fw-bold">Customer Relationship Management</h1>
-            <p class="lead mt-2">Manage your customers efficiently</p>
+            <p class="lead mt-2">Manage customers, feedback, and reports</p>
         </div>
     </header>
 
     <!-- Main Content -->
     <div class="container mt-4">
-        <!-- Stats Cards Row - Only 2 Cards -->
+        <!-- Stats Cards Row - 2 Cards -->
         <div class="row g-4 mb-5">
             <div class="col-md-6">
                 <div class="stats-card bg-white p-3 rounded-3 shadow-sm border-start border-primary border-4">
@@ -91,15 +91,85 @@
             </div>
         </div>
 
-        <!-- Add Customer Button -->
+        <!-- Function Cards Row - 3 Cards -->
+        <div class="row g-4 mb-5">
+            <!-- Card 1: Customer Profiles -->
+            <div class="col-md-4">
+                <div class="function-card h-100" data-bs-toggle="modal" data-bs-target="#customerProfilesModal">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; cursor: pointer;">
+                        <div class="card-header bg-primary text-white p-3 border-0" style="border-radius: 20px 20px 0 0;">
+                            <i class="bi bi-person-lines-fill fs-2"></i>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">Customer Profiles</h5>
+                            <p class="card-text text-muted small">View, edit, and manage all customer profiles</p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-1" id="profileCount">0 profiles</span>
+                                <span class="badge bg-light text-dark" id="newProfileCount">0 new</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <span class="text-primary">Manage Profiles <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Customer Feedback -->
+            <div class="col-md-4">
+                <div class="function-card h-100" data-bs-toggle="modal" data-bs-target="#feedbackModal">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; cursor: pointer;">
+                        <div class="card-header bg-success text-white p-3 border-0" style="border-radius: 20px 20px 0 0;">
+                            <i class="bi bi-chat-square-quote-fill fs-2"></i>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">Customer Feedback</h5>
+                            <p class="card-text text-muted small">View and manage customer feedback and ratings</p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-1" id="feedbackCount">0 feedbacks</span>
+                                <span class="badge bg-light text-dark" id="avgRating">0 ★ avg</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <span class="text-success">View Feedback <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Reports Generation -->
+            <div class="col-md-4">
+                <div class="function-card h-100" data-bs-toggle="modal" data-bs-target="#reportsModal">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; cursor: pointer;">
+                        <div class="card-header bg-info text-white p-3 border-0" style="border-radius: 20px 20px 0 0;">
+                            <i class="bi bi-file-bar-graph-fill fs-2"></i>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark">Reports Generation</h5>
+                            <p class="card-text text-muted small">Generate customer summaries and order history reports</p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-1">PDF</span>
+                                <span class="badge bg-light text-dark">Excel</span>
+                                <span class="badge bg-light text-dark">Print</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <span class="text-info">Generate Reports <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Action Section -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="bg-white p-4 rounded-4 shadow-sm d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-1 fw-bold text-primary">
-                            <i class="bi bi-person-plus-fill me-2"></i>Customer Management
+                            <i class="bi bi-person-plus-fill me-2"></i>Quick Action
                         </h4>
-                        <p class="text-muted mb-0">Add, edit, or delete customers</p>
+                        <p class="text-muted mb-0">Click to add a new customer manually</p>
                     </div>
                     <button class="btn btn-primary btn-lg px-5 py-3" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                         <i class="bi bi-plus-circle-fill me-2"></i>ADD CUSTOMER
@@ -108,12 +178,17 @@
             </div>
         </div>
 
-        <!-- Customers Table with CRUD Actions -->
-        <div class="row">
+        <!-- Recent Customers Table -->
+        <div class="row mb-5">
             <div class="col-12">
                 <div class="card shadow-sm border-0" style="border-radius: 20px;">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-table me-2 text-primary"></i>Customer List</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Customer Profiles</h5>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customerProfilesModal">
+                                View All <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body p-4">
                         <div class="table-responsive">
@@ -129,8 +204,8 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="customerTableBody">
-                                    <!-- JS will populate this -->
+                                <tbody id="recentCustomersTable">
+                                    <!-- JS will populate recent 5 customers -->
                                 </tbody>
                             </table>
                         </div>
@@ -140,15 +215,17 @@
         </div>
     </div>
 
-    <!-- Add/Edit Customer Modal -->
-    <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Modal 1: Add/Edit Customer -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="border-radius: 20px;">
-                <div class="modal-header bg-primary text-white" style="border-radius: 20px 20px 0 0;">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold" id="addCustomerModalLabel">
                         <i class="bi bi-person-plus-fill me-2"></i>Add New Customer
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="customerForm">
@@ -201,12 +278,112 @@
                     </form>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg me-1"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" id="saveCustomerBtn">
-                        <i class="bi bi-save me-1"></i>Save Customer
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Customer Profiles (Full List with CRUD) -->
+    <div class="modal fade" id="customerProfilesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="border-radius: 20px;">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-people-fill me-2"></i>All Customer Profiles</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Company</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Orders</th>
+                                    <th>Feedback</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allCustomersTable">
+                                <!-- JS will populate all customers -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal" data-bs-dismiss="modal">Add New Customer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Customer Feedback -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 20px;">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-chat-dots-fill me-2"></i>Customer Feedback</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Company</th>
+                                    <th>Feedback Rating</th>
+                                    <th>Orders</th>
+                                    <th>Customer Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedbackTable">
+                                <!-- JS will populate feedback data -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Reports Generation -->
+    <div class="modal fade" id="reportsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 20px;">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-file-bar-graph-fill me-2"></i>Generate Reports</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-printer fs-1 text-info"></i>
+                        <h5 class="mt-2">Customer Reports</h5>
+                    </div>
+                    <div class="list-group">
+                        <button class="list-group-item list-group-item-action" onclick="generateReport('pdf')">
+                            <i class="bi bi-file-pdf-fill text-danger me-3"></i> Export as PDF
+                            <span class="badge bg-secondary float-end">Customer Summary</span>
+                        </button>
+                        <button class="list-group-item list-group-item-action" onclick="generateReport('excel')">
+                            <i class="bi bi-file-excel-fill text-success me-3"></i> Export as Excel
+                            <span class="badge bg-secondary float-end">Order History</span>
+                        </button>
+                        <button class="list-group-item list-group-item-action" onclick="generateReport('print')">
+                            <i class="bi bi-printer-fill text-primary me-3"></i> Print Report
+                            <span class="badge bg-secondary float-end">All Data</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -234,7 +411,7 @@
 
     <!-- Toast Notification -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0">
             <div class="d-flex">
                 <div class="toast-body">
                     <i class="bi bi-check-circle-fill me-2"></i>
