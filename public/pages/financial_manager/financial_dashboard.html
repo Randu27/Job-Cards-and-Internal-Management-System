@@ -151,8 +151,7 @@
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Total Amount (Rs.)</label>
-                                <input type="number" id="billAmount" class="form-control" placeholder="0.00" min="1"
-                                    step="0.01" required>
+                                <input type="number" id="billAmount" class="form-control" min="0.00" placeholder="0.00" required>
                             </div>
 
                             <div class="col-12">
@@ -211,30 +210,20 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-bordered border-dark text-center align-middle">
-                        <thead style="background-color: #e9ecef;"><tr>
+                   <table class="table table-bordered border-dark text-center align-middle">
+                     <thead style="background-color: #e9ecef;">
+                        <tr>
                             <th style="width: 80px;">TID</th>
                             <th style="width: 100px;">Type</th>
                             <th style="width: 120px;">Date</th>
                             <th>Description</th>
                             <th style="width: 150px;">Amount</th>
-                            <th style="width: 60px;" class="text-center">View</th>
-                            <th style="width: 60px;" class="text-center">Edit</th>
-                            <th style="width: 60px;" class="text-center">Delete</th>
-                        </tr>
-                    </thead>
-                        <thead style="background-color: #e9ecef;">
-                            <tr>
-                                <th style="width: 80px;">TID</th>
-                                <th style="width: 100px;">Type</th>
-                                <th style="width: 120px;">Date</th>
-                                <th>Description</th>
-                                <th style="width: 150px;">Amount</th>
-                                <th style="width: 180px;">View Details, Edit Or Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody id="financeRecordsTableBody">
-                        </tbody>
+                            <th style="width: 50px;">View</th>
+                            <th style="width: 50px;">Edit</th>
+                            <th style="width: 50px;">Delete</th>
+                         </tr>
+                     </thead>
+                     <tbody id="financeRecordsTableBody"></tbody>
                     </table>
                 </div>
             </div>
