@@ -47,6 +47,7 @@ body {
 .navbar { background-color: var(--primary-color); }
 .offcanvas { background-color: var(--primary-color); color: white; width: 280px !important; }
 
+
 /* 1. Target the button in its normal state */
 .navbar .btn-outline-light {
     transition: all 0.3s ease;
