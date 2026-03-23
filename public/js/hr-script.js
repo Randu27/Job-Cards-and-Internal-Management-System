@@ -663,9 +663,9 @@ document.addEventListener("DOMContentLoaded", function () {
       grid.style.display = "grid";
 
       employees.forEach(emp => {
-        const isActive = (emp.status || "").toLowerCase() === "active";
+        const isFullTime = (emp.status || "").toLowerCase() === "full time";
         const card = document.createElement("div");
-        card.className = `emp-card ${isActive ? "" : "inactive-card"}`;
+        card.className = `emp-card ${isFullTime ? "fulltime-card" : "parttime-card"}`;
 
         const avatarContent = emp.image
           ? `<img src="${emp.image}" alt="${emp.name}">`
@@ -699,7 +699,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Open detail modal
     function openDetail(emp) {
-      const isActive = (emp.status || "").toLowerCase() === "active";
+      const isFullTime = (emp.status || "").toLowerCase() === "full time";
       const avatarContent = emp.image
         ? `<img src="${emp.image}" alt="${emp.name}">`
         : getInitials(emp.name);
