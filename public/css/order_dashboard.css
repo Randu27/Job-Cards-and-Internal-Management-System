@@ -628,6 +628,18 @@ body {
     text-overflow: ellipsis;
 }
 
+#ordersTable tbody tr:nth-child(odd) td {
+    background-color: #f5f3ff !important;
+}
+
+#ordersTable tbody tr:nth-child(even) td {
+    background-color: #ffffff !important;
+}
+
+#ordersTable tbody tr:hover td {
+    background-color: #ede9fe !important;
+}
+
 /* ....................... MODALS ............... */
 
 .modal-overlay {
