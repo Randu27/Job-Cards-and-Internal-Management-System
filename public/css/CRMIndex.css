@@ -1,6 +1,10 @@
+/* --- 1. GLOBAL VARIABLES & BASE --- */
 :root {
     --primary-color: #ffe785;
     --secondary-color: #fdfcf0;
+    --dark-slate: #34495e;
+    --danger-red: #dc3545;
+    --bootstrap-blue: #0d6efd;
 }
 
 body {
@@ -8,38 +12,10 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Navbar & Sidebar */
-.navbar { background-color: var(--primary-color); }
-.offcanvas { background-color: var(--primary-color); width: 280px !important; }
-
-.navbar .btn-outline-light {
-    transition: all 0.3s ease;
-    border-color: rgba(0, 0, 0, 0.2) !important;
+/* --- 2. NAVBAR & HAMBURGER MENU --- */
+.navbar { 
+    background-color: var(--primary-color); 
 }
-
-.navbar .btn-outline-light:hover {
-    background-color: #34495e !important;
-    border-color: #34495e !important;
-}
-
-.navbar .btn-outline-light:hover .bi-list {
-    color: #ffffff !important;
-}
-
-.nav-link {
-    color: #000000;
-    padding: 15px 20px;
-    border-left: 5px solid transparent;
-    transition: 0.3s;
-}
-
-.nav-link:hover, .nav-link.active {
-    color: white;
-    background: #34495e;
-    border-left: 5px solid var(--secondary-color);
-}
-
-.nav-link i { margin-right: 15px; }
 
 .navbar-brand {
     color: #000000 !important;
@@ -50,9 +26,64 @@ body {
     color: #000000 !important;
 }
 
-/* Hero Section */
+.navbar .btn-outline-light {
+    transition: all 0.3s ease;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.navbar .btn-outline-light:hover {
+    background-color: var(--dark-slate) !important;
+    border-color: var(--dark-slate) !important;
+}
+
+.navbar .btn-outline-light:hover .bi-list {
+    color: #ffffff !important;
+}
+
+/* --- 3. SIDEBAR (OFFCANVAS) --- */
+.offcanvas { 
+    background-color: var(--primary-color); 
+    width: 280px !important; 
+    border-right: 1px solid rgba(0,0,0,0.1);
+}
+
+.offcanvas-title {
+    color: #000;
+    padding: 20px;
+    font-weight: 700;
+}
+
+.nav-link {
+    color: #000000; /* Ensures words are visible on yellow */
+    padding: 15px 20px;
+    border-left: 5px solid transparent;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.nav-link i { 
+    margin-right: 15px; 
+    font-size: 1.1rem;
+}
+
+/* Active and Hover States */
+.nav-link:hover, 
+.nav-link.active {
+    color: #ffffff !important;
+    background: var(--dark-slate);
+    border-left: 5px solid var(--secondary-color);
+}
+
+.nav-link:hover i,
+.nav-link.active i {
+    color: #ffffff !important;
+}
+
+/* --- 4. HERO SECTION --- */
 .hero-section {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, var(--dark-slate) 100%);
     color: white;
     padding: 40px 0;
     margin-bottom: 30px;
@@ -68,10 +99,11 @@ body {
     opacity: 0.9;
 }
 
-/* Stats Cards */
+/* --- 5. DASHBOARD CARDS & STATS --- */
 .stats-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border-radius: 15px;
+    border: none;
 }
 
 .stats-card:hover {
@@ -85,13 +117,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 12px;
 }
 
-/* Table Styling */
-.table {
-    margin-bottom: 0;
-}
-
+/* --- 6. TABLES & BADGES --- */
 .table thead th {
     font-weight: 600;
     color: #2c3e50;
@@ -108,7 +137,6 @@ body {
     justify-content: center;
     color: white;
     font-weight: 600;
-    font-size: 1rem;
 }
 
 .feedback-badge {
@@ -123,68 +151,7 @@ body {
     gap: 4px;
 }
 
-/* Buttons */
-.btn-sm {
-    border-radius: 8px;
-    padding: 0.25rem 0.6rem;
-}
-
-.btn-sm:hover {
-    transform: translateY(-2px);
-    transition: all 0.2s;
-}
-
-/* Logout Button */
-.custom-logout-btn {
-    display: inline-block;
-    background-color: #0d6efd;
-    color: white !important;
-    font-weight: bold;
-    text-decoration: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.custom-logout-btn:hover {
-    background-color: #dc3545;
-    color: white !important;
-    transform: translateY(-2px);
-}
-
-/* Modal Styling */
-.modal-content {
-    border: none;
-    border-radius: 20px;
-}
-
-.modal-header {
-    border-bottom: none;
-    border-radius: 20px 20px 0 0;
-}
-
-.modal .form-control,
-.modal .form-select {
-    border-radius: 10px;
-    padding: 0.6rem 1rem;
-}
-
-.modal .form-control:focus,
-.modal .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-}
-
-/* Toast */
-.toast-container {
-    z-index: 1100;
-}
-
-.toast {
-    border-radius: 10px;
-}
-
-/* Add Customer Button */
+/* --- 7. BUTTONS & LOGOUT --- */
 .btn-primary {
     border-radius: 50px;
     transition: all 0.3s;
@@ -195,14 +162,37 @@ body {
     box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
 }
 
-/* Responsive */
+.custom-logout-btn {
+    display: inline-block;
+    background-color: var(--bootstrap-blue);
+    color: white !important;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.custom-logout-btn:hover {
+    background-color: var(--danger-red);
+    transform: translateY(-2px);
+}
+
+/* --- 8. MODALS & FORMS --- */
+.modal-content {
+    border: none;
+    border-radius: 20px;
+}
+
+.modal .form-control,
+.modal .form-select {
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+}
+
+/* --- 9. RESPONSIVE QUERIES --- */
 @media (max-width: 768px) {
     .hero-section h1 {
         font-size: 1.8rem !important;
-    }
-    
-    .btn-primary.btn-lg {
-        padding: 0.6rem 1.2rem !important;
-        font-size: 0.9rem !important;
     }
 }

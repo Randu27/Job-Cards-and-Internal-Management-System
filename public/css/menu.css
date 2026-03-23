@@ -1,0 +1,142 @@
+:root {
+    --primary-color: #ffe785;
+    --secondary-color: #fdfcf0;
+}
+
+/* Navbar & Sidebar Styling */
+.navbar {
+    background-color: var(--primary-color);
+}
+
+.offcanvas {
+    background-color: var(--primary-color);
+    width: 280px !important;
+    border: none;
+}
+
+.offcanvas-header {
+    padding: 20px;
+}
+
+/* Layout logic to push logout to bottom */
+.offcanvas-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.offcanvas-body .nav {
+    flex: 1;
+}
+
+/* Base Nav Links */
+.nav-link {
+    color: #000000 !important;
+    padding: 15px 20px;
+    border-left: 5px solid transparent;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.nav-link i {
+    margin-right: 15px;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: #ffffff !important;
+    background: #34495e;
+    border-left: 5px solid var(--secondary-color);
+}
+
+/* .................... Log out option Settings ............... */
+
+.nav-link-logout {
+    position: relative;
+    overflow: hidden;
+    color: #000 !important;
+    transition: color 0.3s ease;
+}
+
+.nav-link-logout::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #ef4444; /* The red background */
+    transform: translateX(-100%);
+    transition: transform 0.35s ease;
+    z-index: 0;
+}
+
+.nav-link-logout:hover::before {
+    transform: translateX(0);
+}
+
+.nav-link-logout:hover {
+    color: #fff !important;
+    border-left: 5px solid #fff !important;
+}
+
+.nav-link-logout i,
+.nav-link-logout span {
+    position: relative;
+    z-index: 1;
+}
+
+
+
+/* --- THE FLOATING OVERLAY --- */
+.modal-overlay {
+    position: fixed; /* This makes it float over the content */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* This darkens/freezes the screen behind */
+    display: none; /* Hidden by default - shown via JS */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* Higher than EVERYTHING else */
+}
+
+/* --- THE POPUP BOX --- */
+.modal-box {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    color: #000;
+}
+
+/* Modal Icons & Buttons to match your style */
+.modal-icon.danger {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.modal-btn-row {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.modal-btn-confirm-red {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.modal-btn-cancel {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+}
