@@ -1,0 +1,124 @@
+:root {
+    --primary-color: #ffe785;
+    --secondary-color: #fdfcf0;
+    --dark-slate: #34495e;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* --- NAVBAR & SIDEBAR (OFFCANVAS) --- */
+.navbar { 
+    background-color: var(--primary-color); 
+}
+
+.offcanvas { 
+    background-color: var(--primary-color); 
+    width: 280px !important; 
+    border-right: 1px solid rgba(0,0,0,0.1);
+}
+
+.offcanvas-title {
+    color: #000000;
+    padding: 20px;
+    font-weight: 700;
+}
+
+/* --- NAVIGATION LINKS --- */
+.nav-link {
+    color: #000000;
+    padding: 15px 20px;
+    border-left: 5px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.nav-link i { 
+    margin-right: 15px;
+    font-size: 1.1rem;
+}
+
+/* Hover & Active States - Text turns white on dark slate background */
+.nav-link:hover, 
+.nav-link.active {
+    color: #ffffff !important;
+    background-color: var(--dark-slate);
+    border-left: 5px solid var(--secondary-color);
+}
+
+.nav-link:hover i,
+.nav-link.active i {
+    color: #ffffff !important;
+}
+
+/* --- HAMBURGER BUTTON (BI-LIST) --- */
+.navbar .btn-outline-light {
+    transition: all 0.3s ease;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.navbar .btn-outline-light:hover {
+    background-color: var(--dark-slate) !important;
+    border-color: var(--dark-slate) !important;
+}
+
+.bi-list {
+    color: #000000 !important;
+}
+
+.navbar .btn-outline-light:hover .bi-list {
+    color: #ffffff !important;
+}
+
+.navbar-brand {
+    color: #000000 !important;
+    font-weight: 700;
+}
+
+/* --- LOGOUT BUTTON --- */
+.custom-logout-btn {
+    display: inline-block;
+    background-color: #0d6efd;
+    color: white !important;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.custom-logout-btn:hover {
+    background-color: #dc3545; /* Turns red on hover */
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* --- DASHBOARD ELEMENTS --- */
+.hero-section {
+    background: linear-gradient(135deg, #2c3e50 0%, var(--dark-slate) 100%);
+    color: white;
+    padding: 20px 0;
+    margin-bottom: 20px;
+}
+
+.hero-section h1 {
+    font-size: 2.3rem !important; 
+    font-weight: 600;
+}
+
+.feature-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 15px;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+}
