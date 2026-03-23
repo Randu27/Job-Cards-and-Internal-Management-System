@@ -1,6 +1,8 @@
+/* --- 1. GLOBAL VARIABLES & BASE --- */
 :root {
     --primary-color: #ffe785;
     --secondary-color: #fdfcf0;
+<<<<<<< HEAD
     --dark-color: #2c3e50;
 }
 
@@ -8,6 +10,11 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+=======
+    --dark-slate: #34495e;
+    --danger-red: #dc3545;
+    --bootstrap-blue: #0d6efd;
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 }
 
 body {
@@ -15,16 +22,23 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+<<<<<<< HEAD
 /* Navbar */
 .navbar {
     background-color: var(--primary-color);
     padding: 10px 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+=======
+/* --- 2. NAVBAR & HAMBURGER MENU --- */
+.navbar { 
+    background-color: var(--primary-color); 
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 }
 
 .navbar-brand {
     color: #000000 !important;
     font-weight: 700;
+<<<<<<< HEAD
 }
 
 .navbar-brand img {
@@ -81,6 +95,8 @@ body {
 
 .nav-link i {
     margin-right: 15px;
+=======
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 }
 
 .custom-logout-btn {
@@ -95,6 +111,7 @@ body {
     text-align: center;
 }
 
+<<<<<<< HEAD
 .custom-logout-btn:hover {
     background-color: #dc3545;
     color: white !important;
@@ -104,6 +121,66 @@ body {
 /* Hero Section - Original Gradient */
 .page-header {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+=======
+.navbar .btn-outline-light {
+    transition: all 0.3s ease;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.navbar .btn-outline-light:hover {
+    background-color: var(--dark-slate) !important;
+    border-color: var(--dark-slate) !important;
+}
+
+.navbar .btn-outline-light:hover .bi-list {
+    color: #ffffff !important;
+}
+
+/* --- 3. SIDEBAR (OFFCANVAS) --- */
+.offcanvas { 
+    background-color: var(--primary-color); 
+    width: 280px !important; 
+    border-right: 1px solid rgba(0,0,0,0.1);
+}
+
+.offcanvas-title {
+    color: #000;
+    padding: 20px;
+    font-weight: 700;
+}
+
+.nav-link {
+    color: #000000; /* Ensures words are visible on yellow */
+    padding: 15px 20px;
+    border-left: 5px solid transparent;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.nav-link i { 
+    margin-right: 15px; 
+    font-size: 1.1rem;
+}
+
+/* Active and Hover States */
+.nav-link:hover, 
+.nav-link.active {
+    color: #ffffff !important;
+    background: var(--dark-slate);
+    border-left: 5px solid var(--secondary-color);
+}
+
+.nav-link:hover i,
+.nav-link.active i {
+    color: #ffffff !important;
+}
+
+/* --- 4. HERO SECTION --- */
+.hero-section {
+    background: linear-gradient(135deg, #2c3e50 0%, var(--dark-slate) 100%);
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
     color: white;
     padding: 50px 0;
     margin-bottom: 40px;
@@ -129,10 +206,15 @@ body {
     text-align: center;
 }
 
+<<<<<<< HEAD
 /* Stats Cards - Colorful with Icons */
+=======
+/* --- 5. DASHBOARD CARDS & STATS --- */
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 .stats-card {
     background: white;
     border-radius: 15px;
+<<<<<<< HEAD
     padding: 20px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -146,6 +228,9 @@ body {
 
 .stats-card.border-start-success {
     border-left: 4px solid #198754;
+=======
+    border: none;
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 }
 
 .stats-card:hover {
@@ -160,6 +245,7 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 12px;
+<<<<<<< HEAD
     background: rgba(13, 110, 253, 0.1);
 }
 
@@ -318,6 +404,11 @@ body {
     margin-bottom: 0;
 }
 
+=======
+}
+
+/* --- 6. TABLES & BADGES --- */
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 .table thead th {
     font-weight: 700;
     color: #2c3e50;
@@ -345,7 +436,6 @@ body {
     justify-content: center;
     color: white;
     font-weight: 600;
-    font-size: 1rem;
 }
 
 .feedback-badge {
@@ -360,6 +450,7 @@ body {
     gap: 5px;
 }
 
+<<<<<<< HEAD
 /* Action Icons */
 .action-icons {
     display: flex;
@@ -593,6 +684,9 @@ footer {
 }
 
 /* Buttons */
+=======
+/* --- 7. BUTTONS & LOGOUT --- */
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 .btn-primary {
     background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
     border: none;
@@ -670,7 +764,35 @@ footer {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* Responsive */
+.custom-logout-btn {
+    display: inline-block;
+    background-color: var(--bootstrap-blue);
+    color: white !important;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.custom-logout-btn:hover {
+    background-color: var(--danger-red);
+    transform: translateY(-2px);
+}
+
+/* --- 8. MODALS & FORMS --- */
+.modal-content {
+    border: none;
+    border-radius: 20px;
+}
+
+.modal .form-control,
+.modal .form-select {
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+}
+
+/* --- 9. RESPONSIVE QUERIES --- */
 @media (max-width: 768px) {
     .page-header {
         padding: 30px 0;
@@ -679,6 +801,7 @@ footer {
     .page-header h1 {
         font-size: 1.8rem !important;
     }
+<<<<<<< HEAD
     
     .stats-number {
         font-size: 24px;
@@ -703,4 +826,6 @@ footer {
     .action-icon {
         font-size: 16px;
     }
+=======
+>>>>>>> 01475e6641be1554a211fe28bf33aacdb955af4a
 }

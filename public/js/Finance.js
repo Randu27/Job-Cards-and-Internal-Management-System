@@ -60,6 +60,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (el) el.setAttribute('max', todayStr);
     });
 
+
+
+    // E. BLOCK MINUS SIGN (Move this here!)
+    const amountInput = document.getElementById('billAmount');
+    if (amountInput) {
+        amountInput.addEventListener('keydown', function(e) {
+            if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                e.preventDefault();
+            }
+        });
+        amountInput.addEventListener('paste', function(e) {
+            const pasteData = e.clipboardData.getData('text');
+            if (pasteData.includes('-')) {
+                e.preventDefault();
+                alert("Negative values are not allowed.");
+            }
+        });
+    }
+
     
 });
 
@@ -157,11 +176,15 @@ async function loadFinanceRecords() {
     });
 }
 
+
+
 function applyFilters() {
     const typeFilter = document.getElementById('filterType')?.value || 'All';
     const startDate = document.getElementById('filterDateStart')?.value;
     const endDate = document.getElementById('filterDateEnd')?.value;
     const tableBody = document.getElementById('financeRecordsTableBody');
+
+    if (!tableBody) return;
 
     let filtered = masterRecords.filter(record => {
         const matchesType = (typeFilter === "All" || record.type === typeFilter);
@@ -186,25 +209,37 @@ function applyFilters() {
     let currentOutgoings = 0;
 
     filtered.forEach(record => {
-        if (record.type === 'Order') currentIncome += record.amount;
-        else currentOutgoings += record.amount;
+    if (record.type === 'Order') currentIncome += record.amount;
+    else currentOutgoings += record.amount;
 
-        tableBody.innerHTML += `
-            <tr>
-                <td>${record.id}</td>
-                <td><span class="badge ${record.type === 'Order' ? 'bg-success' : 'bg-danger'}">${record.type}</span></td>
-                <td>${record.date}</td>
-                <td class="text-start">${record.description}</td>
-                <td>Rs. ${record.amount.toLocaleString()}</td>
-                <td>
-                    <div class="d-flex justify-content-center gap-2">
-                       <button class="btn btn-light border-dark btn-sm" onclick="viewRecord('${record.docId}')"><i class="bi bi-file-earmark-ruled"></i></button>
-                        <button class="btn btn-light border-dark btn-sm" onclick="editRecord('${record.docId}')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-light border-dark btn-sm text-danger" onclick="deleteRecord('${record.docId}', '${record.type}')"><i class="bi bi-trash"></i></button>
-                    </div>
-                </td>
-            </tr>`;
-    });
+    const isBill = record.type === 'Bill';
+
+    // 1. View Column (Always exists)
+    const viewCell = `<td><button class="btn btn-light border-dark btn-sm" onclick="viewRecord('${record.docId}')"><i class="bi bi-file-earmark-ruled"></i></button></td>`;
+    
+    // 2. Edit Column (Only for Bills)
+    const editCell = isBill 
+        ? `<td><button class="btn btn-light border-dark btn-sm" onclick="editRecord('${record.docId}')"><i class="bi bi-pencil"></i></button></td>` 
+        : `<td class="text-muted">-</td>`;
+        
+    // 3. Delete Column (Only for Bills)
+    const deleteCell = isBill 
+        ? `<td><button class="btn btn-light border-dark btn-sm text-danger" onclick="deleteRecord('${record.docId}', '${record.type}')"><i class="bi bi-trash"></i></button></td>` 
+        : `<td class="text-muted">-</td>`;
+
+    // 4. Inject all 8 columns
+    tableBody.innerHTML += `
+        <tr>
+            <td>${record.id}</td>
+            <td><span class="badge ${record.type === 'Order' ? 'bg-success' : 'bg-danger'}">${record.type}</span></td>
+            <td>${record.date}</td>
+            <td class="text-start">${record.description}</td>
+            <td>Rs. ${record.amount.toLocaleString()}</td>
+            ${viewCell}
+            ${editCell}
+            ${deleteCell}
+        </tr>`;
+});
 
     updateHistorySummary(currentIncome, currentOutgoings);
 }
@@ -213,42 +248,6 @@ function applyFilters() {
 
 
 
-filtered.forEach(record => {
-    if (record.type === 'Order') currentIncome += record.amount;
-    else currentOutgoings += record.amount;
-
-    // 1. Create a variable to hold the action buttons
-    let actionButtons = '';
-
-    if (record.type === 'Bill') {
-        // Bills get View, Edit, and Delete
-        actionButtons = `
-            <button class="btn btn-light border-dark btn-sm" onclick="viewRecord('${record.docId}')"><i class="bi bi-file-earmark-ruled"></i></button>
-            <button class="btn btn-light border-dark btn-sm" onclick="editRecord('${record.docId}')"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-light border-dark btn-sm text-danger" onclick="deleteRecord('${record.docId}', '${record.type}')"><i class="bi bi-trash"></i></button>
-        `;
-    } else {
-        // Orders ONLY get the View button
-        actionButtons = `
-            <button class="btn btn-light border-dark btn-sm" onclick="viewRecord('${record.docId}')"><i class="bi bi-file-earmark-ruled"></i></button>
-        `;
-    }
-
-    // 2. Insert the actionButtons variable into the table row
-    tableBody.innerHTML += `
-        <tr>
-            <td>${record.id}</td>
-            <td><span class="badge ${record.type === 'Order' ? 'bg-success' : 'bg-danger'}">${record.type}</span></td>
-            <td>${record.date}</td>
-            <td class="text-start">${record.description}</td>
-            <td>Rs. ${record.amount.toLocaleString()}</td>
-            <td>
-                <div class="d-flex justify-content-center gap-2">
-                    ${actionButtons}
-                </div>
-            </td>
-        </tr>`;
-});
 
 
 
@@ -272,12 +271,16 @@ function updateHistorySummary(income, outgoings) {
     });
 }
 
+
+
 function resetFilters() {
     if (document.getElementById('filterType')) document.getElementById('filterType').value = "All";
     if (document.getElementById('filterDateStart')) document.getElementById('filterDateStart').value = "";
     if (document.getElementById('filterDateEnd')) document.getElementById('filterDateEnd').value = "";
     applyFilters();
 }
+
+
 
 function viewRecord(docId) {
     // 1. Find the specific record from our loaded data
@@ -437,10 +440,8 @@ function resetFormToDefault() {
 
 
 
-
-
-
 async function saveTransaction() {
+    
     // 1. Get references to elements and values
     const amountInput = document.getElementById('billAmount');
     const amount = parseFloat(amountInput.value);
