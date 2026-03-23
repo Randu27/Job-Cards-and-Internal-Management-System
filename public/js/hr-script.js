@@ -796,4 +796,170 @@ document.addEventListener("DOMContentLoaded", function () {
 
   } // end VIEW PAGE
 
+
+  // ================================================
+  // PRINT PAGE — only runs if reportArea exists
+  // ================================================
+  if (document.getElementById("reportArea")) {
+
+    const reportArea     = document.getElementById("reportArea");
+    const printLoading   = document.getElementById("printLoading");
+    const printEmpty     = document.getElementById("printEmpty");
+    const reportThead    = document.getElementById("reportThead");
+    const reportTbody    = document.getElementById("reportTbody");
+    const deptFilter     = document.getElementById("printDeptFilter");
+    const statusFilter   = document.getElementById("printStatusFilter");
+    const colToggles     = document.getElementById("colToggles");
+    const printBtn       = document.getElementById("printBtn");
+    const exportCsvBtn   = document.getElementById("exportCsvBtn");
+    const reportDate     = document.getElementById("reportDate");
+
+    let allEmployees = [];
+
+    // Column definitions
+    const COLUMNS = [
+      { key: "id",         label: "Employee ID",  on: true },
+      { key: "name",       label: "Name",         on: true },
+      { key: "department", label: "Department",   on: true },
+      { key: "status",     label: "Status",       on: true },
+      { key: "joinDate",   label: "Date Joined",  on: true },
+      { key: "nic",        label: "NIC",          on: true },
+      { key: "contact",    label: "Contact",      on: true },
+      { key: "email",      label: "Email",        on: true },
+      { key: "address",    label: "Address",      on: false },
+      { key: "remarks",    label: "Remarks",      on: false },
+    ];
+
+    // Build column toggle pills
+    COLUMNS.forEach((col, i) => {
+      const lbl = document.createElement("label");
+      lbl.className = `print-col-toggle ${col.on ? "on" : ""}`;
+      lbl.innerHTML = `<input type="checkbox" ${col.on ? "checked" : ""}> ${col.label}`;
+      lbl.querySelector("input").addEventListener("change", function () {
+        COLUMNS[i].on = this.checked;
+        lbl.classList.toggle("on", this.checked);
+        renderTable(getFiltered());
+      });
+      colToggles.appendChild(lbl);
+    });
+
+    // Get active columns
+    function activeCols() { return COLUMNS.filter(c => c.on); }
+
+    // Get filtered employees
+    function getFiltered() {
+      const dept = deptFilter.value.toLowerCase();
+      const stat = statusFilter.value.toLowerCase();
+      return allEmployees.filter(emp => {
+        const matchDept = !dept || (emp.department || "").toLowerCase() === dept;
+        const matchStat = !stat || (emp.status     || "").toLowerCase() === stat;
+        return matchDept && matchStat;
+      });
+    }
+
+    // Update summary counts
+    function updateSummary(employees) {
+      const active   = employees.filter(e => (e.status || "").toLowerCase() === "active").length;
+      const inactive = employees.length - active;
+      const depts    = new Set(employees.map(e => e.department).filter(Boolean)).size;
+      document.getElementById("pTotal").textContent   = employees.length;
+      document.getElementById("pActive").textContent  = active;
+      document.getElementById("pInactive").textContent = inactive;
+      document.getElementById("pDepts").textContent   = depts;
+    }
+
+    // Render table
+    function renderTable(employees) {
+      const cols = activeCols();
+
+      // Header
+      reportThead.innerHTML = `<tr>${cols.map(c => `<th>${c.label}</th>`).join("")}</tr>`;
+
+      // Body
+      if (employees.length === 0) {
+        reportTbody.innerHTML = "";
+        printEmpty.style.display = "block";
+      } else {
+        printEmpty.style.display = "none";
+        reportTbody.innerHTML = employees.map((emp, idx) => `
+          <tr>
+            ${cols.map(c => {
+              if (c.key === "status") {
+                const isActive = (emp.status || "").toLowerCase() === "active";
+                return `<td><span class="report-status-badge ${isActive ? "active" : "inactive"}">${emp.status || "—"}</span></td>`;
+              }
+              return `<td>${emp[c.key] || "—"}</td>`;
+            }).join("")}
+          </tr>
+        `).join("");
+      }
+
+      updateSummary(employees);
+    }
+
+    // Load from Firestore
+    async function loadPrintData() {
+      printLoading.style.display = "block";
+      reportArea.style.display   = "none";
+
+      try {
+        const snapshot = await firebase.firestore().collection("employees").orderBy("name").get();
+        allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        printLoading.style.display = "none";
+        reportArea.style.display   = "block";
+
+        // Set print date
+        reportDate.textContent = "Generated: " + new Date().toLocaleString("en-GB", {
+          day: "2-digit", month: "long", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        });
+
+        renderTable(getFiltered());
+
+      } catch (err) {
+        console.error(err);
+        printLoading.style.display = "none";
+        reportArea.style.display   = "block";
+        printEmpty.style.display   = "block";
+        printEmpty.querySelector("h5").textContent = "Failed to load data";
+      }
+    }
+
+    // Filter change events
+    deptFilter.addEventListener("change",   () => renderTable(getFiltered()));
+    statusFilter.addEventListener("change", () => renderTable(getFiltered()));
+
+    // Print
+    printBtn.addEventListener("click", () => {
+      // Update date before printing
+      reportDate.textContent = "Generated: " + new Date().toLocaleString("en-GB", {
+        day: "2-digit", month: "long", year: "numeric",
+        hour: "2-digit", minute: "2-digit"
+      });
+      window.print();
+    });
+
+    // Export CSV
+    exportCsvBtn.addEventListener("click", () => {
+      const cols = activeCols();
+      const employees = getFiltered();
+      const header = cols.map(c => `"${c.label}"`).join(",");
+      const rows   = employees.map(emp =>
+        cols.map(c => `"${(emp[c.key] || "").toString().replace(/"/g, '""')}"`).join(",")
+      );
+      const csv  = [header, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `employees_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    loadPrintData();
+
+  } // end PRINT PAGE
+
 }); // end DOMContentLoaded
