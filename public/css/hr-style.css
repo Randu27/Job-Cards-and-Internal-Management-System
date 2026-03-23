@@ -43,76 +43,97 @@ body {
     color: #1e293b;
 }
 
-/* ==========================
-   NAVBAR & SIDEBAR — UNCHANGED
-=========================== */
+/* Navbar & Sidebar Styling */
 .navbar { background-color: var(--primary-color); }
-.offcanvas { background-color: var(--primary-color); width: 280px !important; }
+.offcanvas { background-color: var(--primary-color); color: white; width: 280px !important; }
+
+/* 1. Target the button in its normal state */
+.navbar .btn-outline-light {
+    transition: all 0.3s ease;
+    border-color: rgba(0, 0, 0, 0.2) !important; /* Darker border for visibility */
+}
+
+/* 2. The Hover State */
+.navbar .btn-outline-light:hover {
+    background-color: #34495e !important; /* Calming dark slate on hover */
+    border-color: #34495e !important;
+}
+
+/* 3. Ensure the icon turns white when the background turns dark */
+.navbar .btn-outline-light:hover .bi-list {
+    color: #ffffff !important;
+}
 
 .nav-link {
     color: #000000;
     padding: 15px 20px;
     border-left: 5px solid transparent;
-    transition: all 0.3s ease;
+    transition: 0.3s;
 }
+
 .nav-link:hover, .nav-link.active {
-    color: #ffffff;
-    background-color: var(--dark-blue);
+    color: rgb(255, 255, 255);
+    background: #34495e;
     border-left: 5px solid var(--secondary-color);
 }
+
 .nav-link i { margin-right: 15px; }
-.navbar-brand { color: #000000 !important; font-weight: 700; }
 
-
-/* ==========================
-   HAMBURGER BUTTON
-=========================== */
-.navbar .btn-outline-light {
-    transition: all 0.3s ease;
-    border-color: rgba(0, 0, 0, 0.2) !important;
-    background-color: transparent !important;
+/* Company name styling */
+.navbar-brand {
+    color: #000000 !important;
+    font-weight: 700;
 }
+
+/* Hamburger button (rounded square box like your image) */
+.navbar .btn-outline-light {
+    width: 48px;
+    height: 50px;
+    border-radius: 6px; /* Rounded square shape */
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: transparent;
+    border: 1.5px solid rgba(0, 0, 0, 0.25) !important;
+
+    padding: 0; /* remove default padding */
+    transition: all 0.25s ease;
+}
+
+/* Hamburger icon size */
+.navbar .btn-outline-light .bi-list {
+    font-size: 1.4rem;
+    color: #000000 !important;
+    transition: 0.25s ease;
+}
+
+/* Hover effect */
 .navbar .btn-outline-light:hover {
     background-color: #34495e !important;
     border-color: #34495e !important;
 }
+
+/* Icon color on hover */
 .navbar .btn-outline-light:hover .bi-list {
     color: #ffffff !important;
 }
-.bi-list { color: #000000 !important; font-size: 1.8rem !important; }
-.btn-outline-light { border-color: rgba(0, 0, 0, 0.2) !important; }
-.btn-outline-light:focus { box-shadow: none !important; outline: none !important; }
 
-
-
-/* ==========================
-   HERO — UNCHANGED
-=========================== */
+/* Hero Styling */
 .hero-section {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
-    padding: 60px 0;
-    margin-bottom: 40px;
-    text-align: center;
+    padding: 20px 0;
+    margin-bottom: 20px;
 }
+
 .hero-section h1 {
-    font-family: var(--font-main);
-    font-weight: 700;
-    font-size: 3rem;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 2.3rem !important; 
+    margin-bottom: 0;
+    font-weight: 600;
 }
-.hero-section .lead {
-    font-family: var(--font-main);
-    font-weight: 400;
-    font-size: 1.25rem;
-    letter-spacing: -0.01em;
-    opacity: 0.95;
-    max-width: 600px;
-    margin: 0 auto;
-}
+
 
 /* ==========================
    FEATURE CARDS — original index design
@@ -1204,6 +1225,240 @@ button#searchBtn:hover,
 .detail-sub {
     font-size: 0.85rem;
     color: var(--text-mid);
+}
+
+/* ==========================
+   PRINT REPORT PAGE
+=========================== */
+.print-controls-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(16px);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 1rem;
+}
+.print-filters { display: flex; gap: 1.2rem; flex-wrap: wrap; align-items: flex-end; }
+.print-filter-group { display: flex; flex-direction: column; gap: 5px; }
+.print-filter-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-light);
+}
+.print-filter-select {
+    padding: 0.55rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-main);
+    font-size: 0.88rem;
+    color: var(--text-dark);
+    background: #f8faff;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    min-width: 150px;
+}
+.print-filter-select:focus { outline: none; border-color: var(--accent-violet); }
+.print-col-toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.print-col-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--border);
+    background: #f8faff;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+}
+.print-col-toggle.on {
+    background: var(--accent-violet-light);
+    border-color: var(--accent-violet);
+    color: var(--accent-violet);
+}
+.print-col-toggle input { display: none; }
+.print-actions { display: flex; gap: 0.6rem; }
+.print-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-pill);
+    border: none;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    white-space: nowrap;
+}
+.print-action-btn.primary {
+    background: linear-gradient(135deg, var(--accent-violet), var(--accent-indigo));
+    color: white;
+    box-shadow: 0 4px 14px rgba(124,58,237,0.32);
+}
+.print-action-btn.primary:hover {
+    box-shadow: 0 6px 20px rgba(124,58,237,0.44);
+    transform: translateY(-1px);
+}
+.print-action-btn.secondary {
+    background: linear-gradient(135deg, var(--accent-teal), #059669);
+    color: white;
+    box-shadow: 0 4px 14px rgba(13,148,136,0.28);
+}
+.print-action-btn.secondary:hover {
+    box-shadow: 0 6px 20px rgba(13,148,136,0.42);
+    transform: translateY(-1px);
+}
+
+/* Summary bar */
+.print-summary-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(255,255,255,0.85);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    padding: 1rem 1.6rem;
+    flex-wrap: wrap;
+    gap: 0;
+}
+.print-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.8rem;
+    gap: 2px;
+}
+.print-summary-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1;
+}
+.print-summary-num.active   { color: #16a34a; }
+.print-summary-num.inactive { color: #94a3b8; }
+.print-summary-num.dept     { color: var(--accent-violet); }
+.print-summary-lbl {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+}
+.print-summary-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+}
+
+/* Report table */
+.report-table-wrap {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    background: white;
+}
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-main);
+}
+.report-table thead tr {
+    background: linear-gradient(135deg, var(--accent-violet), var(--accent-indigo));
+}
+.report-table thead th {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 1rem 1.2rem;
+    border: none;
+    white-space: nowrap;
+}
+.report-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+}
+.report-table tbody tr:last-child { border-bottom: none; }
+.report-table tbody tr:hover { background: rgba(237,233,254,0.18); }
+.report-table tbody tr:nth-child(even) { background: #fafbff; }
+.report-table tbody tr:nth-child(even):hover { background: rgba(237,233,254,0.25); }
+.report-table tbody td {
+    padding: 0.85rem 1.2rem;
+    font-size: 0.88rem;
+    color: var(--text-dark);
+    vertical-align: middle;
+}
+.report-status-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.report-status-badge.active   { background: #dcfce7; color: #16a34a; }
+.report-status-badge.inactive { background: #f1f5f9; color: #64748b; }
+
+/* Print header (visible only when printing) */
+.print-only { display: none; }
+.report-print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0 0 1.2rem;
+    margin-bottom: 1.2rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+.report-print-logo { display: flex; align-items: center; gap: 12px; }
+.report-print-company { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+.report-print-sub { font-size: 0.8rem; color: #64748b; }
+.report-print-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; text-align: right; }
+.report-print-date { font-size: 0.8rem; color: #64748b; text-align: right; }
+
+/* ===== PRINT MEDIA STYLES ===== */
+@media print {
+    .no-print { display: none !important; }
+    .print-only { display: flex !important; }
+    body { background: white !important; }
+    .report-table-wrap {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+    .report-table thead tr {
+        background: #1e293b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .report-table thead th { color: white !important; }
+    .report-table tbody tr:nth-child(even) {
+        background: #f8faff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .report-status-badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    #reportArea { display: block !important; }
+    
 }
 
 ::-webkit-scrollbar { width: 6px; }
