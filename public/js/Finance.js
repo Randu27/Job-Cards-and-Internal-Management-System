@@ -157,11 +157,15 @@ async function loadFinanceRecords() {
     });
 }
 
+
+
 function applyFilters() {
     const typeFilter = document.getElementById('filterType')?.value || 'All';
     const startDate = document.getElementById('filterDateStart')?.value;
     const endDate = document.getElementById('filterDateEnd')?.value;
     const tableBody = document.getElementById('financeRecordsTableBody');
+
+    if (!tableBody) return;
 
     let filtered = masterRecords.filter(record => {
         const matchesType = (typeFilter === "All" || record.type === typeFilter);
@@ -189,6 +193,21 @@ function applyFilters() {
         if (record.type === 'Order') currentIncome += record.amount;
         else currentOutgoings += record.amount;
 
+        const isBill = record.type === 'Bill';
+
+        // View Column (Always visible)
+        const viewCell = `<td class="text-center"><button class="btn btn-light border-dark btn-sm" onclick="viewRecord('${record.docId}')"><i class="bi bi-file-earmark-ruled"></i></button></td>`;
+        
+        // Edit Column (Only for Bills)
+        const editCell = isBill 
+            ? `<td class="text-center"><button class="btn btn-light border-dark btn-sm" onclick="editRecord('${record.docId}')"><i class="bi bi-pencil"></i></button></td>` 
+            : `<td class="text-center text-muted">-</td>`;
+            
+        // Delete Column (Only for Bills)
+        const deleteCell = isBill 
+            ? `<td class="text-center"><button class="btn btn-light border-dark btn-sm text-danger" onclick="deleteRecord('${record.docId}', '${record.type}')"><i class="bi bi-trash"></i></button></td>` 
+            : `<td class="text-center text-muted">-</td>`;
+
         tableBody.innerHTML += `
             <tr>
                 <td>${record.id}</td>
@@ -196,13 +215,9 @@ function applyFilters() {
                 <td>${record.date}</td>
                 <td class="text-start">${record.description}</td>
                 <td>Rs. ${record.amount.toLocaleString()}</td>
-                <td>
-                    <div class="d-flex justify-content-center gap-2">
-                       <button class="btn btn-light border-dark btn-sm" onclick="viewRecord('${record.docId}')"><i class="bi bi-file-earmark-ruled"></i></button>
-                        <button class="btn btn-light border-dark btn-sm" onclick="editRecord('${record.docId}')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-light border-dark btn-sm text-danger" onclick="deleteRecord('${record.docId}', '${record.type}')"><i class="bi bi-trash"></i></button>
-                    </div>
-                </td>
+                ${viewCell}
+                ${editCell}
+                ${deleteCell}
             </tr>`;
     });
 
@@ -272,12 +287,16 @@ function updateHistorySummary(income, outgoings) {
     });
 }
 
+
+
 function resetFilters() {
     if (document.getElementById('filterType')) document.getElementById('filterType').value = "All";
     if (document.getElementById('filterDateStart')) document.getElementById('filterDateStart').value = "";
     if (document.getElementById('filterDateEnd')) document.getElementById('filterDateEnd').value = "";
     applyFilters();
 }
+
+
 
 function viewRecord(docId) {
     // 1. Find the specific record from our loaded data
