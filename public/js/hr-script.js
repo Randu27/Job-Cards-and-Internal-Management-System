@@ -961,5 +961,6 @@ document.addEventListener("DOMContentLoaded", function () {
     loadPrintData();
 
   } // end PRINT PAGE
+  
 
 }); // end DOMContentLoaded
