@@ -12,7 +12,7 @@
     padding: 20px 0;
 }
 
-/* Table Row Update Animation */
+/* Table Row Update Animation */ 
 @keyframes highlightUpdate {
     0% { background-color: rgba(255, 231, 133, 0.5); }
     100% { background-color: transparent; }
