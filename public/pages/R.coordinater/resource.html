@@ -330,11 +330,7 @@ function addLog(message, textColor = 'text-dark') {
 }
 
 function updateStats(docs) {
-    const total   = docs.length;
-    const healthy = docs.filter(d => d.data().qty > 50).length;
-    document.getElementById('statTotal').textContent   = total;
-    document.getElementById('statHealthy').textContent = healthy;
-    document.getElementById('statLow').textContent     = total - healthy;
+    // Stats pills removed from UI - function kept for PDF use only
 }
 
 /* ── ① CREATE / UPDATE ── */
@@ -424,7 +420,7 @@ function renderTable(docs) {
 }
 
 function startRealtimeListener() {
-    stockDB.collection(STOCK_COLLECTION).orderBy("name").onSnapshot(
+    stockDB.collection(STOCK_COLLECTION).onSnapshot(
         snapshot => {
             renderTable(snapshot.docs);
             document.getElementById('syncStatus').innerHTML =
