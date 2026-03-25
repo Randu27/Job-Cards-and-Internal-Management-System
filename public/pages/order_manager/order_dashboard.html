@@ -185,6 +185,18 @@
                             <textarea id="designDescription" class="form-control" rows="5"
                                 placeholder="Briefly explain what customer really want"></textarea>
                         </div>
+
+                        <!-- Order Process (edit mode only) -->
+                        <div class="mb-3" id="orderProcessWrapper" style="display:none;">
+                            <label class="form-label fw-semibold">Order Process</label>
+                            <select id="orderProcessSelect" class="form-select">
+                                <option value="Pending">Pending</option>
+                                <option value="Ongoing">Ongoing</option>
+                                <option value="Finished">Finished</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+
                         <div class="mb-4">
                             <label class="form-label fw-semibold">
                                 Original Design <span class="optional-label">(optional)</span>
