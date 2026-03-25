@@ -86,9 +86,19 @@ function confirmLeaveForm() {
 function closeLeaveModal() {
     document.getElementById('leaveFormModal').style.display = 'none';
 }
+
+// leave conformation in both edit and new add form..//
+
 function leaveForm() {
     closeLeaveModal();
-    showView('dashboardView');
+    if (editingOrderId) {
+        editingOrderId = null;
+        resetFormToCreateMode();
+        clearFormFields();
+        showView('viewOrdersView');
+    } else {
+        showView('dashboardView');
+    }
 }
 
 // ............. Validation Modal ...............//
@@ -402,12 +412,161 @@ function closeViewDetailModal() {
     document.getElementById('viewDetailModal').style.display = 'none';
 }
 
-// ................... Edit (stub).............................//
+
+
+// ................... Edit Order .............................//
+
+let editingOrderId = null;
 
 function editOrder(id) {
-    alert('Edit order: ' + id);
+    const order = allOrders.find(o => o.id === id);
+    if (!order) return;
+
+    editingOrderId = id;
+
+    // ── Step 1 fields ──
+    document.getElementById('customerName').value = order.customerName || '';
+    document.getElementById('contactNumber').value = order.contactNumber || '';
+    document.getElementById('emailAddress').value = order.emailAddress || '';
+    document.getElementById('address').value = order.address || '';
+    document.getElementById('companyName').value = order.companyName || '';
+    document.getElementById('paymentMethod').value = order.paymentMethod || '';
+    document.getElementById('amountPaid').value = order.amountPaid || '';
+
+    if (order.amountPaid) {
+        document.getElementById('currencyPrefix').style.display = 'flex';
+    }
+
+    // ── Step 2 fields ──
+    // Values are stored as "12 cm" — split into number + unit
+    if (order.productHeight) {
+        const parts = order.productHeight.split(' ');
+        document.getElementById('productHeight').value = parts[0] || '';
+        document.getElementById('productHeightUnit').value = parts[1] || 'cm';
+    }
+    if (order.productWidth) {
+        const parts = order.productWidth.split(' ');
+        document.getElementById('productWidth').value = parts[0] || '';
+        document.getElementById('productWidthUnit').value = parts[1] || 'cm';
+    }
+
+    document.getElementById('designDescription').value = order.designDescription || '';
+    document.getElementById('sketchPhoto').value = ''; // file inputs can't be pre-filled
+
+    // ── Show Order Process dropdown ──
+    document.getElementById('orderProcessWrapper').style.display = 'block';
+    document.getElementById('orderProcessSelect').value = order.orderProcess || 'Pending';
+
+    // ── Swap Submit → Save Changes ──
+    const submitBtn = document.querySelector('.btn-submit');
+    submitBtn.innerHTML = `<i class="bi bi-floppy-fill me-1"></i> Save Changes`;
+    submitBtn.onclick = saveEditedOrder;
+
+    // ── Navigate to the form ──
+    document.getElementById('pageTitle').textContent = 'Edit Order';
+    showView('createOrderView');
+    goToStep1();
 }
 
+function saveEditedOrder() {
+    const customerName = document.getElementById('customerName').value.trim();
+    const contactNumber = document.getElementById('contactNumber').value.trim();
+    const emailAddress = document.getElementById('emailAddress').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const companyName = document.getElementById('companyName').value.trim();
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const amountPaid = document.getElementById('amountPaid').value.trim();
+    const productHeight = document.getElementById('productHeight').value.trim()
+        + ' ' + document.getElementById('productHeightUnit').value;
+    const productWidth = document.getElementById('productWidth').value.trim()
+        + ' ' + document.getElementById('productWidthUnit').value;
+    const designDescription = document.getElementById('designDescription').value.trim();
+    const orderProcess = document.getElementById('orderProcessSelect').value;
+
+    if (!customerName) { showValidationModal('Please enter the Customer Name.'); return; }
+    if (!contactNumber) { showValidationModal('Please enter the Contact Number.'); return; }
+    if (!emailAddress) { showValidationModal('Please enter the Email Address.'); return; }
+    if (!address) { showValidationModal('Please enter the Address.'); return; }
+    if (!companyName) { showValidationModal('Please enter the Company Name.'); return; }
+    if (!paymentMethod) { showValidationModal('Please select a Payment Method.'); return; }
+    if (!amountPaid) { showValidationModal('Please enter the Amount Paid.'); return; }
+    if (!document.getElementById('productHeight').value.trim()) {
+        showValidationModal('Please enter the Product Height.'); return;
+    }
+    if (!document.getElementById('productWidth').value.trim()) {
+        showValidationModal('Please enter the Product Width.'); return;
+    }
+    if (!designDescription) { showValidationModal('Please enter the Design Description.'); return; }
+
+    setSubmitLoading(true);
+
+    const updatedData = {
+        customerName, contactNumber, emailAddress, address, companyName,
+        paymentMethod, amountPaid, productHeight, productWidth,
+        designDescription, orderProcess
+    };
+
+    const sketchFile = document.getElementById('sketchPhoto').files[0];
+
+    const doUpdate = (extraData = {}) => {
+        db.collection('orders').doc(editingOrderId)
+            .update({ ...updatedData, ...extraData })
+            .then(() => editSuccess())
+            .catch(err => {
+                setSubmitLoading(false);
+                showValidationModal('Something went wrong. Please try again.');
+                console.error('Firestore update error:', err);
+            });
+    };
+
+    if (sketchFile) {
+        const fileRef = firebase.storage().ref()
+            .child('sketches/' + Date.now() + '_' + sketchFile.name);
+        fileRef.put(sketchFile)
+            .then(snap => snap.ref.getDownloadURL())
+            .then(url => doUpdate({ sketchPhotoURL: url }))
+            .catch(err => {
+                setSubmitLoading(false);
+                showValidationModal('Image upload failed. Please try again.');
+                console.error(err);
+            });
+    } else {
+        doUpdate(); // no new image — existing sketchPhotoURL stays untouched in Firestore
+    }
+}
+
+function editSuccess() {
+    setSubmitLoading(false);
+    editingOrderId = null;
+    resetFormToCreateMode();
+    clearFormFields();
+    goToStep1();
+    setTimeout(() => {
+        document.getElementById('successModal').querySelector('h5').textContent = 'Order Updated!';
+        document.getElementById('successModal').querySelector('p').textContent = 'Changes have been saved successfully.';
+        showSuccessModal();
+    }, 450);
+}
+
+function resetFormToCreateMode() {
+    const submitBtn = document.querySelector('.btn-submit');
+    submitBtn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Submit`;
+    submitBtn.onclick = submitOrder;
+    document.getElementById('orderProcessWrapper').style.display = 'none';
+    document.getElementById('pageTitle').textContent = 'Create New Order';
+}
+
+function clearFormFields() {
+    ['customerName', 'contactNumber', 'emailAddress', 'address', 'companyName',
+        'amountPaid', 'productHeight', 'productWidth', 'designDescription'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+    document.getElementById('paymentMethod').selectedIndex = 0;
+    document.getElementById('productHeightUnit').selectedIndex = 0;
+    document.getElementById('productWidthUnit').selectedIndex = 0;
+    document.getElementById('sketchPhoto').value = '';
+    document.getElementById('currencyPrefix').style.display = 'none';
+}
 // ........................ Success Modal ......................................//
 
 function showSuccessModal() {
@@ -415,7 +574,16 @@ function showSuccessModal() {
 }
 function closeSuccessModal() {
     document.getElementById('successModal').style.display = 'none';
-    showView('dashboardView');
+    // Reset modal text back to default for next create-order use
+    document.getElementById('successModal').querySelector('h5').textContent = 'Order Added Successfully!';
+    document.getElementById('successModal').querySelector('p').textContent = 'The new order has been saved.';
+
+    // After edit → go to View Orders; after create → go to Dashboard
+    if (document.getElementById('pageTitle').textContent === 'Order Management') {
+        showView('dashboardView');
+    } else {
+        showView('viewOrdersView');
+    }
 }
 
 
