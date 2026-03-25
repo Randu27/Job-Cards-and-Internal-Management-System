@@ -417,6 +417,7 @@ function closeViewDetailModal() {
 // ................... Edit Order .............................//
 
 let editingOrderId = null;
+let justFinishedEdit = false;
 
 function editOrder(id) {
     const order = allOrders.find(o => o.id === id);
@@ -537,6 +538,7 @@ function saveEditedOrder() {
 
 function editSuccess() {
     setSubmitLoading(false);
+    justFinishedEdit = true;
     editingOrderId = null;
     resetFormToCreateMode();
     clearFormFields();
@@ -574,15 +576,17 @@ function showSuccessModal() {
 }
 function closeSuccessModal() {
     document.getElementById('successModal').style.display = 'none';
+
     // Reset modal text back to default for next create-order use
     document.getElementById('successModal').querySelector('h5').textContent = 'Order Added Successfully!';
     document.getElementById('successModal').querySelector('p').textContent = 'The new order has been saved.';
 
     // After edit → go to View Orders; after create → go to Dashboard
-    if (document.getElementById('pageTitle').textContent === 'Order Management') {
-        showView('dashboardView');
+    if (justFinishedEdit) {
+        justFinishedEdit = false;
+        showView('viewOrdersView');  // edit → back to table
     } else {
-        showView('viewOrdersView');
+        showView('dashboardView');   // create → back to dashboard
     }
 }
 
