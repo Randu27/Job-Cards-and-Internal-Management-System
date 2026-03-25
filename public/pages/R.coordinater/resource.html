@@ -9,9 +9,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../css/menu.css">
 
-    <!-- jsPDF for PDF export -->
+    <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         :root {
@@ -19,10 +21,8 @@
             --secondary-color: #fdfcf0;
             --dark-bg: #2c3e50;
         }
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
         .navbar { background-color: var(--primary-color); }
         .navbar-brand { color: #000 !important; font-weight: 700; }
         .bi-list { color: #000 !important; }
@@ -30,20 +30,11 @@
         .nav-link { color: #000; padding: 15px 20px; transition: 0.3s; text-decoration: none; display: block; }
         .nav-link:hover, .nav-link.active { color: #fff !important; background: #34495e; }
 
-        .hero-section {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 20px 0;
-        }
-        .feature-card {
-            border: none;
-            border-radius: 15px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-        }
+        .hero-section { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px 0; }
+
+        .feature-card { border: none; border-radius: 15px; transition: transform 0.3s, box-shadow 0.3s; }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,0.12); }
+
         .badge { padding: 8px 12px; border-radius: 6px; font-weight: 500; }
         .btn-dark { background-color: var(--dark-bg); border: none; }
         .btn-dark:hover { background-color: #1a252f; }
@@ -74,19 +65,10 @@
             background: #fff; border-radius: 12px;
             padding: 30px; max-width: 350px; width: 90%; text-align: center;
         }
-        .modal-btn-confirm-red {
-            background: #dc3545; color: #fff; border: none;
-            border-radius: 8px; padding: 8px 20px; margin-right: 8px; cursor: pointer;
-        }
-        .modal-btn-cancel {
-            background: #6c757d; color: #fff; border: none;
-            border-radius: 8px; padding: 8px 20px; cursor: pointer;
-        }
+        .modal-btn-confirm-red { background: #dc3545; color: #fff; border: none; border-radius: 8px; padding: 8px 20px; margin-right: 8px; cursor: pointer; }
+        .modal-btn-cancel { background: #6c757d; color: #fff; border: none; border-radius: 8px; padding: 8px 20px; cursor: pointer; }
 
-        .view-detail-row {
-            display: flex; justify-content: space-between;
-            padding: 10px 0; border-bottom: 1px solid #f0f0f0;
-        }
+        .view-detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
         .view-detail-label { color: #6c757d; font-size: 0.85rem; }
         .view-detail-value { font-weight: 600; }
 
@@ -95,23 +77,51 @@
             color: white; border: none; border-radius: 8px;
             padding: 10px 16px; font-size: 0.9rem; transition: 0.3s; width: 100%;
         }
-        .btn-pdf:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(231,76,60,0.4); color: white;
-        }
+        .btn-pdf:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(231,76,60,0.4); color: white; }
 
-        .stat-pill {
-            background: white; border-radius: 50px; padding: 6px 16px;
-            font-size: 0.82rem; font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            display: inline-flex; align-items: center; gap: 6px;
+        .btn-alert {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white; border: none; border-radius: 8px;
+            padding: 10px 16px; font-size: 0.9rem; transition: 0.3s; width: 100%;
         }
+        .btn-alert:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(243,156,18,0.4); color: white; }
 
         .action-btn-group { display: flex; gap: 4px; justify-content: center; }
+
+        /* Toast notification */
+        #toastContainer {
+            position: fixed; top: 80px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .toast-msg {
+            padding: 12px 20px; border-radius: 10px; color: white;
+            font-size: 0.88rem; font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-success { background: #27ae60; }
+        .toast-warning { background: #e67e22; }
+        .toast-danger  { background: #e74c3c; }
+        .toast-info    { background: #2980b9; }
+
+        /* Low stock warning banner */
+        #lowStockBanner {
+            display: none;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white; padding: 10px 20px;
+            border-radius: 10px; margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        #lowStockBanner.show { display: block; }
     </style>
 </head>
 <body>
 
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<!-- Navbar -->
 <nav class="navbar navbar-dark shadow-sm sticky-top">
     <div class="container">
         <div class="d-flex align-items-center">
@@ -139,9 +149,7 @@
 </div>
 
 <div id="loadingOverlay">
-    <div class="spinner-border text-dark" role="status">
-        <span class="visually-hidden">Loading…</span>
-    </div>
+    <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Loading…</span></div>
 </div>
 
 <!-- VIEW Modal -->
@@ -210,19 +218,28 @@
     </div>
 </div>
 
+<!-- Main -->
 <main>
     <div class="hero-section text-center mb-4 shadow">
         <h1 class="fw-bold">Resource Coordination</h1>
-        <p class="mb-2 opacity-75" id="syncStatus">
+        <p class="mb-0 opacity-75" id="syncStatus">
             <i class="bi bi-cloud-check me-1"></i>Connected to Firebase
         </p>
-
     </div>
 
     <div class="container mt-4">
+
+        <!-- Low stock warning banner -->
+        <div id="lowStockBanner">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Low Stock Warning!</strong>
+            <span id="lowStockList"></span>
+        </div>
+
         <div class="row g-4">
+            <!-- Left column -->
             <div class="col-md-4">
-                <!-- ADD form -->
+                <!-- ADD -->
                 <div class="card feature-card shadow-sm p-4">
                     <h4 class="mb-3"><i class="bi bi-plus-circle me-2 text-success"></i>Add Stock</h4>
                     <div class="mb-3">
@@ -235,6 +252,18 @@
                     </div>
                     <button class="btn btn-dark w-100" onclick="updateStock()">
                         <i class="bi bi-plus-circle me-2"></i>Add / Update Stock
+                    </button>
+                </div>
+
+                <!-- Email Alert -->
+                <div class="card feature-card shadow-sm p-4 mt-4">
+                    <h4 class="mb-2"><i class="bi bi-envelope-exclamation me-2 text-warning"></i>Low Stock Alert</h4>
+                    <p class="text-muted small mb-3">
+                        Automatically sends an email when items drop below 50 units.
+                        Click below to manually send an alert now.
+                    </p>
+                    <button class="btn-alert" onclick="sendLowStockEmail(true)">
+                        <i class="bi bi-send me-2"></i>Send Alert Email Now
                     </button>
                 </div>
 
@@ -256,6 +285,7 @@
                 </div>
             </div>
 
+            <!-- Right column: table -->
             <div class="col-md-8">
                 <div class="card feature-card shadow-sm p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -290,6 +320,7 @@
     </div>
 </main>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -301,24 +332,46 @@
 
 <script>
 /* ================================================================
-   Resource Coordination – Full CRUD + PDF Export
-   Firestore Collection: "stock"
+   Resource Coordination – Full CRUD + PDF Export + Email Alerts
    ================================================================ */
 
+// ── EmailJS Config ──
+const EMAILJS_SERVICE_ID  = "service_vegoayv";
+const EMAILJS_TEMPLATE_ID = "m9ss5a8";
+const EMAILJS_PUBLIC_KEY  = "4QLPsopzRof8LrR3S";
+
+// ── Firestore Config ──
 const STOCK_COLLECTION = "stock";
 let stockDB;
 let allDocs = [];
+let emailAlertSentFor = new Set(); // track which items already triggered email
 
+/* ── Init EmailJS ── */
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+/* ── Toast notification ── */
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast-msg toast-${type}`;
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'info-circle'} me-2"></i>${message}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+/* ── Loading overlay ── */
 function showLoading(show) {
     document.getElementById('loadingOverlay').classList.toggle('show', show);
 }
 
+/* ── Status badge ── */
 function statusBadge(qty) {
     return qty > 50
         ? `<span class="badge bg-success">Healthy</span>`
         : `<span class="badge bg-danger">Low Stock</span>`;
 }
 
+/* ── Activity log ── */
 function addLog(message, textColor = 'text-dark') {
     const log = document.getElementById('activityLog');
     if (log.innerText.includes("No recent updates")) log.innerHTML = "";
@@ -329,12 +382,55 @@ function addLog(message, textColor = 'text-dark') {
     log.prepend(entry);
 }
 
-function updateStats(docs) {
-    const total   = docs.length;
-    const healthy = docs.filter(d => d.data().qty > 50).length;
-    document.getElementById('statTotal').textContent   = total;
-    document.getElementById('statHealthy').textContent = healthy;
-    document.getElementById('statLow').textContent     = total - healthy;
+/* ── Check & send low stock email alert ── */
+function checkLowStock(docs) {
+    const lowItems = docs.filter(d => d.data().qty <= 50);
+
+    // Update banner
+    const banner = document.getElementById('lowStockBanner');
+    const list   = document.getElementById('lowStockList');
+    if (lowItems.length > 0) {
+        list.textContent = ' ' + lowItems.map(d => `${d.data().name} (${d.data().qty} left)`).join(', ');
+        banner.classList.add('show');
+    } else {
+        banner.classList.remove('show');
+    }
+
+    // Send email only for NEW low stock items (not already alerted)
+    const newLowItems = lowItems.filter(d => !emailAlertSentFor.has(d.id));
+    if (newLowItems.length > 0) {
+        newLowItems.forEach(d => emailAlertSentFor.add(d.id));
+        sendLowStockEmail(false, newLowItems);
+    }
+
+    // Remove from alerted set if stock is back above 50
+    docs.filter(d => d.data().qty > 50).forEach(d => emailAlertSentFor.delete(d.id));
+}
+
+/* ── Send low stock email via EmailJS ── */
+async function sendLowStockEmail(manual = false, specificItems = null) {
+    const lowItems = specificItems || allDocs.filter(d => d.data().qty <= 50);
+
+    if (lowItems.length === 0) {
+        if (manual) showToast('No low stock items found! All stock is healthy.', 'success');
+        return;
+    }
+
+    const itemsList = lowItems
+        .map(d => `• ${d.data().name}: ${d.data().qty} units remaining`)
+        .join('\n');
+
+    try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            low_stock_items: itemsList,
+            date: new Date().toLocaleString()
+        });
+        showToast(`Low stock alert sent for ${lowItems.length} item(s)!`, 'warning');
+        addLog(`Email alert sent: ${lowItems.length} low stock item(s)`, 'text-warning');
+    } catch (err) {
+        console.error("EmailJS error:", err);
+        if (manual) showToast('Failed to send email. Check console.', 'danger');
+    }
 }
 
 /* ── ① CREATE / UPDATE ── */
@@ -362,6 +458,7 @@ async function updateStock() {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             addLog(`Stock increased: ${name} (+${qty})`, 'text-primary');
+            showToast(`${name} updated (+${qty})`, 'success');
         } else {
             await stockDB.collection(STOCK_COLLECTION).add({
                 name:      name,
@@ -370,6 +467,7 @@ async function updateStock() {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             addLog(`New resource added: ${name} (${qty})`, 'text-success');
+            showToast(`${name} added to inventory!`, 'success');
         }
         nameInput.value = "";
         qtyInput.value  = "1";
@@ -384,7 +482,8 @@ async function updateStock() {
 /* ── ② READ / Render ── */
 function renderTable(docs) {
     allDocs = docs;
-    updateStats(docs);
+    checkLowStock(docs);
+
     const tbody = document.getElementById('stockTableBody');
     tbody.innerHTML = '';
 
@@ -395,7 +494,7 @@ function renderTable(docs) {
 
     docs.forEach(doc => {
         const { name, qty } = doc.data();
-        const safeName = name.replace(/\\/g, '\\\\').replace(/`/g, "'").replace(/"/g, '&quot;');
+        const safeName = name.replace(/'/g, "\\'");
         const row = document.createElement('tr');
         row.dataset.id   = doc.id;
         row.dataset.name = name;
@@ -405,7 +504,7 @@ function renderTable(docs) {
             <td>${statusBadge(qty)}</td>
             <td>
                 <div class="action-btn-group">
-                    <button class="btn btn-sm btn-outline-info" title="View Details"
+                    <button class="btn btn-sm btn-outline-info" title="View"
                         onclick="viewItem('${doc.id}')">
                         <i class="bi bi-eye"></i>
                     </button>
@@ -423,8 +522,9 @@ function renderTable(docs) {
     });
 }
 
+/* ── Real-time listener ── */
 function startRealtimeListener() {
-    stockDB.collection(STOCK_COLLECTION).orderBy("name").onSnapshot(
+    stockDB.collection(STOCK_COLLECTION).onSnapshot(
         snapshot => {
             renderTable(snapshot.docs);
             document.getElementById('syncStatus').innerHTML =
@@ -433,7 +533,7 @@ function startRealtimeListener() {
         error => {
             console.error("Listener error:", error);
             document.getElementById('syncStatus').innerHTML =
-                `<i class="bi bi-cloud-slash me-1"></i>Sync error – check console`;
+                `<i class="bi bi-cloud-slash me-1"></i>Sync error`;
         }
     );
 }
@@ -479,6 +579,7 @@ async function saveEdit() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         addLog(`Edited: ${newName} → qty ${newQty}`, 'text-warning');
+        showToast(`${newName} updated successfully!`, 'success');
         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
     } catch (err) {
         console.error("saveEdit error:", err);
@@ -495,6 +596,7 @@ async function deleteItem(docId, name) {
     try {
         await stockDB.collection(STOCK_COLLECTION).doc(docId).delete();
         addLog(`Removed: ${name}`, 'text-danger');
+        showToast(`${name} removed from inventory`, 'danger');
     } catch (err) {
         console.error("deleteItem error:", err);
         alert("Failed to delete: " + err.message);
@@ -519,7 +621,7 @@ function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Header banner
+    // Header
     doc.setFillColor(44, 62, 80);
     doc.rect(0, 0, 210, 35, 'F');
     doc.setTextColor(255, 231, 133);
@@ -534,7 +636,7 @@ function exportPDF() {
     doc.setTextColor(200, 200, 200);
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32);
 
-    // Stats line
+    // Stats
     const total   = allDocs.length;
     const healthy = allDocs.filter(d => d.data().qty > 50).length;
     const low     = total - healthy;
@@ -543,58 +645,42 @@ function exportPDF() {
     doc.setFont('helvetica', 'bold');
     doc.text(`Total Items: ${total}   |   Healthy: ${healthy}   |   Low Stock: ${low}`, 14, 45);
 
-    // Table data
+    // Table
     const tableData = allDocs.map((d, i) => {
         const { name, qty, updatedAt } = d.data();
-        return [
-            i + 1,
-            name,
-            qty,
-            qty > 50 ? 'Healthy' : 'Low Stock',
-            updatedAt ? updatedAt.toDate().toLocaleDateString() : 'N/A'
-        ];
+        return [i + 1, name, qty, qty > 50 ? 'Healthy' : 'Low Stock',
+            updatedAt ? updatedAt.toDate().toLocaleDateString() : 'N/A'];
     });
 
     doc.autoTable({
         startY: 52,
         head: [['#', 'Resource Name', 'Qty', 'Status', 'Last Updated']],
         body: tableData,
-        headStyles: {
-            fillColor: [44, 62, 80],
-            textColor: [255, 231, 133],
-            fontStyle: 'bold',
-            fontSize: 10
-        },
+        headStyles: { fillColor: [44, 62, 80], textColor: [255, 231, 133], fontStyle: 'bold', fontSize: 10 },
         bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
         alternateRowStyles: { fillColor: [253, 252, 240] },
-        columnStyles: {
-            0: { cellWidth: 10, halign: 'center' },
-            2: { halign: 'center' },
-            3: { halign: 'center' }
-        },
+        columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } },
         didParseCell: (data) => {
             if (data.section === 'body' && data.column.index === 3) {
-                data.cell.styles.textColor =
-                    data.cell.text[0] === 'Low Stock' ? [220, 53, 69] : [25, 135, 84];
+                data.cell.styles.textColor = data.cell.text[0] === 'Low Stock' ? [220, 53, 69] : [25, 135, 84];
                 data.cell.styles.fontStyle = 'bold';
             }
         }
     });
 
-    // Page footer
+    // Footer
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text(
-            `Grafix Print Hub – Stock Report  |  Page ${i} of ${pageCount}`,
-            doc.internal.pageSize.width / 2, 290, { align: 'center' }
-        );
+        doc.text(`Grafix Print Hub – Stock Report  |  Page ${i} of ${pageCount}`,
+            doc.internal.pageSize.width / 2, 290, { align: 'center' });
     }
 
     doc.save(`GrafixPrintHub_Stock_${new Date().toISOString().slice(0,10)}.pdf`);
     addLog('PDF Report downloaded', 'text-danger');
+    showToast('PDF downloaded successfully!', 'success');
 }
 
 /* ── Init ── */
