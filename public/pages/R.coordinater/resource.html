@@ -234,17 +234,15 @@
 <script src="../../js/firebase-config.js"></script>
 <script src="../../js/navbar-loader.js"></script>
 <script src="../../js/signin.js"></script>
-<script src="../../js/hr-script.js"></script>
 
 <script>
 /* ================================================================
    Resource Coordination – Firestore-backed inventory manager
    Collection: "stock"
-   Document fields: { name: string, qty: number, updatedAt: timestamp }
    ================================================================ */
 
-const COLLECTION = "stock";   // Firestore collection name
-let db;                        // Firestore reference (set after firebase-config loads)
+const COLLECTION = "stock";
+let stockDB;   // renamed to avoid conflict with any global `db` in other scripts
 
 /* ── Helpers ── */
 function showLoading(show) {
@@ -298,7 +296,7 @@ function renderTable(docs) {
 
 /* ── Real-time listener – keeps table in sync automatically ── */
 function startRealtimeListener() {
-    db.collection(COLLECTION)
+    stockDB.collection(COLLECTION)
       .orderBy("name")
       .onSnapshot(
           snapshot => {
@@ -329,12 +327,11 @@ async function updateStock() {
     showLoading(true);
     try {
         // Search for existing document with the same name (case-insensitive)
-        const snapshot = await db.collection(COLLECTION)
+        const snapshot = await stockDB.collection(COLLECTION)
             .where("nameLower", "==", name.toLowerCase())
             .get();
 
         if (!snapshot.empty) {
-            // Update existing
             const docRef = snapshot.docs[0].ref;
             const currentQty = snapshot.docs[0].data().qty;
             await docRef.update({
@@ -343,16 +340,14 @@ async function updateStock() {
             });
             addLog(`Stock increased: ${name} (+${qty})`, 'text-primary');
 
-            // Animate the updated row
             const row = document.querySelector(`tr[data-name="${name}"]`);
             if (row) {
                 row.classList.remove('updated-row');
-                void row.offsetWidth; // reflow
+                void row.offsetWidth;
                 row.classList.add('updated-row');
             }
         } else {
-            // Add new document
-            await db.collection(COLLECTION).add({
+            await stockDB.collection(COLLECTION).add({
                 name:       name,
                 nameLower:  name.toLowerCase(),   // for case-insensitive lookup
                 qty:        qty,
@@ -377,7 +372,7 @@ async function deleteItem(docId, name) {
 
     showLoading(true);
     try {
-        await db.collection(COLLECTION).doc(docId).delete();
+        await stockDB.collection(COLLECTION).doc(docId).delete();
         addLog(`Removed: ${name}`, 'text-danger');
     } catch (err) {
         console.error("deleteItem error:", err);
@@ -401,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // firebase-config.js should call firebase.initializeApp(firebaseConfig)
     // We just grab the Firestore instance from the already-initialized app.
     try {
-        db = firebase.firestore();
+        stockDB = firebase.firestore();
         startRealtimeListener();
     } catch (e) {
         console.error("Firebase not initialized. Make sure firebase-config.js runs first.", e);
