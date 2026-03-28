@@ -1,3 +1,25 @@
+/*mobile responsive*/
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+        }
+        
+        .container {
+            width: 90%;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+            }
+        }
 :root {
     --primary-color: #ffe785;
     --secondary-color: #fdfcf0;
@@ -1101,17 +1123,35 @@ button#searchBtn:hover,
     color: var(--text-light);
     font-weight: 500;
 }
+/* Status badges */
 .emp-status-badge {
-    margin-left: auto;
-    padding: 3px 12px;
-    border-radius: var(--radius-pill);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
 }
-.emp-status-badge.active  { background: #dcfce7; color: #16a34a; }
-.emp-status-badge.inactive { background: #f1f5f9; color: #64748b; }
+
+.emp-status-badge.fulltime {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.emp-status-badge.parttime {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+/* Stats badges */
+.view-stat-badge.active {
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.view-stat-badge.inactive {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+}
 
 .emp-card-body {
     padding: 0.5rem 1.4rem 1.25rem;
