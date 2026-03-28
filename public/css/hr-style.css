@@ -1074,7 +1074,7 @@ button#searchBtn:hover,
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--accent-violet), var(--accent-teal));
+    background: linear-gradient(90deg, #ffe785, var(--accent-teal));
 }
 .emp-card.inactive-card::before {
     background: linear-gradient(90deg, #94a3b8, #cbd5e1);
@@ -1100,7 +1100,7 @@ button#searchBtn:hover,
     font-size: 1.2rem;
     color: white;
     flex-shrink: 0;
-    background: linear-gradient(135deg, var(--accent-violet), var(--accent-teal));
+    background: linear-gradient(135deg, #ffe785, var(--accent-teal));
 }
 .emp-card.inactive-card .emp-avatar {
     background: linear-gradient(135deg, #94a3b8, #cbd5e1);
@@ -1168,14 +1168,14 @@ button#searchBtn:hover,
     padding: 0.45rem 1.2rem;
     border-radius: var(--radius-pill);
     border: none;
-    background: linear-gradient(135deg, var(--accent-violet), var(--accent-indigo));
+    background: linear-gradient(135deg, #ffe785, var(--accent-indigo));
     color: white;
     cursor: pointer;
     transition: all 0.22s ease;
-    box-shadow: 0 3px 10px rgba(124,58,237,0.28);
+    box-shadow: 0 3px 10px rgba(255,231,133,0.42);
 }
 .emp-view-btn:hover {
-    box-shadow: 0 5px 16px rgba(124,58,237,0.42);
+    box-shadow: 0 5px 16px rgba(255,231,133,0.6);
     transform: translateY(-1px);
 }
 
