@@ -332,299 +332,198 @@ document.addEventListener("DOMContentLoaded", function () {
   // ================================================
   // UPDATE PAGE — only runs if employeeForm exists
   // ================================================
-  if (document.getElementById("employeeForm")) {
+  // ================================================
+// VIEW PAGE — Employee Records Grid View
+// ================================================
+if (document.getElementById("employeeGrid")) {
+  
+  const employeeGrid = document.getElementById("employeeGrid");
+  const viewLoading = document.getElementById("viewLoading");
+  const viewEmpty = document.getElementById("viewEmpty");
+  const searchInput = document.getElementById("viewSearchInput");
+  const deptFilter = document.getElementById("deptFilter");
+  const statusFilter = document.getElementById("statusFilter");
+  const totalCountSpan = document.getElementById("totalCount");
+  const activeCountSpan = document.getElementById("activeCount");
+  const inactiveCountSpan = document.getElementById("inactiveCount");
 
-  const searchInput      = document.getElementById("employeeSearch");
-  const searchBtn        = document.getElementById("searchBtn");
-  const form             = document.getElementById("employeeForm");
-  const empName          = document.getElementById("empName");
-  const empId            = document.getElementById("empId");
-  const empStatus        = document.getElementById("empStatus");
-  const empDept          = document.getElementById("empDepartment");
-  const empJoinDate      = document.getElementById("empJoinDate");
-  const empNic           = document.getElementById("empNic");
-  const empAddress       = document.getElementById("empAddress");
-  const empEmail         = document.getElementById("empEmail");
-  const empContact       = document.getElementById("empContact");
-  const empRemarks       = document.getElementById("empRemarks");
-  const editBtn          = document.getElementById("editBtn");
-  const updateBtn        = document.getElementById("updateBtn");
-  const deleteBtn        = document.getElementById("deleteBtn");
-  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+  let allEmployees = [];
 
-  let currentEmployeeId = null;
-  let currentData = {};
+  // Function to render employee cards
+  function renderEmployees(employees) {
+    if (employees.length === 0) {
+      employeeGrid.style.display = "none";
+      viewEmpty.style.display = "block";
+      return;
+    }
 
-  // Field definitions: [elementId, label]
-  const fields = [
-    ["empName",       "Employee Name"],
-    ["empId",         "Employee ID"],
-    ["empStatus",     "Status"],
-    ["empDepartment", "Department"],
-    ["empJoinDate",   "Date Joined"],
-    ["empNic",        "NIC"],
-    ["empAddress",    "Address"],
-    ["empEmail",      "Email"],
-    ["empContact",    "Contact Number"],
-    ["empRemarks",    "Remarks"],
-  ];
+    employeeGrid.style.display = "grid";
+    viewEmpty.style.display = "none";
 
-  // Show as styled info display (view mode)
-  function showViewMode(data, id) {
-    const displayData = {
-      empName:       data.name       || "—",
-      empId:         id,
-      empStatus:     data.status     || "—",
-      empDepartment: data.department || "—",
-      empJoinDate:   data.joinDate   || "—",
-      empNic:        data.nic        || "—",
-      empAddress:    data.address    || "—",
-      empEmail:      data.email      || "—",
-      empContact:    data.contact    || "—",
-      empRemarks:    data.remarks    || "—",
-    };
+    employeeGrid.innerHTML = employees.map(emp => `
+      <div class="emp-card ${emp.status === 'PartTime' ? 'inactive-card' : ''}" data-id="${emp.id}">
+        <div class="emp-card-header">
+          <div class="emp-avatar">
+            ${emp.image ? `<img src="${emp.image}" alt="${emp.name}">` : emp.name ? emp.name.charAt(0).toUpperCase() : "?"}
+          </div>
+          <div>
+            <h3 class="emp-card-name">${emp.name || "—"}</h3>
+            <div class="emp-card-id">ID: ${emp.id}</div>
+          </div>
+          <span class="emp-status-badge ${emp.status === 'FullTime' ? 'active' : 'inactive'}">${emp.status === 'FullTime' ? 'Full Time' : emp.status === 'PartTime' ? 'Part Time' : emp.status || "—"}</span>
+        </div>
+        <div class="emp-card-body">
+          <div class="emp-card-row">
+            <i class="bi bi-building"></i>
+            <span>${emp.department || "—"}</span>
+          </div>
+          <div class="emp-card-row">
+            <i class="bi bi-calendar3"></i>
+            <span>Joined: ${emp.joinDate || "—"}</span>
+          </div>
+          <div class="emp-card-row">
+            <i class="bi bi-envelope"></i>
+            <span>${emp.email || "—"}</span>
+          </div>
+          <div class="emp-card-row">
+            <i class="bi bi-telephone"></i>
+            <span>${emp.contact || "—"}</span>
+          </div>
+        </div>
+        <div class="emp-card-footer">
+          <button class="emp-view-btn" data-id="${emp.id}">View Details</button>
+        </div>
+      </div>
+    `).join("");
 
-    // Hide the actual form inputs, show info panel
-    form.querySelectorAll("input, select, textarea").forEach(el => el.style.display = "none");
-    form.querySelectorAll(".form-label").forEach(el => el.style.display = "none");
-    form.querySelectorAll(".mb-2").forEach(el => el.style.marginBottom = "0");
-
-    // Remove old info panel if any
-    const oldPanel = document.getElementById("empInfoPanel");
-    if (oldPanel) oldPanel.remove();
-
-    // Build info panel
-    const panel = document.createElement("div");
-    panel.id = "empInfoPanel";
-    panel.style.cssText = "margin-bottom: 1rem;";
-
-    // Split into two columns matching the form layout
-    const leftFields  = ["empName","empId","empStatus","empDepartment","empJoinDate","empNic","empAddress"];
-    const rightFields = ["empEmail","empContact","empRemarks"];
-
-    const row = document.createElement("div");
-    row.className = "row g-3";
-
-    [leftFields, rightFields].forEach(group => {
-      const col = document.createElement("div");
-      col.className = "col-md-6";
-
-      group.forEach(key => {
-        const label = fields.find(f => f[0] === key)?.[1] || key;
-        const value = displayData[key];
-        const item = document.createElement("div");
-        item.className = "emp-info-item";
-        item.innerHTML = `
-          <span class="emp-info-label">${label}</span>
-          <span class="emp-info-value">${value}</span>
-        `;
-        col.appendChild(item);
+    // Add click handlers to view buttons
+    document.querySelectorAll(".emp-view-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const empId = btn.getAttribute("data-id");
+        showEmployeeDetails(empId);
       });
-
-      row.appendChild(col);
     });
 
-    panel.appendChild(row);
-
-    // Insert panel before the button row
-    const btnRow = form.querySelector(".d-flex.gap-2");
-    form.insertBefore(panel, btnRow);
-
-    form.style.display = "block";
-    updateBtn.disabled = true;
-  }
-
-  // Switch to edit mode — restore inputs
-  function showEditMode() {
-    const oldPanel = document.getElementById("empInfoPanel");
-    if (oldPanel) oldPanel.remove();
-
-    // Restore inputs and labels
-    form.querySelectorAll("input, select, textarea").forEach(el => el.style.display = "");
-    form.querySelectorAll(".form-label").forEach(el => el.style.display = "");
-    form.querySelectorAll(".mb-2").forEach(el => el.style.marginBottom = "");
-
-    // Re-populate values from currentData
-    empName.value     = currentData.name       || "";
-    empId.value       = currentEmployeeId;
-    empStatus.value   = currentData.status     || "";
-    empJoinDate.value = currentData.joinDate   || "";
-    empNic.value      = currentData.nic        || "";
-    empAddress.value  = currentData.address    || "";
-    empEmail.value    = currentData.email      || "";
-    empContact.value  = currentData.contact    || "";
-    empRemarks.value  = currentData.remarks    || "";
-    for (let opt of empDept.options) {
-      if (opt.value.toLowerCase() === (currentData.department || "").toLowerCase()) {
-        empDept.value = opt.value; break;
-      }
-    }
-
-    // Make all fields editable
-    [empName, empStatus, empJoinDate, empNic, empAddress, empEmail, empContact, empRemarks].forEach(f => {
-      if (f) f.readOnly = false;
-    });
-    empDept.disabled = false;
-    empId.readOnly = true; // ID never editable
-    updateBtn.disabled = false;
-  }
-
-  // Populate: store data and show view mode
-  function populateForm(data, id) {
-    currentData = data;
-    currentEmployeeId = id;
-    showViewMode(data, id);
-    form.querySelectorAll(".is-valid, .is-invalid").forEach(el => el.classList.remove("is-valid", "is-invalid"));
-  }
-
-  // Search
-  async function searchEmployee() {
-    const id = searchInput.value.trim();
-    if (!id) { showPopup("error", "No ID Entered", "Please enter an <strong>Employee ID</strong> to search."); return; }
-
-    searchBtn.disabled = true;
-    searchBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Searching...`;
-
-    try {
-      const doc = await firebase.firestore().collection("employees").doc(id).get();
-      searchBtn.disabled = false;
-      searchBtn.innerHTML = "Search";
-
-      if (!doc.exists) {
-        form.style.display = "none";
-        currentEmployeeId = null;
-        showPopup("error", "Not Found", `No employee found with ID <strong>${id}</strong>. Please check and try again.`);
-        return;
-      }
-      currentEmployeeId = id;
-      populateForm(doc.data(), id);
-      showPopup("success", "Employee Found", `Loaded details for <strong>${doc.data().name}</strong>.`);
-
-    } catch (err) {
-      searchBtn.disabled = false;
-      searchBtn.innerHTML = "Search";
-      console.error(err);
-      showPopup("error", "Search Failed", "Could not connect to the database. Please check your internet connection.");
-    }
-  }
-
-  searchBtn.addEventListener("click", searchEmployee);
-  searchInput.addEventListener("keydown", e => { if (e.key === "Enter") searchEmployee(); });
-
-  // Edit — switch to input mode
-  editBtn.addEventListener("click", () => {
-    if (!currentEmployeeId) { showPopup("error", "No Employee Loaded", "Please search for an employee first."); return; }
-    showEditMode();
-    showPopup("success", "Edit Mode Enabled", "Fields are now editable. Click <strong>Update</strong> to save changes.");
-  });
-
-  // Validators (shared rules)
-  function isValidNameU(v)    { return /^[a-zA-Z\s.\-']{2,}$/.test(v.trim()); }
-  function isValidNICU(v)     { const n = v.trim().toUpperCase(); return /^[0-9]{9}[VX]$/.test(n) || /^[0-9]{12}$/.test(n); }
-  function isValidEmailU(v)   { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
-  function isValidContactU(v) { const c = v.trim().replace(/[\s\-]/g, ""); return /^(0[1-9][0-9]{7,8}|\+94[1-9][0-9]{8})$/.test(c); }
-  function isValidAddressU(v) { return v.trim().length >= 5; }
-  function isValidDateU(v)    { return v && new Date(v) <= new Date(); }
-
-  function getUpdateValidationError() {
-    if (!empName.value.trim())              return { field: empName,     msg: "Please enter the <strong>Employee Name</strong>." };
-    if (!isValidNameU(empName.value))       return { field: empName,     msg: "<strong>Employee Name</strong> should only contain letters, spaces, dots, or hyphens." };
-    if (!empStatus.value.trim())            return { field: empStatus,   msg: "Please enter the <strong>Status</strong>." };
-    if (!empDept.value)                     return { field: empDept,     msg: "Please select a <strong>Department</strong>." };
-    if (!empJoinDate.value)                 return { field: empJoinDate, msg: "Please select the <strong>Date Joined</strong>." };
-    if (!isValidDateU(empJoinDate.value))   return { field: empJoinDate, msg: "<strong>Date Joined</strong> cannot be a future date." };
-    if (!empNic.value.trim())               return { field: empNic,      msg: "Please enter the <strong>NIC</strong> number." };
-    if (!isValidNICU(empNic.value))         return { field: empNic,      msg: "<strong>NIC</strong> must be old format (e.g. <em>901234567V</em>) or new format (e.g. <em>200012345678</em>)." };
-    if (!empAddress.value.trim())           return { field: empAddress,  msg: "Please enter the <strong>Address</strong>." };
-    if (!isValidAddressU(empAddress.value)) return { field: empAddress,  msg: "<strong>Address</strong> must be at least 5 characters." };
-    if (!empEmail.value.trim())             return { field: empEmail,    msg: "Please enter the <strong>Email</strong> address." };
-    if (!isValidEmailU(empEmail.value))     return { field: empEmail,    msg: "Please enter a <strong>valid Email</strong> (e.g. <em>name@example.com</em>)." };
-    if (!empContact.value.trim())           return { field: empContact,  msg: "Please enter the <strong>Contact Number</strong>." };
-    if (!isValidContactU(empContact.value)) return { field: empContact,  msg: "<strong>Contact Number</strong> must be a valid Sri Lankan number (e.g. <em>0771234567</em>)." };
-    return null;
-  }
-
-  function highlightFieldU(field) {
-    field.classList.add("is-invalid");
-    field.classList.remove("is-valid");
-    field.focus();
-    field.addEventListener("input", () => field.classList.remove("is-invalid"), { once: true });
-  }
-
-  // Update
-  updateBtn.addEventListener("click", async () => {
-    if (!currentEmployeeId) return;
-    const err = getUpdateValidationError();
-    if (err) { highlightFieldU(err.field); showPopup("error", "Invalid Input", err.msg); return; }
-
-    updateBtn.disabled = true;
-    updateBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Updating...`;
-
-    try {
-      const updatedName = empName.value.trim();
-      await firebase.firestore().collection("employees").doc(currentEmployeeId).update({
-        name:       updatedName,
-        status:     empStatus.value.trim(),
-        department: empDept.value,
-        joinDate:   empJoinDate.value,
-        nic:        empNic.value.trim(),
-        address:    empAddress.value.trim(),
-        email:      empEmail.value.trim(),
-        contact:    empContact.value.trim(),
-        remarks:    empRemarks.value.trim(),
-        updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
+    // Add click handlers to cards
+    document.querySelectorAll(".emp-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const empId = card.getAttribute("data-id");
+        showEmployeeDetails(empId);
       });
-      updateBtn.innerHTML = "Update";
-      // Refresh stored data and switch back to view mode
-      currentData = {
-        name: empName.value.trim(), status: empStatus.value.trim(),
-        department: empDept.value,  joinDate: empJoinDate.value,
-        nic: empNic.value.trim(),   address: empAddress.value.trim(),
-        email: empEmail.value.trim(), contact: empContact.value.trim(),
-        remarks: empRemarks.value.trim()
-      };
-      showViewMode(currentData, currentEmployeeId);
-      showPopup("success", "Updated Successfully", `<strong>${updatedName}</strong>'s details have been saved.`);
+    });
+  }
 
-    } catch (error) {
-      console.error(error);
-      updateBtn.disabled = false;
-      updateBtn.innerHTML = "Update";
-      showPopup("error", "Update Failed", "Could not save changes. Please try again.");
-    }
-  });
+  // Function to update stats
+  function updateStats(employees) {
+    const total = employees.length;
+    const fullTime = employees.filter(e => e.status === "FullTime").length;
+    const partTime = employees.filter(e => e.status === "PartTime").length;
+    
+    totalCountSpan.textContent = total;
+    activeCountSpan.textContent = fullTime;
+    inactiveCountSpan.textContent = partTime;
+  }
 
-  // Delete — confirm modal
-  deleteBtn.addEventListener("click", () => {
-    if (!currentEmployeeId) { showPopup("error", "No Employee Loaded", "Please search for an employee first."); return; }
-    new bootstrap.Modal(document.getElementById("deleteModal")).show();
-  });
+  // Function to filter employees
+  function getFilteredEmployees() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const dept = deptFilter.value;
+    const status = statusFilter.value;
 
-  confirmDeleteBtn.addEventListener("click", async () => {
-    if (!currentEmployeeId) return;
-    bootstrap.Modal.getInstance(document.getElementById("deleteModal")).hide();
-    confirmDeleteBtn.disabled = true;
-    confirmDeleteBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Deleting...`;
+    return allEmployees.filter(emp => {
+      const matchesSearch = !searchTerm || 
+        (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
+        (emp.id && emp.id.toLowerCase().includes(searchTerm)) ||
+        (emp.department && emp.department.toLowerCase().includes(searchTerm));
+      
+      const matchesDept = !dept || emp.department === dept;
+      const matchesStatus = !status || emp.status === status;
+      
+      return matchesSearch && matchesDept && matchesStatus;
+    });
+  }
 
+  // Function to apply filters
+  function applyFilters() {
+    const filtered = getFilteredEmployees();
+    renderEmployees(filtered);
+    updateStats(filtered);
+  }
+
+  // Function to show employee details in modal
+  function showEmployeeDetails(empId) {
+    const employee = allEmployees.find(e => e.id === empId);
+    if (!employee) return;
+
+    const modalBody = document.getElementById("detailModalBody");
+    modalBody.innerHTML = `
+      <div class="p-4">
+        <div class="text-center mb-4">
+          <div class="emp-avatar mx-auto" style="width: 100px; height: 100px; font-size: 2rem;">
+            ${employee.image ? `<img src="${employee.image}" alt="${employee.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (employee.name ? employee.name.charAt(0).toUpperCase() : "?")}
+          </div>
+          <h3 class="mt-3 mb-1">${employee.name || "—"}</h3>
+          <span class="emp-status-badge ${employee.status === 'FullTime' ? 'active' : 'inactive'}">${employee.status === 'FullTime' ? 'Full Time' : employee.status === 'PartTime' ? 'Part Time' : employee.status || "—"}</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="detail-item mb-2"><strong>Employee ID:</strong> ${employee.id || "—"}</div>
+            <div class="detail-item mb-2"><strong>Department:</strong> ${employee.department || "—"}</div>
+            <div class="detail-item mb-2"><strong>Date Joined:</strong> ${employee.joinDate || "—"}</div>
+            <div class="detail-item mb-2"><strong>NIC:</strong> ${employee.nic || "—"}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item mb-2"><strong>Email:</strong> ${employee.email || "—"}</div>
+            <div class="detail-item mb-2"><strong>Contact:</strong> ${employee.contact || "—"}</div>
+            <div class="detail-item mb-2"><strong>Address:</strong> ${employee.address || "—"}</div>
+            <div class="detail-item mb-2"><strong>Remarks:</strong> ${employee.remarks || "—"}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById("detailModal"));
+    modal.show();
+  }
+
+  // Load employees from Firestore
+  async function loadEmployees() {
     try {
-      const deletedName = empName.value.trim();
-      await firebase.firestore().collection("employees").doc(currentEmployeeId).delete();
-      confirmDeleteBtn.disabled = false;
-      confirmDeleteBtn.innerHTML = "Delete";
-      form.style.display = "none";
-      searchInput.value = "";
-      currentEmployeeId = null;
-      showPopup("success", "Employee Deleted", `<strong>${deletedName}</strong> has been removed from the system.`);
+      viewLoading.style.display = "flex";
+      employeeGrid.style.display = "none";
+      viewEmpty.style.display = "none";
+
+      const snapshot = await firebase.firestore().collection("employees").get();
+      allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      viewLoading.style.display = "none";
+      
+      if (allEmployees.length === 0) {
+        viewEmpty.style.display = "block";
+      } else {
+        applyFilters();
+      }
 
     } catch (error) {
-      console.error(error);
-      confirmDeleteBtn.disabled = false;
-      confirmDeleteBtn.innerHTML = "Delete";
-      showPopup("error", "Delete Failed", "Could not delete the employee. Please try again.");
+      console.error("Error loading employees:", error);
+      viewLoading.style.display = "none";
+      viewEmpty.style.display = "block";
+      const emptyTitle = viewEmpty.querySelector("h5");
+      if (emptyTitle) emptyTitle.textContent = "Failed to load data";
+      const emptyText = viewEmpty.querySelector("p");
+      if (emptyText) emptyText.textContent = "Please check your connection and try again.";
     }
-  });
+  }
 
-  } // end UPDATE PAGE
+  // Add event listeners
+  if (searchInput) searchInput.addEventListener("input", applyFilters);
+  if (deptFilter) deptFilter.addEventListener("change", applyFilters);
+  if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+
+  // Load employees
+  loadEmployees();
+}
 
 
   
