@@ -328,205 +328,198 @@ document.addEventListener("DOMContentLoaded", function () {
 
   } // end ADD PAGE
 
-
   // ================================================
-  // UPDATE PAGE — only runs if employeeForm exists
+  // VIEW PAGE — Employee Records Grid View
   // ================================================
-  // ================================================
-// VIEW PAGE — Employee Records Grid View
-// ================================================
-if (document.getElementById("employeeGrid")) {
-  
-  const employeeGrid = document.getElementById("employeeGrid");
-  const viewLoading = document.getElementById("viewLoading");
-  const viewEmpty = document.getElementById("viewEmpty");
-  const searchInput = document.getElementById("viewSearchInput");
-  const deptFilter = document.getElementById("deptFilter");
-  const statusFilter = document.getElementById("statusFilter");
-  const totalCountSpan = document.getElementById("totalCount");
-  const activeCountSpan = document.getElementById("activeCount");
-  const inactiveCountSpan = document.getElementById("inactiveCount");
-
-  let allEmployees = [];
-
-  // Function to render employee cards
-  function renderEmployees(employees) {
-    if (employees.length === 0) {
-      employeeGrid.style.display = "none";
-      viewEmpty.style.display = "block";
-      return;
-    }
-
-    employeeGrid.style.display = "grid";
-    viewEmpty.style.display = "none";
-
-    employeeGrid.innerHTML = employees.map(emp => `
-      <div class="emp-card ${emp.status === 'PartTime' ? 'inactive-card' : ''}" data-id="${emp.id}">
-        <div class="emp-card-header">
-          <div class="emp-avatar">
-            ${emp.image ? `<img src="${emp.image}" alt="${emp.name}">` : emp.name ? emp.name.charAt(0).toUpperCase() : "?"}
-          </div>
-          <div>
-            <h3 class="emp-card-name">${emp.name || "—"}</h3>
-            <div class="emp-card-id">ID: ${emp.id}</div>
-          </div>
-          <span class="emp-status-badge ${emp.status === 'FullTime' ? 'active' : 'inactive'}">${emp.status === 'FullTime' ? 'Full Time' : emp.status === 'PartTime' ? 'Part Time' : emp.status || "—"}</span>
-        </div>
-        <div class="emp-card-body">
-          <div class="emp-card-row">
-            <i class="bi bi-building"></i>
-            <span>${emp.department || "—"}</span>
-          </div>
-          <div class="emp-card-row">
-            <i class="bi bi-calendar3"></i>
-            <span>Joined: ${emp.joinDate || "—"}</span>
-          </div>
-          <div class="emp-card-row">
-            <i class="bi bi-envelope"></i>
-            <span>${emp.email || "—"}</span>
-          </div>
-          <div class="emp-card-row">
-            <i class="bi bi-telephone"></i>
-            <span>${emp.contact || "—"}</span>
-          </div>
-        </div>
-        <div class="emp-card-footer">
-          <button class="emp-view-btn" data-id="${emp.id}">View Details</button>
-        </div>
-      </div>
-    `).join("");
-
-    // Add click handlers to view buttons
-    document.querySelectorAll(".emp-view-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const empId = btn.getAttribute("data-id");
-        showEmployeeDetails(empId);
-      });
-    });
-
-    // Add click handlers to cards
-    document.querySelectorAll(".emp-card").forEach(card => {
-      card.addEventListener("click", () => {
-        const empId = card.getAttribute("data-id");
-        showEmployeeDetails(empId);
-      });
-    });
-  }
-
-  // Function to update stats
-  function updateStats(employees) {
-    const total = employees.length;
-    const fullTime = employees.filter(e => e.status === "FullTime").length;
-    const partTime = employees.filter(e => e.status === "PartTime").length;
+  if (document.getElementById("employeeGrid")) {
     
-    totalCountSpan.textContent = total;
-    activeCountSpan.textContent = fullTime;
-    inactiveCountSpan.textContent = partTime;
-  }
+    const employeeGrid = document.getElementById("employeeGrid");
+    const viewLoading = document.getElementById("viewLoading");
+    const viewEmpty = document.getElementById("viewEmpty");
+    const searchInput = document.getElementById("viewSearchInput");
+    const deptFilter = document.getElementById("deptFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const totalCountSpan = document.getElementById("totalCount");
+    const activeCountSpan = document.getElementById("activeCount");
+    const inactiveCountSpan = document.getElementById("inactiveCount");
 
-  // Function to filter employees
-  function getFilteredEmployees() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const dept = deptFilter.value;
-    const status = statusFilter.value;
+    let allEmployees = [];
 
-    return allEmployees.filter(emp => {
-      const matchesSearch = !searchTerm || 
-        (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
-        (emp.id && emp.id.toLowerCase().includes(searchTerm)) ||
-        (emp.department && emp.department.toLowerCase().includes(searchTerm));
-      
-      const matchesDept = !dept || emp.department === dept;
-      const matchesStatus = !status || emp.status === status;
-      
-      return matchesSearch && matchesDept && matchesStatus;
-    });
-  }
-
-  // Function to apply filters
-  function applyFilters() {
-    const filtered = getFilteredEmployees();
-    renderEmployees(filtered);
-    updateStats(filtered);
-  }
-
-  // Function to show employee details in modal
-  function showEmployeeDetails(empId) {
-    const employee = allEmployees.find(e => e.id === empId);
-    if (!employee) return;
-
-    const modalBody = document.getElementById("detailModalBody");
-    modalBody.innerHTML = `
-      <div class="p-4">
-        <div class="text-center mb-4">
-          <div class="emp-avatar mx-auto" style="width: 100px; height: 100px; font-size: 2rem;">
-            ${employee.image ? `<img src="${employee.image}" alt="${employee.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (employee.name ? employee.name.charAt(0).toUpperCase() : "?")}
-          </div>
-          <h3 class="mt-3 mb-1">${employee.name || "—"}</h3>
-          <span class="emp-status-badge ${employee.status === 'FullTime' ? 'active' : 'inactive'}">${employee.status === 'FullTime' ? 'Full Time' : employee.status === 'PartTime' ? 'Part Time' : employee.status || "—"}</span>
-        </div>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="detail-item mb-2"><strong>Employee ID:</strong> ${employee.id || "—"}</div>
-            <div class="detail-item mb-2"><strong>Department:</strong> ${employee.department || "—"}</div>
-            <div class="detail-item mb-2"><strong>Date Joined:</strong> ${employee.joinDate || "—"}</div>
-            <div class="detail-item mb-2"><strong>NIC:</strong> ${employee.nic || "—"}</div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-item mb-2"><strong>Email:</strong> ${employee.email || "—"}</div>
-            <div class="detail-item mb-2"><strong>Contact:</strong> ${employee.contact || "—"}</div>
-            <div class="detail-item mb-2"><strong>Address:</strong> ${employee.address || "—"}</div>
-            <div class="detail-item mb-2"><strong>Remarks:</strong> ${employee.remarks || "—"}</div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    const modal = new bootstrap.Modal(document.getElementById("detailModal"));
-    modal.show();
-  }
-
-  // Load employees from Firestore
-  async function loadEmployees() {
-    try {
-      viewLoading.style.display = "flex";
-      employeeGrid.style.display = "none";
-      viewEmpty.style.display = "none";
-
-      const snapshot = await firebase.firestore().collection("employees").get();
-      allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      viewLoading.style.display = "none";
-      
-      if (allEmployees.length === 0) {
+    // Function to render employee cards
+    function renderEmployees(employees) {
+      if (employees.length === 0) {
+        employeeGrid.style.display = "none";
         viewEmpty.style.display = "block";
-      } else {
-        applyFilters();
+        return;
       }
 
-    } catch (error) {
-      console.error("Error loading employees:", error);
-      viewLoading.style.display = "none";
-      viewEmpty.style.display = "block";
-      const emptyTitle = viewEmpty.querySelector("h5");
-      if (emptyTitle) emptyTitle.textContent = "Failed to load data";
-      const emptyText = viewEmpty.querySelector("p");
-      if (emptyText) emptyText.textContent = "Please check your connection and try again.";
+      employeeGrid.style.display = "grid";
+      viewEmpty.style.display = "none";
+
+      employeeGrid.innerHTML = employees.map(emp => `
+        <div class="emp-card ${emp.status === 'PartTime' ? 'inactive-card' : ''}" data-id="${emp.id}">
+          <div class="emp-card-header">
+            <div class="emp-avatar">
+              ${emp.image ? `<img src="${emp.image}" alt="${emp.name}">` : emp.name ? emp.name.charAt(0).toUpperCase() : "?"}
+            </div>
+            <div>
+              <h3 class="emp-card-name">${emp.name || "—"}</h3>
+              <div class="emp-card-id">ID: ${emp.id}</div>
+            </div>
+            <span class="emp-status-badge ${emp.status === 'FullTime' ? 'active' : 'inactive'}">${emp.status === 'FullTime' ? 'Full Time' : emp.status === 'PartTime' ? 'Part Time' : emp.status || "—"}</span>
+          </div>
+          <div class="emp-card-body">
+            <div class="emp-card-row">
+              <i class="bi bi-building"></i>
+              <span>${emp.department || "—"}</span>
+            </div>
+            <div class="emp-card-row">
+              <i class="bi bi-calendar3"></i>
+              <span>Joined: ${emp.joinDate || "—"}</span>
+            </div>
+            <div class="emp-card-row">
+              <i class="bi bi-envelope"></i>
+              <span>${emp.email || "—"}</span>
+            </div>
+            <div class="emp-card-row">
+              <i class="bi bi-telephone"></i>
+              <span>${emp.contact || "—"}</span>
+            </div>
+          </div>
+          <div class="emp-card-footer">
+            <button class="emp-view-btn" data-id="${emp.id}">View Details</button>
+          </div>
+        </div>
+      `).join("");
+
+      // Add click handlers to view buttons
+      document.querySelectorAll(".emp-view-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const empId = btn.getAttribute("data-id");
+          showEmployeeDetails(empId);
+        });
+      });
+
+      // Add click handlers to cards
+      document.querySelectorAll(".emp-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const empId = card.getAttribute("data-id");
+          showEmployeeDetails(empId);
+        });
+      });
     }
+
+    // Function to update stats
+    function updateStats(employees) {
+      const total = employees.length;
+      const fullTime = employees.filter(e => e.status === "FullTime").length;
+      const partTime = employees.filter(e => e.status === "PartTime").length;
+      
+      totalCountSpan.textContent = total;
+      activeCountSpan.textContent = fullTime;
+      inactiveCountSpan.textContent = partTime;
+    }
+
+    // Function to filter employees
+    function getFilteredEmployees() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const dept = deptFilter.value;
+      const status = statusFilter.value;
+
+      return allEmployees.filter(emp => {
+        const matchesSearch = !searchTerm || 
+          (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
+          (emp.id && emp.id.toLowerCase().includes(searchTerm)) ||
+          (emp.department && emp.department.toLowerCase().includes(searchTerm));
+        
+        const matchesDept = !dept || emp.department === dept;
+        const matchesStatus = !status || emp.status === status;
+        
+        return matchesSearch && matchesDept && matchesStatus;
+      });
+    }
+
+    // Function to apply filters
+    function applyFilters() {
+      const filtered = getFilteredEmployees();
+      renderEmployees(filtered);
+      updateStats(filtered);
+    }
+
+    // Function to show employee details in modal
+    function showEmployeeDetails(empId) {
+      const employee = allEmployees.find(e => e.id === empId);
+      if (!employee) return;
+
+      const modalBody = document.getElementById("detailModalBody");
+      modalBody.innerHTML = `
+        <div class="p-4">
+          <div class="text-center mb-4">
+            <div class="emp-avatar mx-auto" style="width: 100px; height: 100px; font-size: 2rem;">
+              ${employee.image ? `<img src="${employee.image}" alt="${employee.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (employee.name ? employee.name.charAt(0).toUpperCase() : "?")}
+            </div>
+            <h3 class="mt-3 mb-1">${employee.name || "—"}</h3>
+            <span class="emp-status-badge ${employee.status === 'FullTime' ? 'active' : 'inactive'}">${employee.status === 'FullTime' ? 'Full Time' : employee.status === 'PartTime' ? 'Part Time' : employee.status || "—"}</span>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="detail-item mb-2"><strong>Employee ID:</strong> ${employee.id || "—"}</div>
+              <div class="detail-item mb-2"><strong>Department:</strong> ${employee.department || "—"}</div>
+              <div class="detail-item mb-2"><strong>Date Joined:</strong> ${employee.joinDate || "—"}</div>
+              <div class="detail-item mb-2"><strong>NIC:</strong> ${employee.nic || "—"}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-item mb-2"><strong>Email:</strong> ${employee.email || "—"}</div>
+              <div class="detail-item mb-2"><strong>Contact:</strong> ${employee.contact || "—"}</div>
+              <div class="detail-item mb-2"><strong>Address:</strong> ${employee.address || "—"}</div>
+              <div class="detail-item mb-2"><strong>Remarks:</strong> ${employee.remarks || "—"}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      const modal = new bootstrap.Modal(document.getElementById("detailModal"));
+      modal.show();
+    }
+
+    // Load employees from Firestore
+    async function loadEmployees() {
+      try {
+        viewLoading.style.display = "flex";
+        employeeGrid.style.display = "none";
+        viewEmpty.style.display = "none";
+
+        const snapshot = await firebase.firestore().collection("employees").get();
+        allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        viewLoading.style.display = "none";
+        
+        if (allEmployees.length === 0) {
+          viewEmpty.style.display = "block";
+        } else {
+          applyFilters();
+        }
+
+      } catch (error) {
+        console.error("Error loading employees:", error);
+        viewLoading.style.display = "none";
+        viewEmpty.style.display = "block";
+        const emptyTitle = viewEmpty.querySelector("h5");
+        if (emptyTitle) emptyTitle.textContent = "Failed to load data";
+        const emptyText = viewEmpty.querySelector("p");
+        if (emptyText) emptyText.textContent = "Please check your connection and try again.";
+      }
+    }
+
+    // Add event listeners
+    if (searchInput) searchInput.addEventListener("input", applyFilters);
+    if (deptFilter) deptFilter.addEventListener("change", applyFilters);
+    if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+
+    // Load employees
+    loadEmployees();
   }
-
-  // Add event listeners
-  if (searchInput) searchInput.addEventListener("input", applyFilters);
-  if (deptFilter) deptFilter.addEventListener("change", applyFilters);
-  if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-
-  // Load employees
-  loadEmployees();
-}
-
-
-  
 
   // ================================================
   // PRINT PAGE — only runs if reportArea exists
@@ -583,30 +576,30 @@ if (document.getElementById("employeeGrid")) {
       const stat = statusFilter.value.toLowerCase();
       return allEmployees.filter(emp => {
         const matchDept = !dept || (emp.department || "").toLowerCase() === dept;
-        const matchStat = !stat || (emp.status     || "").toLowerCase() === stat;
+        const matchStat = !stat || (emp.status || "").toLowerCase() === stat;
         return matchDept && matchStat;
       });
     }
 
     // Update summary counts
-      function updateSummary(employees) {
-    const fullTime   = employees.filter(e => (e.status || "").toLowerCase() === "fulltime").length;
-    const partTime   = employees.length - fullTime;
-    const depts      = new Set(employees.map(e => e.department).filter(Boolean)).size;
-    
-    document.getElementById("pTotal").textContent    = employees.length;
-    document.getElementById("pFullTime").textContent = fullTime;
-    document.getElementById("pPartTime").textContent = partTime;
-    document.getElementById("pDepts").textContent    = depts;
-  }
+    function updateSummary(employees) {
+      const fullTime   = employees.filter(e => (e.status || "").toLowerCase() === "fulltime").length;
+      const partTime   = employees.length - fullTime;
+      const depts      = new Set(employees.map(e => e.department).filter(Boolean)).size;
+      
+      document.getElementById("pTotal").textContent    = employees.length;
+      document.getElementById("pFullTime").textContent = fullTime;
+      document.getElementById("pPartTime").textContent = partTime;
+      document.getElementById("pDepts").textContent    = depts;
+    }
 
-  // Format status for display
-  function formatStatus(status) {
-    if (!status) return "—";
-    if (status.toLowerCase() === "fulltime") return "Full Time";
-    if (status.toLowerCase() === "parttime") return "Part Time";
-    return status;
-  }
+    // Format status for display
+    function formatStatus(status) {
+      if (!status) return "—";
+      if (status.toLowerCase() === "fulltime") return "Full Time";
+      if (status.toLowerCase() === "parttime") return "Part Time";
+      return status;
+    }
 
     // Render table
     function renderTable(employees) {
@@ -621,12 +614,12 @@ if (document.getElementById("employeeGrid")) {
         printEmpty.style.display = "block";
       } else {
         printEmpty.style.display = "none";
-        reportTbody.innerHTML = employees.map((emp, idx) => `
+        reportTbody.innerHTML = employees.map((emp) => `
           <tr>
             ${cols.map(c => {
               if (c.key === "status") {
-                const isActive = (emp.status || "").toLowerCase() === "active";
-                return `<td><span class="report-status-badge ${isActive ? "active" : "inactive"}">${emp.status || "—"}</span></td>`;
+                const isFullTime = (emp.status || "").toLowerCase() === "fulltime";
+                return `<td><span class="report-status-badge ${isFullTime ? "active" : "inactive"}">${formatStatus(emp.status)}</span></td>`;
               }
               return `<td>${emp[c.key] || "—"}</td>`;
             }).join("")}
