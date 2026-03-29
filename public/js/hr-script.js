@@ -1,91 +1,54 @@
 // =============================== 
-// HR - Add Employee Page
+// HR SYSTEM (SAFE VERSION)
 // ===============================
 
 document.addEventListener("DOMContentLoaded", function () {
 
   // =========================
-  // Shared popup helper
+  // SAFETY: Ensure Firebase loaded
+  // =========================
+  if (!window.firebase) {
+    console.error("Firebase not loaded");
+    return;
+  }
+
+  // =========================
+  // Popup
   // =========================
   function showPopup(type, title, message) {
     const existing = document.getElementById("hrPopupOverlay");
     if (existing) existing.remove();
 
-    const icon = type === "success"
-      ? "bi-check-circle-fill"
-      : "bi-exclamation-triangle-fill";
-
     const overlay = document.createElement("div");
     overlay.id = "hrPopupOverlay";
-    overlay.className = "hr-popup-overlay";
-
     overlay.innerHTML = `
       <div class="hr-popup ${type}">
-        <div class="hr-popup-icon"><i class="bi ${icon}"></i></div>
-        <div class="hr-popup-body">
-          <div class="hr-popup-title">${title}</div>
-          <div class="hr-popup-msg">${message}</div>
-        </div>
-        <button class="hr-popup-close" id="hrPopupClose">
-          <i class="bi bi-x-lg"></i>
-        </button>
+        <div>${title}</div>
+        <div>${message}</div>
       </div>`;
-
     document.body.appendChild(overlay);
 
-    const timer = setTimeout(() => overlay.remove(), 4000);
-
-    document
-      .getElementById("hrPopupClose")
-      .addEventListener("click", () => {
-        clearTimeout(timer);
-        overlay.remove();
-      });
+    setTimeout(() => overlay.remove(), 3000);
   }
 
   // =========================
-  // Global Validators
+  // Validators
   // =========================
-  function isValidName(val) {
-    return /^[a-zA-Z\s.\-']{2,}$/.test(val.trim());
-  }
+  const isValidName = v => /^[a-zA-Z\s.\-']{2,}$/.test(v.trim());
+  const isValidEmpId = v => /^[a-zA-Z0-9\-_]{3,15}$/.test(v.trim());
+  const isValidNIC = v => /^[0-9]{9}[VX]$/.test(v.toUpperCase()) || /^[0-9]{12}$/.test(v);
+  const isValidEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  const isValidContact = v => /^(0[0-9]{9}|\+94[0-9]{9})$/.test(v.replace(/[\s-]/g, ""));
 
-  function isValidEmpId(val) {
-    return /^[a-zA-Z0-9\-_]{3,15}$/.test(val.trim());
-  }
+  // ============================================================
+  // ADD + EDIT FORM
+  // ============================================================
+  let isEditMode = false;
 
-  function isValidNIC(val) {
-    const nic = val.trim().toUpperCase();
-    return /^[0-9]{9}[VX]$/.test(nic) || /^[0-9]{12}$/.test(nic);
-  }
-
-  function isValidContact(val) {
-    const cleaned = val.trim().replace(/[\s\-]/g, "");
-    return /^(0[1-9][0-9]{7,8}|\+94[1-9][0-9]{8})$/.test(cleaned);
-  }
-
-  function isValidEmail(val) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-  }
-
-  function isValidDate(val) {
-    if (!val) return false;
-    const chosen = new Date(val);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    return chosen <= today;
-  }
-
-  function isValidAddress(val) {
-    return val.trim().length >= 5;
-  }
-
-  // ================================================
-  // ADD / EDIT PAGE
-  // ================================================
   if (document.getElementById("addEmployeeForm")) {
 
     const form = document.getElementById("addEmployeeForm");
+
     const empName = document.getElementById("empName");
     const empId = document.getElementById("empId");
     const empStatus = document.getElementById("empStatus");
@@ -96,120 +59,45 @@ document.addEventListener("DOMContentLoaded", function () {
     const empEmail = document.getElementById("empEmail");
     const empContact = document.getElementById("empContact");
     const empRemarks = document.getElementById("empRemarks");
-    const empImage = document.getElementById("empImage");
-    const imagePreview = document.getElementById("imagePreview");
 
-    let isEditMode = false;
-
-    if (empImage && imagePreview) {
-      empImage.addEventListener("change", function () {
-        const file = this.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-            imagePreview.style.display = "block";
-          };
-          reader.readAsDataURL(file);
-        } else {
-          imagePreview.style.display = "none";
-        }
-      });
-    }
-
-    function getValidationError() {
-      if (!empName.value.trim())
-        return { field: empName, msg: "Please enter Employee Name." };
-      if (!isValidName(empName.value))
-        return { field: empName, msg: "Invalid name." };
-
-      if (!empId.value.trim())
-        return { field: empId, msg: "Enter Employee ID." };
-      if (!isValidEmpId(empId.value))
-        return { field: empId, msg: "Invalid ID." };
-
-      if (!empStatus.value)
-        return { field: empStatus, msg: "Select status." };
-
-      if (!empDept.value)
-        return { field: empDept, msg: "Select department." };
-
-      if (!empJoinDate.value || !isValidDate(empJoinDate.value))
-        return { field: empJoinDate, msg: "Invalid date." };
-
-      if (!empNic.value.trim() || !isValidNIC(empNic.value))
-        return { field: empNic, msg: "Invalid NIC." };
-
-      if (!empAddress.value.trim() || !isValidAddress(empAddress.value))
-        return { field: empAddress, msg: "Invalid address." };
-
-      if (!empEmail.value.trim() || !isValidEmail(empEmail.value))
-        return { field: empEmail, msg: "Invalid email." };
-
-      if (!empContact.value.trim() || !isValidContact(empContact.value))
-        return { field: empContact, msg: "Invalid contact." };
-
-      return null;
-    }
-
-    function highlightField(field) {
-      field.classList.add("is-invalid");
-      field.focus();
-      field.addEventListener("input", () => field.classList.remove("is-invalid"), { once: true });
-    }
-
-    // =========================
-    // FORM SUBMIT (CREATE + UPDATE)
-    // =========================
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const err = getValidationError();
-      if (err) {
-        highlightField(err.field);
-        showPopup("error", "Error", err.msg);
-        return;
-      }
+      // validation
+      if (!isValidName(empName.value)) return showPopup("error","Error","Invalid name");
+      if (!isValidEmpId(empId.value)) return showPopup("error","Error","Invalid ID");
+
+      const data = {
+        name: empName.value.trim(),
+        status: empStatus.value,
+        department: empDept.value,
+        joinDate: empJoinDate.value,
+        nic: empNic.value.trim(),
+        address: empAddress.value.trim(),
+        email: empEmail.value.trim(),
+        contact: empContact.value.trim(),
+        remarks: empRemarks.value.trim()
+      };
 
       try {
-
-        const data = {
-          name: empName.value.trim(),
-          status: empStatus.value,
-          department: empDept.value,
-          joinDate: empJoinDate.value,
-          nic: empNic.value.trim(),
-          address: empAddress.value.trim(),
-          email: empEmail.value.trim(),
-          contact: empContact.value.trim(),
-          remarks: empRemarks.value.trim(),
-        };
-
         if (isEditMode) {
-          await firebase.firestore().collection("employees").doc(empId.value.trim()).update({
-            ...data,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          showPopup("success", "Updated", "Employee updated.");
+          await firebase.firestore().collection("employees").doc(empId.value).update(data);
+          showPopup("success","Updated","Employee updated");
         } else {
-          await firebase.firestore().collection("employees").doc(empId.value.trim()).set({
-            ...data,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          showPopup("success", "Success", "Employee added.");
+          await firebase.firestore().collection("employees").doc(empId.value).set(data);
+          showPopup("success","Added","Employee added");
         }
 
         form.reset();
         isEditMode = false;
 
-      } catch (e) {
-        showPopup("error", "Error", "Failed.");
+      } catch (err) {
+        console.error(err);
+        showPopup("error","Error","Database failed");
       }
     });
 
-    // expose for selection
+    // expose edit fill
     window.fillFormForEdit = function(emp) {
       empName.value = emp.name || "";
       empId.value = emp.id || "";
@@ -226,17 +114,19 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  // ================================================================
-  // EMPLOYEE MANAGEMENT
-  // ================================================================
+  // ============================================================
+  // EMPLOYEE MANAGEMENT LIST
+  // ============================================================
   let allEmployees = [];
-  let currentEmpId = null;
-  let currentEmpData = {};
 
   async function loadEmployees() {
-    const snapshot = await firebase.firestore().collection("employees").get();
-    allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderList(allEmployees);
+    try {
+      const snapshot = await firebase.firestore().collection("employees").get();
+      allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderList(allEmployees);
+    } catch (e) {
+      console.error("Load error", e);
+    }
   }
 
   function renderList(employees) {
@@ -244,61 +134,68 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!list) return;
 
     list.innerHTML = employees.map(emp => `
-      <div class="emp-row-card" data-id="${emp.id}" onclick="selectEmployee('${emp.id}')">
+      <div class="emp-row-card" data-id="${emp.id}">
         ${emp.name}
       </div>
     `).join("");
   }
 
-  function selectEmployee(id) {
+  // SAFE click handler (no inline onclick)
+  document.getElementById("empList")?.addEventListener("click", function(e){
+    const card = e.target.closest(".emp-row-card");
+    if (!card) return;
+
+    const id = card.dataset.id;
     const emp = allEmployees.find(e => e.id === id);
     if (!emp) return;
 
-    currentEmpId = id;
-    currentEmpData = emp;
-
-    // 🔥 fill form for editing
-    if (window.fillFormForEdit) {
+    if (typeof window.fillFormForEdit === "function") {
       window.fillFormForEdit({ ...emp, id });
     }
-  }
-
-  window.selectEmployee = selectEmployee;
+  });
 
   loadEmployees();
 
-  // ================================================
+  // ============================================================
   // EMAIL PAGE
-  // ================================================
+  // ============================================================
   if (document.getElementById("emailPageContainer")) {
-
-    async function loadEmployeesForEmail() {
-      const snapshot = await firebase.firestore().collection("employees").get();
-
-      const employees = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      console.log("Employees for email:", employees);
-    }
-
-    loadEmployeesForEmail();
+    (async function(){
+      try {
+        const snapshot = await firebase.firestore().collection("employees").get();
+        console.log("Email employees:", snapshot.size);
+      } catch(e){
+        console.error("Email load error", e);
+      }
+    })();
   }
 
-  // ================================================
-  // PRINT PAGE
-  // ================================================
+  // ============================================================
+  // PRINT PAGE (SAFE)
+  // ============================================================
   if (document.getElementById("reportArea")) {
 
-    let allEmployeesPrint = [];
+    (async function(){
+      try {
+        const snapshot = await firebase.firestore().collection("employees").get();
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    async function loadPrintData() {
-      const snapshot = await firebase.firestore().collection("employees").get();
-      allEmployeesPrint = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
+        const tbody = document.getElementById("reportTbody");
+        if (!tbody) return;
 
-    loadPrintData();
+        tbody.innerHTML = data.map(emp => `
+          <tr>
+            <td>${emp.id}</td>
+            <td>${emp.name}</td>
+            <td>${emp.department}</td>
+            <td>${emp.status}</td>
+          </tr>
+        `).join("");
+
+      } catch(e){
+        console.error("Print error", e);
+      }
+    })();
   }
 
 });
