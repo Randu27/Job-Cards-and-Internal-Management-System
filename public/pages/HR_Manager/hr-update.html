@@ -13,7 +13,49 @@
   <link rel="stylesheet" href="../../css/menu.css">
   
 </head>
-<body><!-- Add this after the existing employee form section -->
+<body>
+  <nav class="navbar navbar-dark shadow-sm sticky-top">
+    <div class="container">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
+                Grafix Print Hub
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu"></div>
+
+<div id="logoutModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <h5>Confirm Logout</h5>
+        <p>Are you sure you want to leave?</p>
+        <button onclick="logout()" class="modal-btn-confirm-red">Logout</button>
+        <button onclick="closeLogoutModal()" class="modal-btn-cancel">Cancel</button>
+    </div>
+</div>
+
+
+
+    <div class="hero-section">
+    <div class="container text-center">
+      <h1 class="display-4">Send Updates</h1>
+    </div>
+  </div>
+
+   <!-- Back to dashboard -->
+<div class="container mt-3">
+  <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
+</div>
+<br>
+  
+  <!-- Add this after the existing employee form section -->
 <div class="card mt-4">
   <div class="card-header" style="background: linear-gradient(135deg, #ffe785, var(--accent-teal));">
     <h5 class="mb-0 text-dark">
