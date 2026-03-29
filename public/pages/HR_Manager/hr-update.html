@@ -56,59 +56,7 @@
 <br>
   
   <!-- Add this after the existing employee form section -->
-<div class="card mt-4">
-  <div class="card-header" style="background: linear-gradient(135deg, #ffe785, var(--accent-teal));">
-    <h5 class="mb-0 text-dark">
-      <i class="bi bi-envelope-paper me-2"></i>Send Company Updates
-    </h5>
-  </div>
-  <div class="card-body">
-    <div class="row">
-      <div class="col-md-12 mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <label class="fw-bold">Select Recipients:</label>
-          <div>
-            <button type="button" id="selectAllEmployeesBtn" class="btn btn-sm btn-outline-primary me-2">
-              <i class="bi bi-check-all"></i> All Employees
-            </button>
-            <button type="button" id="clearSelectionBtn" class="btn btn-sm btn-outline-secondary">
-              <i class="bi bi-x-circle"></i> Clear
-            </button>
-          </div>
-        </div>
-        
-        <!-- Employee selection list -->
-        <div class="employee-selection-list border rounded p-3" style="max-height: 300px; overflow-y: auto;">
-          <div id="emailEmployeeList" class="row g-2">
-            <div class="col-12 text-center text-muted py-3">
-              <div class="spinner-border spinner-border-sm me-2"></div>
-              Loading employees...
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-md-12 mb-3">
-        <label class="fw-bold">Email Subject:</label>
-        <input type="text" id="emailSubject" class="form-control" placeholder="Enter email subject">
-      </div>
-      
-      <div class="col-md-12 mb-3">
-        <label class="fw-bold">Email Message:</label>
-        <textarea id="emailMessage" class="form-control" rows="6" placeholder="Enter your message here..."></textarea>
-      </div>
-      
-      <div class="col-md-12">
-        <button type="button" id="sendEmailBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #ffe785, var(--accent-teal)); border: none; color: #000;">
-          <i class="bi bi-send"></i> Send Emails
-        </button>
-        <button type="button" id="previewEmailBtn" class="btn btn-secondary ms-2">
-          <i class="bi bi-eye"></i> Preview
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+
 
 <!-- Email Preview Modal -->
 <div class="modal fade" id="emailPreviewModal" tabindex="-1">
@@ -125,7 +73,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" id="sendFromPreviewBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #ffe785, var(--accent-teal)); border: none; color: #000;">
+        <button type="button" id="sendFromPreviewBtn" class="btn btn-primary" style="background:  #21b55e; border: none; color: #000;">
           <i class="bi bi-send"></i> Send Now
         </button>
       </div>

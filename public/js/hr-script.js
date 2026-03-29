@@ -1,4 +1,4 @@
-// ===============================
+// =============================== 
 // HR - Add Employee Page
 // ===============================
 
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // ================================================
-  // ADD PAGE
+  // ADD / EDIT PAGE
   // ================================================
   if (document.getElementById("addEmployeeForm")) {
 
@@ -98,6 +98,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const empRemarks = document.getElementById("empRemarks");
     const empImage = document.getElementById("empImage");
     const imagePreview = document.getElementById("imagePreview");
+
+    let isEditMode = false;
 
     if (empImage && imagePreview) {
       empImage.addEventListener("change", function () {
@@ -156,6 +158,9 @@ document.addEventListener("DOMContentLoaded", function () {
       field.addEventListener("input", () => field.classList.remove("is-invalid"), { once: true });
     }
 
+    // =========================
+    // FORM SUBMIT (CREATE + UPDATE)
+    // =========================
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -167,7 +172,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
-        await firebase.firestore().collection("employees").doc(empId.value.trim()).set({
+
+        const data = {
           name: empName.value.trim(),
           status: empStatus.value,
           department: empDept.value,
@@ -177,15 +183,47 @@ document.addEventListener("DOMContentLoaded", function () {
           email: empEmail.value.trim(),
           contact: empContact.value.trim(),
           remarks: empRemarks.value.trim(),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        if (isEditMode) {
+          await firebase.firestore().collection("employees").doc(empId.value.trim()).update({
+            ...data,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          showPopup("success", "Updated", "Employee updated.");
+        } else {
+          await firebase.firestore().collection("employees").doc(empId.value.trim()).set({
+            ...data,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          showPopup("success", "Success", "Employee added.");
+        }
 
         form.reset();
-        showPopup("success", "Success", "Employee added.");
+        isEditMode = false;
+
       } catch (e) {
         showPopup("error", "Error", "Failed.");
       }
     });
+
+    // expose for selection
+    window.fillFormForEdit = function(emp) {
+      empName.value = emp.name || "";
+      empId.value = emp.id || "";
+      empStatus.value = emp.status || "";
+      empDept.value = emp.department || "";
+      empJoinDate.value = emp.joinDate || "";
+      empNic.value = emp.nic || "";
+      empAddress.value = emp.address || "";
+      empEmail.value = emp.email || "";
+      empContact.value = emp.contact || "";
+      empRemarks.value = emp.remarks || "";
+
+      isEditMode = true;
+    };
   }
 
   // ================================================================
@@ -206,7 +244,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!list) return;
 
     list.innerHTML = employees.map(emp => `
-      <div class="emp-row-card" data-id="${emp.id}">
+      <div class="emp-row-card" data-id="${emp.id}" onclick="selectEmployee('${emp.id}')">
         ${emp.name}
       </div>
     `).join("");
@@ -215,14 +253,38 @@ document.addEventListener("DOMContentLoaded", function () {
   function selectEmployee(id) {
     const emp = allEmployees.find(e => e.id === id);
     if (!emp) return;
+
     currentEmpId = id;
     currentEmpData = emp;
+
+    // 🔥 fill form for editing
+    if (window.fillFormForEdit) {
+      window.fillFormForEdit({ ...emp, id });
+    }
   }
 
-  // make global
   window.selectEmployee = selectEmployee;
 
   loadEmployees();
+
+  // ================================================
+  // EMAIL PAGE
+  // ================================================
+  if (document.getElementById("emailPageContainer")) {
+
+    async function loadEmployeesForEmail() {
+      const snapshot = await firebase.firestore().collection("employees").get();
+
+      const employees = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log("Employees for email:", employees);
+    }
+
+    loadEmployeesForEmail();
+  }
 
   // ================================================
   // PRINT PAGE
