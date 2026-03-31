@@ -606,337 +606,429 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ================================================
-// VIEW PAGE — Employee Records Grid View
-// ================================================
-if (document.getElementById("employeeGrid")) {
-    // Global variables
-  let employees = [];          // store all employees from Firestore
-  let filteredEmployees = [];
-  let currentEditId = null;
-  let currentEmployeeData = null;
-  let detailModal = null;
+// ===============================
+// HR - Employee Directory Page
+// ===============================
 
-  // DOM elements
-  const loadingDiv = document.getElementById('viewLoading');
-  const emptyDiv = document.getElementById('viewEmpty');
-  const gridContainer = document.getElementById('employeeGrid');
-  const searchInput = document.getElementById('viewSearchInput');
-  const deptFilter = document.getElementById('deptFilter');
-  const statusFilter = document.getElementById('statusFilter');
-  const totalSpan = document.getElementById('totalCount');
-  const activeSpan = document.getElementById('activeCount');
-  const inactiveSpan = document.getElementById('inactiveCount');
+(function () {
 
-  // Helper: get reference to Firestore collection
-  function getEmployeesCollection() {
-    if (!window.db) {
-      console.error("Firestore not initialized, check firebase-config.js");
-      return null;
-    }
-    return window.db.collection("employees");
-  }
+  // ── State ──────────────────────────────────────────────────
+  let allEmployees  = [];   // raw Firestore data
+  let currentEmpId  = null; // ID of employee open in modal
+  let isEditMode    = false;
 
-  // Load employees from Firestore (collection "employees")
-  async function loadEmployees() {
-    if (!window.db) {
-      console.warn("Waiting for Firebase...");
-      setTimeout(() => loadEmployees(), 300);
-      return;
-    }
-    try {
-      loadingDiv.style.display = "flex";
-      gridContainer.style.display = "none";
-      emptyDiv.style.display = "none";
-      const snapshot = await getEmployeesCollection().get();
-      employees = [];
-      snapshot.forEach(doc => {
-        employees.push({ id: doc.id, ...doc.data() });
-      });
-      // if no employees, optionally seed demo data for testing (only if empty)
-      if (employees.length === 0) {
-        await seedDemoEmployees();
-        const newSnapshot = await getEmployeesCollection().get();
-        employees = [];
-        newSnapshot.forEach(doc => employees.push({ id: doc.id, ...doc.data() }));
-      }
-      applyFiltersAndRender();
-    } catch (error) {
-      console.error("Error loading employees:", error);
-      loadingDiv.innerHTML = `<div class="alert alert-danger">Failed to load data: ${error.message}</div>`;
-    }
-  }
+  // ── DOM refs ───────────────────────────────────────────────
+  const dirList     = document.getElementById("dirList");
+  const searchInput = document.getElementById("dirSearch");
+  const filterDept  = document.getElementById("filterDept");
+  const filterStatus= document.getElementById("filterStatus");
+  const countNum    = document.getElementById("countNum");
 
-  // Optional demo seed for testing purposes (creates two example employees if collection empty)
-  async function seedDemoEmployees() {
-    const collection = getEmployeesCollection();
-    const sample = [
-      {
-        name: "Amila Perera",
-        id: "EMP1001",
-        department: "Front Office",
-        position: "Customer Relations",
-        status: "FullTime",
-        email: "amila@grafix.lk",
-        contact: "0771234567",
-        joinDate: "2022-01-15"
-      },
-      {
-        name: "Nuwan Rathnayake",
-        id: "EMP1002",
-        department: "Workshop",
-        position: "Senior Printer",
-        status: "PartTime",
-        email: "nuwan@grafix.lk",
-        contact: "0769876543",
-        joinDate: "2023-06-10"
-      }
-    ];
-    for (const emp of sample) {
-      const exists = await collection.where("id", "==", emp.id).get();
-      if (exists.empty) {
-        await collection.doc(emp.id).set(emp);
-      }
-    }
-  }
+  // ── Validators (same logic as add page) ────────────────────
+  const isValidName    = v => /^[a-zA-Z\s.\-']{2,}$/.test(v.trim());
+  const isValidNIC     = v => { const n=v.trim().toUpperCase(); return /^[0-9]{9}[VX]$/.test(n)||/^[0-9]{12}$/.test(n); };
+  const isValidContact = v => { const c=v.trim().replace(/[\s\-]/g,""); return /^(0[1-9][0-9]{7,8}|\+94[1-9][0-9]{8})$/.test(c); };
+  const isValidEmail   = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const isValidAddress = v => v.trim().length >= 5;
+  const isValidDate    = v => { if(!v) return false; const d=new Date(v),t=new Date(); t.setHours(23,59,59,999); return d<=t; };
 
-  // Filters + search + render cards
-  function applyFiltersAndRender() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const dept = deptFilter.value;
-    const status = statusFilter.value;
-
-    filteredEmployees = employees.filter(emp => {
-      let match = true;
-      if (searchTerm) {
-        match = (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
-                (emp.id && emp.id.toLowerCase().includes(searchTerm)) ||
-                (emp.department && emp.department.toLowerCase().includes(searchTerm));
-        if (!match) return false;
-      }
-      if (dept && emp.department !== dept) return false;
-      if (status) {
-        if (status === "FullTime" && emp.status !== "FullTime") return false;
-        if (status === "PartTime" && emp.status !== "PartTime") return false;
-      }
-      return true;
-    });
-
-    updateStats();
-    if (filteredEmployees.length === 0) {
-      gridContainer.style.display = "none";
-      emptyDiv.style.display = "block";
-      loadingDiv.style.display = "none";
-    } else {
-      gridContainer.style.display = "grid";
-      emptyDiv.style.display = "none";
-      loadingDiv.style.display = "none";
-      renderEmployeeCards(filteredEmployees);
-    }
-  }
-
-  function updateStats() {
-    totalSpan.innerText = employees.length;
-    const fullTimeCount = employees.filter(e => e.status === "FullTime").length;
-    const partTimeCount = employees.filter(e => e.status === "PartTime").length;
-    activeSpan.innerText = fullTimeCount;
-    inactiveSpan.innerText = partTimeCount;
-  }
-
-  function renderEmployeeCards(empList) {
-    gridContainer.innerHTML = "";
-    empList.forEach(emp => {
-      const card = document.createElement("div");
-      card.className = "employee-card";
-      const statusClass = emp.status === "FullTime" ? "status-ft" : "status-pt";
-      const statusText = emp.status === "FullTime" ? "Full Time" : "Part Time";
-      card.innerHTML = `
-        <div class="card-header-custom">
-          <span class="emp-id"><i class="bi bi-upc-scan"></i> ${emp.id || 'N/A'}</span>
-          <span class="status-badge ${statusClass}">${statusText}</span>
-        </div>
-        <div class="emp-name">${escapeHtml(emp.name || 'Unnamed')}</div>
-        <div class="emp-dept"><i class="bi bi-building"></i> ${escapeHtml(emp.department || '—')} · ${escapeHtml(emp.position || '—')}</div>
-        <div class="card-actions">
-          <button class="btn btn-outline-primary btn-sm view-detail-btn" data-id="${emp.id}"><i class="bi bi-eye"></i> View</button>
-          <button class="btn btn-outline-secondary btn-sm edit-detail-btn" data-id="${emp.id}"><i class="bi bi-pencil-square"></i> Edit</button>
-          <button class="btn btn-outline-danger btn-sm delete-employee-btn" data-id="${emp.id}" data-name="${escapeHtml(emp.name)}"><i class="bi bi-trash3"></i> Delete</button>
-        </div>
-      `;
-      gridContainer.appendChild(card);
-    });
-
-    // attach event listeners for view/edit/delete
-    document.querySelectorAll('.view-detail-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = btn.getAttribute('data-id');
-        openDetailModal(id, 'view');
-      });
-    });
-    document.querySelectorAll('.edit-detail-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = btn.getAttribute('data-id');
-        openDetailModal(id, 'edit');
-      });
-    });
-    document.querySelectorAll('.delete-employee-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = btn.getAttribute('data-id');
-        const name = btn.getAttribute('data-name');
-        confirmDelete(id, name);
-      });
-    });
-  }
-
-  async function openDetailModal(empId, mode = 'view') {
-    if (!detailModal) detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
-    const employee = employees.find(emp => emp.id === empId);
-    if (!employee) return;
-    currentEditId = empId;
-    currentEmployeeData = { ...employee };
-    const modalBody = document.getElementById('detailModalBody');
-    const modalFooter = document.getElementById('modalFooter');
-    const modalTitleSpan = document.getElementById('modalTitle');
-    
-    if (mode === 'view') {
-      modalTitleSpan.innerText = "Employee Details";
-      modalBody.innerHTML = renderDetailView(employee);
-      modalFooter.innerHTML = `
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="switchToEditBtn"><i class="bi bi-pencil"></i> Edit Employee</button>
-      `;
-      document.getElementById('switchToEditBtn')?.addEventListener('click', () => {
-        detailModal.hide();
-        setTimeout(() => openDetailModal(empId, 'edit'), 300);
-      });
-    } 
-    else { // edit mode
-      modalTitleSpan.innerText = "Edit Employee";
-      modalBody.innerHTML = renderEditForm(employee);
-      modalFooter.innerHTML = `
-        <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
-        <button type="button" class="btn btn-success" id="saveUpdateBtn"><i class="bi bi-check-lg"></i> Update Employee</button>
-      `;
-      document.getElementById('cancelEditBtn')?.addEventListener('click', () => {
-        detailModal.hide();
-      });
-      document.getElementById('saveUpdateBtn')?.addEventListener('click', async () => {
-        await saveUpdatedEmployee(empId);
-      });
-    }
-    detailModal.show();
-  }
-
-  function renderDetailView(emp) {
-    return `
-      <div class="detail-section">
-        <div><span class="detail-label"><i class="bi bi-person-badge"></i> Full Name:</span> ${escapeHtml(emp.name || '—')}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-upc-scan"></i> Employee ID:</span> ${escapeHtml(emp.id || '—')}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-building"></i> Department:</span> ${escapeHtml(emp.department || '—')}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-briefcase"></i> Position:</span> ${escapeHtml(emp.position || '—')}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-clock-history"></i> Employment:</span> ${emp.status === 'FullTime' ? 'Full Time' : 'Part Time'}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-envelope"></i> Email:</span> ${escapeHtml(emp.email || '—')}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-telephone"></i> Phone:</span> ${escapeHtml(emp.contact || '—')}</div>
-        <div class="mt-2"><span class="detail-label"><i class="bi bi-calendar3"></i> Join Date:</span> ${emp.joinDate ? emp.joinDate : '—'}</div>
-      </div>
-    `;
-  }
-
-  function renderEditForm(emp) {
-    return `
-      <div class="detail-section edit-mode">
-        <div class="mb-3"><label class="fw-bold">Full Name *</label><input type="text" id="editName" class="form-control" value="${escapeHtml(emp.name || '')}"></div>
-        <div class="mb-3"><label class="fw-bold">Employee ID *</label><input type="text" id="editEmpId" class="form-control" value="${escapeHtml(emp.id || '')}" readonly></div>
-        <div class="mb-3"><label class="fw-bold">Department</label>
-          <select id="editDept" class="form-select"><option value="Front Office" ${emp.department === 'Front Office' ? 'selected' : ''}>Front Office</option><option value="Workshop" ${emp.department === 'Workshop' ? 'selected' : ''}>Workshop</option></select>
-        </div>
-        <div class="mb-3"><label class="fw-bold">Position</label><input type="text" id="editPosition" class="form-control" value="${escapeHtml(emp.position || '')}"></div>
-        <div class="mb-3"><label class="fw-bold">Employment Type</label>
-          <select id="editEmpType" class="form-select"><option value="FullTime" ${emp.status === 'FullTime' ? 'selected' : ''}>Full Time</option><option value="PartTime" ${emp.status === 'PartTime' ? 'selected' : ''}>Part Time</option></select>
-        </div>
-        <div class="mb-3"><label class="fw-bold">Email</label><input type="email" id="editEmail" class="form-control" value="${escapeHtml(emp.email || '')}"></div>
-        <div class="mb-3"><label class="fw-bold">Phone</label><input type="text" id="editPhone" class="form-control" value="${escapeHtml(emp.contact || '')}"></div>
-        <div class="mb-3"><label class="fw-bold">Join Date</label><input type="date" id="editJoinDate" class="form-control" value="${emp.joinDate || ''}"></div>
-      </div>
-    `;
-  }
-
-  async function saveUpdatedEmployee(id) {
-    const updatedData = {
-      name: document.getElementById('editName')?.value.trim() || "No Name",
-      status: document.getElementById('editEmpType')?.value,
-      department: document.getElementById('editDept')?.value,
-      position: document.getElementById('editPosition')?.value.trim() || "",
-      email: document.getElementById('editEmail')?.value.trim() || "",
-      contact: document.getElementById('editPhone')?.value.trim() || "",
-      joinDate: document.getElementById('editJoinDate')?.value || "",
+  // ── Firebase error map ─────────────────────────────────────
+  function firebaseErr(code) {
+    const m = {
+      "permission-denied": "You don't have permission to perform this action.",
+      "not-found":         "Employee record not found.",
+      "unavailable":       "Service unavailable. Check your internet connection.",
+      "storage/unauthorized": "Not authorised to upload images.",
+      "storage/unknown":   "Unknown error during image upload.",
     };
-    if (!updatedData.name) {
-      alert("Name is required.");
+    return m[code] || `Unexpected error (${code||"unknown"}). Please try again.`;
+  }
+
+  // ── Fetch all employees ────────────────────────────────────
+  async function loadDirectory() {
+    renderSkeletons();
+    try {
+      const snap = await firebase.firestore()
+        .collection("employees")
+        .orderBy("name")
+        .get();
+
+      allEmployees = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyFilters();
+    } catch (err) {
+      console.error(err);
+      dirList.innerHTML = `
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-wifi-off"></i>
+            <p>Could not load employees. Please check your connection.</p>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ── Skeleton placeholders ──────────────────────────────────
+  function renderSkeletons(n = 6) {
+    dirList.innerHTML = Array.from({ length: n }, () => `
+      <div class="col-md-6 col-lg-4">
+        <div class="skeleton-card">
+          <div class="sk-circle"></div>
+          <div class="sk-lines">
+            <div class="sk-line"></div>
+            <div class="sk-line short"></div>
+          </div>
+        </div>
+      </div>`).join("");
+  }
+
+  // ── Filter + render ────────────────────────────────────────
+  function applyFilters() {
+    const q    = searchInput.value.trim().toLowerCase();
+    const dept = filterDept.value;
+    const stat = filterStatus.value;
+
+    const filtered = allEmployees.filter(e => {
+      const matchQ = !q ||
+        (e.name    || "").toLowerCase().includes(q) ||
+        (e.id      || "").toLowerCase().includes(q) ||
+        (e.email   || "").toLowerCase().includes(q) ||
+        (e.nic     || "").toLowerCase().includes(q) ||
+        (e.contact || "").toLowerCase().includes(q);
+      const matchDept = !dept || e.department === dept;
+      const matchStat = !stat || e.status     === stat;
+      return matchQ && matchDept && matchStat;
+    });
+
+    countNum.textContent = filtered.length;
+    renderCards(filtered);
+  }
+
+  // ── Render employee cards ──────────────────────────────────
+  function renderCards(list) {
+    if (!list.length) {
+      dirList.innerHTML = `
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <p>No employees match your search.</p>
+          </div>
+        </div>`;
       return;
     }
-    try {
-      await getEmployeesCollection().doc(id).update(updatedData);
-      // update local array
-      const index = employees.findIndex(emp => emp.id === id);
-      if (index !== -1) employees[index] = { id, ...updatedData };
-      applyFiltersAndRender();
-      if (detailModal) detailModal.hide();
-      alert("Employee updated successfully!");
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("Update failed: " + err.message);
-    }
+
+    dirList.innerHTML = list.map(e => {
+      const initial = (e.name || "?")[0].toUpperCase();
+      const avatar  = e.image
+        ? `<img src="${escHtml(e.image)}" class="emp-avatar" alt="${escHtml(e.name)}">`
+        : `<div class="emp-avatar-placeholder">${initial}</div>`;
+      const badgeClass = e.status === "Full Time" ? "badge-fulltime" : "badge-parttime";
+
+      return `
+        <div class="col-md-6 col-lg-4">
+          <div class="emp-card" onclick="openEmployee('${escHtml(e.id)}')">
+            ${avatar}
+            <div class="emp-card-info">
+              <div class="emp-card-name">${escHtml(e.name || "—")}</div>
+              <div class="emp-card-meta">
+                <span><i class="bi bi-hash"></i>${escHtml(e.id)}</span>
+                <span><i class="bi bi-building"></i>${escHtml(e.department || "—")}</span>
+              </div>
+              <div class="mt-1">
+                <span class="badge-status ${badgeClass}">${escHtml(e.status || "—")}</span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
   }
 
-  async function confirmDelete(id, name) {
-    const userConfirmed = confirm(`⚠️ Permanently delete "${name}"? This action cannot be undone.`);
-    if (!userConfirmed) return;
-    try {
-      await getEmployeesCollection().doc(id).delete();
-      employees = employees.filter(emp => emp.id !== id);
-      applyFiltersAndRender();
-      if (detailModal) detailModal.hide();
-      alert("Employee record deleted.");
-    } catch (err) {
-      alert("Delete error: " + err.message);
-    }
+  // ── Open employee modal ────────────────────────────────────
+  window.openEmployee = function (id) {
+    const emp = allEmployees.find(e => e.id === id);
+    if (!emp) return;
+    currentEmpId = id;
+    isEditMode   = false;
+
+    populateViewMode(emp);
+    showViewMode();
+    document.getElementById("empModal").style.display = "flex";
+    document.body.style.overflow = "hidden";
+  };
+
+  function populateViewMode(emp) {
+    // Header
+    const initial = (emp.name || "?")[0].toUpperCase();
+    document.getElementById("modalAvatarWrap").innerHTML = emp.image
+      ? `<img src="${escHtml(emp.image)}" class="dir-modal-avatar" alt="${escHtml(emp.name)}">`
+      : `<div class="dir-modal-avatar-ph">${initial}</div>`;
+    document.getElementById("modalName").textContent = emp.name || "—";
+    document.getElementById("modalSub").textContent  = `${emp.id} · ${emp.department || "—"} · ${emp.status || "—"}`;
+
+    // Detail grid
+    const fields = [
+      { label: "Employee ID",  val: emp.id },
+      { label: "Status",       val: emp.status },
+      { label: "Department",   val: emp.department },
+      { label: "Date Joined",  val: formatDate(emp.joinDate) },
+      { label: "NIC",          val: emp.nic },
+      { label: "Contact",      val: emp.contact },
+      { label: "Email",        val: emp.email, full: true },
+      { label: "Address",      val: emp.address, full: true },
+      { label: "Remarks",      val: emp.remarks || "—", full: true },
+    ];
+
+    document.getElementById("detailGrid").innerHTML = fields.map(f => `
+      <div class="detail-item ${f.full ? "full" : ""}">
+        <label>${f.label}</label>
+        <div class="val">${escHtml(f.val || "—")}</div>
+      </div>`).join("");
   }
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-      return c;
-    });
-  }
+  // ── Edit mode ──────────────────────────────────────────────
+  window.enterEditMode = function () {
+    const emp = allEmployees.find(e => e.id === currentEmpId);
+    if (!emp) return;
+    isEditMode = true;
 
-  // Event listeners for search & filters
-  searchInput.addEventListener('input', () => applyFiltersAndRender());
-  deptFilter.addEventListener('change', () => applyFiltersAndRender());
-  statusFilter.addEventListener('change', () => applyFiltersAndRender());
+    // Populate edit fields
+    document.getElementById("editName").value     = emp.name     || "";
+    document.getElementById("editEmpId").value    = emp.id;
+    document.getElementById("editStatus").value   = emp.status   || "";
+    document.getElementById("editDept").value     = emp.department || "";
+    document.getElementById("editJoinDate").value = emp.joinDate || "";
+    document.getElementById("editNic").value      = emp.nic      || "";
+    document.getElementById("editAddress").value  = emp.address  || "";
+    document.getElementById("editEmail").value    = emp.email    || "";
+    document.getElementById("editContact").value  = emp.contact  || "";
+    document.getElementById("editRemarks").value  = emp.remarks  || "";
 
-  // Wait for firebase config
-  window.addEventListener('load', () => {
-    const waitForFirebase = setInterval(() => {
-      if (window.db && window.firebase) {
-        clearInterval(waitForFirebase);
-        loadEmployees();
-      } else if (typeof firebase !== 'undefined' && firebase.apps.length && !window.db) {
-        console.warn("re-check firebase-config, ensure db export");
+    // Photo preview
+    const prev = document.getElementById("editPhotoPreview");
+    prev.src = emp.image || "https://via.placeholder.com/60";
+    prev.style.display = "block";
+
+    // Photo input preview change
+    document.getElementById("editPhotoInput").value = "";
+    document.getElementById("editPhotoInput").onchange = function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => { prev.src = e.target.result; };
+        reader.readAsDataURL(file);
       }
-    }, 400);
-    setTimeout(() => {
-      if (employees.length === 0 && window.db) loadEmployees();
-    }, 1500);
+    };
+
+    showEditMode();
+  };
+
+  window.cancelEditMode = function () {
+    isEditMode = false;
+    const emp = allEmployees.find(e => e.id === currentEmpId);
+    if (emp) populateViewMode(emp);
+    showViewMode();
+    cancelDelete();
+  };
+
+  // ── Save (update) ──────────────────────────────────────────
+  window.saveEmployee = async function () {
+    // Validate
+    const name    = document.getElementById("editName").value;
+    const status  = document.getElementById("editStatus").value;
+    const dept    = document.getElementById("editDept").value;
+    const joinDate= document.getElementById("editJoinDate").value;
+    const nic     = document.getElementById("editNic").value;
+    const address = document.getElementById("editAddress").value;
+    const email   = document.getElementById("editEmail").value;
+    const contact = document.getElementById("editContact").value;
+    const remarks = document.getElementById("editRemarks").value;
+
+    if (!name.trim() || !isValidName(name))
+      return showPopup("error", "Validation Error", "<strong>Employee Name</strong> is invalid.");
+    if (!status)
+      return showPopup("error", "Validation Error", "Please select an <strong>Employment Status</strong>.");
+    if (!dept)
+      return showPopup("error", "Validation Error", "Please select a <strong>Department</strong>.");
+    if (!joinDate || !isValidDate(joinDate))
+      return showPopup("error", "Validation Error", "<strong>Date Joined</strong> cannot be a future date.");
+    if (!isValidNIC(nic))
+      return showPopup("error", "Validation Error", "<strong>NIC</strong> format is invalid.");
+    if (!isValidAddress(address))
+      return showPopup("error", "Validation Error", "<strong>Address</strong> must be at least 5 characters.");
+    if (!isValidEmail(email))
+      return showPopup("error", "Validation Error", "<strong>Email</strong> address is invalid.");
+    if (!isValidContact(contact))
+      return showPopup("error", "Validation Error", "<strong>Contact Number</strong> is not a valid Sri Lankan number.");
+
+    // Disable save btn
+    const saveBtn = document.getElementById("btnSave");
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Saving…`;
+
+    try {
+      let imageUrl = allEmployees.find(e => e.id === currentEmpId)?.image || "";
+
+      // Upload new photo if selected
+      const photoFile = document.getElementById("editPhotoInput").files[0];
+      if (photoFile) {
+        try {
+          const ref = firebase.storage().ref("employees/" + currentEmpId);
+          await ref.put(photoFile);
+          imageUrl = await ref.getDownloadURL();
+        } catch (imgErr) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>Save Changes`;
+          showPopup("error", "Image Upload Failed", firebaseErr(imgErr.code));
+          return;
+        }
+      }
+
+      // Update Firestore
+      const updated = {
+        name:       name.trim(),
+        status,
+        department: dept,
+        joinDate,
+        nic:        nic.trim(),
+        address:    address.trim(),
+        email:      email.trim(),
+        contact:    contact.trim(),
+        remarks:    remarks.trim(),
+        image:      imageUrl,
+        updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      await firebase.firestore().collection("employees").doc(currentEmpId).update(updated);
+
+      // Update local cache
+      const idx = allEmployees.findIndex(e => e.id === currentEmpId);
+      if (idx !== -1) allEmployees[idx] = { id: currentEmpId, ...allEmployees[idx], ...updated };
+
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>Save Changes`;
+
+      isEditMode = false;
+      populateViewMode(allEmployees[idx]);
+      showViewMode();
+      applyFilters(); // refresh cards
+      showPopup("success", "Employee Updated!", `<strong>${name.trim()}</strong>'s details have been updated.`);
+
+    } catch (err) {
+      console.error(err);
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>Save Changes`;
+      showPopup("error", "Update Failed", firebaseErr(err.code));
+    }
+  };
+
+  // ── Delete ─────────────────────────────────────────────────
+  window.promptDelete = function () {
+    const emp = allEmployees.find(e => e.id === currentEmpId);
+    document.getElementById("deleteNameLabel").textContent = emp ? emp.name : currentEmpId;
+    const box = document.getElementById("deleteConfirmBox");
+    box.classList.add("active");
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  window.cancelDelete = function () {
+    document.getElementById("deleteConfirmBox").classList.remove("active");
+  };
+
+  window.confirmDelete = async function () {
+    const btn = document.getElementById("confirmDeleteBtn");
+    btn.disabled = true;
+    btn.textContent = "Deleting…";
+
+    try {
+      // Delete photo from Storage if exists
+      const emp = allEmployees.find(e => e.id === currentEmpId);
+      if (emp?.image) {
+        try {
+          await firebase.storage().ref("employees/" + currentEmpId).delete();
+        } catch (_) { /* ignore if no file */ }
+      }
+
+      await firebase.firestore().collection("employees").doc(currentEmpId).delete();
+
+      // Remove from local cache
+      const deletedName = emp?.name || currentEmpId;
+      allEmployees = allEmployees.filter(e => e.id !== currentEmpId);
+      applyFilters();
+      closeModal();
+      showPopup("success", "Employee Deleted", `<strong>${deletedName}</strong> has been removed from the system.`);
+
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = "Yes, Delete";
+      showPopup("error", "Delete Failed", firebaseErr(err.code));
+    }
+  };
+
+  // ── Modal helpers ──────────────────────────────────────────
+  function showViewMode() {
+    document.getElementById("viewSection").classList.remove("hidden");
+    document.getElementById("editSection").classList.remove("active");
+    document.getElementById("btnEdit").style.display  = "";
+    document.getElementById("btnSave").style.display  = "none";
+    document.getElementById("btnCancelEdit").style.display = "none";
+    document.getElementById("btnDelete").style.display = "";
+    cancelDelete();
+  }
+
+  function showEditMode() {
+    document.getElementById("viewSection").classList.add("hidden");
+    document.getElementById("editSection").classList.add("active");
+    document.getElementById("btnEdit").style.display  = "none";
+    document.getElementById("btnSave").style.display  = "";
+    document.getElementById("btnCancelEdit").style.display = "";
+    document.getElementById("btnDelete").style.display = "none";
+    cancelDelete();
+  }
+
+  window.closeModal = function () {
+    document.getElementById("empModal").style.display = "none";
+    document.body.style.overflow = "";
+    currentEmpId = null;
+    isEditMode   = false;
+    cancelDelete();
+  };
+
+  window.handleModalBgClick = function (e) {
+    if (e.target === document.getElementById("empModal")) closeModal();
+  };
+
+  // Close on Escape
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && document.getElementById("empModal").style.display !== "none") closeModal();
   });
 
-  loadEmployees();
-}
+  // ── Utility ────────────────────────────────────────────────
+  function escHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function formatDate(val) {
+    if (!val) return "—";
+    try {
+      const d = new Date(val);
+      return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    } catch { return val; }
+  }
+
+  // ── Event listeners for search / filter ───────────────────
+  searchInput.addEventListener("input",  applyFilters);
+  filterDept.addEventListener("change",  applyFilters);
+  filterStatus.addEventListener("change",applyFilters);
+
+  // ── Boot ───────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", loadDirectory);
+
+})();
 
   // ================================================
   // PRINT PAGE — only runs if reportArea exists
