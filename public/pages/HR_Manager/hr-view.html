@@ -2,147 +2,476 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>HR Manage | Grafix Print Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Directory | Grafix Print Hub</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../../css/hr-style.css">
-  <link rel="stylesheet" href="../../css/menu.css" >
-</head>
+  <link rel="stylesheet" href="../../css/menu.css">
+  <style>
+    /* ── Directory-specific styles ─────────────────────────── */
+    :root {
+      --dir-accent: #4f46e5;
+      --dir-accent-soft: #eef2ff;
+      --dir-danger: #dc2626;
+      --dir-success: #16a34a;
+      --dir-warn: #d97706;
+      --card-radius: 14px;
+      --transition: .22s cubic-bezier(.4,0,.2,1);
+    }
 
+    /* Search bar */
+    .search-wrap { position: relative; }
+    .search-wrap .bi-search {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: #9ca3af; font-size: 1.1rem; pointer-events: none;
+    }
+    #dirSearch {
+      padding-left: 40px;
+      border-radius: 10px;
+      border: 1.5px solid #d1d5db;
+      font-size: .97rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    #dirSearch:focus {
+      border-color: var(--dir-accent);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+      outline: none;
+    }
+
+    /* Filter selects */
+    .filter-select {
+      border-radius: 10px;
+      border: 1.5px solid #d1d5db;
+      font-size: .92rem;
+      transition: border-color var(--transition);
+      cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--dir-accent); box-shadow: 0 0 0 3px rgba(79,70,229,.13); outline: none; }
+
+    /* Result count badge */
+    #resultCount {
+      font-size: .85rem; color: #6b7280;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #resultCount span { font-weight: 700; color: var(--dir-accent); }
+
+    /* ── Employee Cards ──────────────────────────────────────── */
+    .emp-card {
+      background: #fff;
+      border: 1.5px solid #e5e7eb;
+      border-radius: var(--card-radius);
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .emp-card::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--dir-accent);
+      opacity: 0;
+      transition: opacity var(--transition);
+      border-radius: 4px 0 0 4px;
+    }
+    .emp-card:hover {
+      box-shadow: 0 6px 24px rgba(79,70,229,.12);
+      border-color: var(--dir-accent);
+      transform: translateY(-2px);
+    }
+    .emp-card:hover::before { opacity: 1; }
+
+    .emp-avatar {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2.5px solid #e5e7eb;
+      flex-shrink: 0;
+      background: #f3f4f6;
+    }
+    .emp-avatar-placeholder {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: var(--dir-accent-soft);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 700; color: var(--dir-accent);
+      border: 2.5px solid #c7d2fe;
+      flex-shrink: 0;
+    }
+    .emp-card-info { flex: 1; min-width: 0; }
+    .emp-card-name {
+      font-weight: 700; font-size: 1rem; color: #111827;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .emp-card-meta { font-size: .82rem; color: #6b7280; margin-top: 2px; }
+    .emp-card-meta span { margin-right: 10px; }
+
+    .badge-status {
+      font-size: .74rem; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    }
+    .badge-fulltime  { background: #dcfce7; color: #15803d; }
+    .badge-parttime  { background: #fef9c3; color: #a16207; }
+
+    /* ── Empty / Loading states ──────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: #9ca3af;
+    }
+    .empty-state i { font-size: 3rem; margin-bottom: 12px; display: block; }
+    .empty-state p { margin: 0; font-size: 1rem; }
+
+    .skeleton-card {
+      background: #fff; border: 1.5px solid #e5e7eb;
+      border-radius: var(--card-radius); padding: 18px;
+      display: flex; align-items: center; gap: 16px;
+      animation: pulse 1.5s infinite;
+    }
+    .sk-circle  { width: 54px; height: 54px; border-radius: 50%; background: #e5e7eb; flex-shrink: 0; }
+    .sk-lines   { flex: 1; }
+    .sk-line    { height: 12px; background: #e5e7eb; border-radius: 6px; margin-bottom: 8px; }
+    .sk-line.short { width: 60%; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* ── Detail Modal ─────────────────────────────────────────── */
+    .modal-backdrop-custom {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(3px);
+      z-index: 1050;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .dir-modal {
+      background: #fff;
+      border-radius: 20px;
+      width: 100%; max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 60px rgba(0,0,0,.25);
+      animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+
+    .dir-modal-header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border-radius: 20px 20px 0 0;
+      padding: 28px 28px 24px;
+      color: #fff;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      position: relative;
+    }
+    .dir-modal-avatar {
+      width: 84px; height: 84px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,.5);
+      flex-shrink: 0;
+    }
+    .dir-modal-avatar-ph {
+      width: 84px; height: 84px; border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800; color: #fff;
+      border: 3px solid rgba(255,255,255,.4);
+      flex-shrink: 0;
+    }
+    .dir-modal-title { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .dir-modal-sub   { font-size: .9rem; opacity: .85; margin-top: 4px; }
+    .btn-modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(255,255,255,.2); border: none; border-radius: 8px;
+      color: #fff; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background var(--transition);
+    }
+    .btn-modal-close:hover { background: rgba(255,255,255,.35); }
+
+    .dir-modal-body { padding: 28px; }
+
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .detail-item label {
+      font-size: .75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: #9ca3af; display: block; margin-bottom: 3px;
+    }
+    .detail-item .val {
+      font-size: .95rem; color: #111827; font-weight: 500;
+    }
+    .detail-item.full { grid-column: 1 / -1; }
+
+    /* Edit form inside modal */
+    .edit-section { display: none; }
+    .edit-section.active { display: block; }
+    .view-section.hidden { display: none; }
+
+    .edit-form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    .edit-form-grid .full-col { grid-column: 1 / -1; }
+    .edit-form-grid label { font-size: .82rem; font-weight: 600; color: #374151; margin-bottom: 4px; display: block; }
+    .edit-form-grid input,
+    .edit-form-grid select,
+    .edit-form-grid textarea {
+      width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px;
+      padding: 8px 12px; font-size: .9rem;
+      transition: border-color var(--transition);
+    }
+    .edit-form-grid input:focus,
+    .edit-form-grid select:focus,
+    .edit-form-grid textarea:focus {
+      border-color: var(--dir-accent); outline: none;
+      box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+    }
+
+    /* Action buttons */
+    .dir-modal-actions {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      padding: 0 28px 28px;
+      border-top: 1px solid #f3f4f6;
+      padding-top: 20px;
+    }
+    .btn-edit   { background: var(--dir-accent); color: #fff; }
+    .btn-edit:hover { background: #4338ca; color: #fff; }
+    .btn-save   { background: var(--dir-success); color: #fff; }
+    .btn-save:hover { background: #15803d; color: #fff; }
+    .btn-cancel-edit { background: #f3f4f6; color: #374151; }
+    .btn-cancel-edit:hover { background: #e5e7eb; }
+    .btn-delete { background: #fee2e2; color: var(--dir-danger); margin-left: auto; }
+    .btn-delete:hover { background: var(--dir-danger); color: #fff; }
+
+    /* Delete confirm */
+    .delete-confirm-box {
+      background: #fff5f5; border: 1.5px solid #fecaca;
+      border-radius: 12px; padding: 18px;
+      text-align: center; display: none;
+      margin: 0 28px 20px;
+    }
+    .delete-confirm-box.active { display: block; }
+    .delete-confirm-box p { font-size: .95rem; color: #991b1b; margin-bottom: 12px; font-weight: 600; }
+
+    /* Photo update */
+    .photo-update-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .photo-update-preview {
+      width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #e5e7eb;
+    }
+
+    /* Responsive */
+    @media (max-width: 575px) {
+      .detail-grid, .edit-form-grid { grid-template-columns: 1fr; }
+      .detail-item.full, .edit-form-grid .full-col { grid-column: auto; }
+      .dir-modal-actions { flex-direction: column; }
+      .btn-delete { margin-left: 0; }
+    }
+  </style>
+</head>
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-dark shadow-sm sticky-top">
-    <div class="container">
-      <div class="d-flex align-items-center">
-        <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-          <i class="bi bi-list fs-4"></i>
-        </button>
-        <a class="navbar-brand d-flex align-items-center" href="#">
-          <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2" onerror="this.src='https://via.placeholder.com/65?text=GPH'">
-          Grafix Print Hub
-        </a>
-      </div>
-    </div>
-  </nav>
-
-  <!-- SIDEBAR (offcanvas) -->
-  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
-    <div class="offcanvas-header border-bottom border-secondary">
-      <h5 class="offcanvas-title fw-bold text-black">Main Menu</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body p-0">
-      <ul class="nav flex-column mt-3">
-        <li class="nav-item"><a href="../../pages/order_manager/order_dashboard.html" class="nav-link"><i class="bi bi-card-checklist"></i> Order Admin</a></li>
-        <li class="nav-item"><a href="../../pages/financial_manager/financial_dashboard.html" class="nav-link"><i class="bi bi-cash-stack"></i> Financials</a></li>
-        <li class="nav-item"><a href="../../pages/R.coordinater/resource.html" class="nav-link"><i class="bi bi-box-seam"></i> Resource Coord.</a></li>
-        <li class="nav-item"><a href="../../pages/Client_profile/CRMIndex.html" class="nav-link"><i class="bi bi-people"></i> CRM</a></li>
-        <li class="nav-item"><a href="../../pages/HR_Manager/hr-index.html" class="nav-link"><i class="bi bi-person-badge"></i> Human Resources</a></li>
-      </ul>
+<!-- Navbar -->
+<nav class="navbar navbar-dark shadow-sm sticky-top">
+  <div class="container">
+    <div class="d-flex align-items-center">
+      <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
+        Grafix Print Hub
+      </a>
     </div>
   </div>
+</nav>
 
-  <!-- HERO -->
-  <div class="hero-section">
-    <div class="container text-center">
-      <h1 class="display-4">Employee Directory</h1>
-      <p class="lead text-secondary">View, edit, update or remove employee records</p>
-    </div>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu"></div>
+
+<div id="logoutModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h5>Confirm Logout</h5>
+    <p>Are you sure you want to leave?</p>
+    <button onclick="logout()" class="modal-btn-confirm-red">Logout</button>
+    <button onclick="closeLogoutModal()" class="modal-btn-cancel">Cancel</button>
   </div>
+</div>
 
-  <!-- Back to dashboard -->
-  <div class="container mt-3">
-    <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
-      <i class="bi bi-arrow-left"></i> Back to Dashboard
-    </a>
+<!-- Hero -->
+<div class="hero-section">
+  <div class="container text-center">
+    <h1 class="display-4">Employee Directory</h1>
   </div>
-  <br>
+</div>
 
-  <!-- MAIN CONTENT -->
-  <div class="container mb-5">
+<!-- Back button -->
+<div class="container mt-3">
+  <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
+</div>
 
-    <!-- Search + Stats Bar -->
-    <div class="view-topbar">
-      <div class="view-stats" id="viewStats">
-        <span class="view-stat-badge"><i class="bi bi-people-fill"></i> <span id="totalCount">0</span> Total</span>
-        <span class="view-stat-badge active"><i class="bi bi-briefcase-fill"></i> <span id="activeCount">0</span> Full Time</span>
-        <span class="view-stat-badge inactive"><i class="bi bi-clock-fill"></i> <span id="inactiveCount">0</span> Part Time</span>
-      </div>
-      <div class="view-search-wrap">
-        <i class="bi bi-search view-search-icon"></i>
-        <input type="text" id="viewSearchInput" class="view-search-input" placeholder="Search by name, ID, department...">
-      </div>
-      <div class="view-filters">
-        <select id="deptFilter" class="view-filter-select">
-          <option value="">All Departments</option>
-          <option value="Front Office">Front Office</option>
-          <option value="Workshop">Workshop</option>
-        </select>
-        <select id="statusFilter" class="view-filter-select">
-          <option value="">All Status</option>
-          <option value="FullTime">Full Time</option>
-          <option value="PartTime">Part Time</option>
-        </select>
+<!-- Search + Filters -->
+<div class="container mt-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-5">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" id="dirSearch" class="form-control" placeholder="Search by name, ID, email…">
       </div>
     </div>
-
-    <!-- Loading State -->
-    <div id="viewLoading" class="view-loading">
-      <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;"></div>
-      <p class="mt-3 text-muted">Loading employee records...</p>
+    <div class="col-md-3 col-6">
+      <select id="filterDept" class="form-select filter-select">
+        <option value="">All Departments</option>
+        <option value="Front Office">Front Office</option>
+        <option value="Workshop">Workshop</option>
+      </select>
     </div>
-
-    <!-- Empty State -->
-    <div id="viewEmpty" class="view-empty" style="display:none;">
-      <i class="bi bi-person-x view-empty-icon" style="font-size: 3rem;"></i>
-      <h5>No employees found</h5>
-      <p class="text-muted">Try adjusting your search or filters.</p>
+    <div class="col-md-2 col-6">
+      <select id="filterStatus" class="form-select filter-select">
+        <option value="">All Status</option>
+        <option value="Full Time">Full Time</option>
+        <option value="Part Time">Part Time</option>
+      </select>
     </div>
-
-    <!-- Employee Cards Grid -->
-    <div id="employeeGrid" class="employee-grid" style="display:none;"></div>
-
+    <div class="col-md-2 d-flex align-items-center justify-content-end">
+      <div id="resultCount"><i class="bi bi-people"></i> <span id="countNum">0</span> employees</div>
+    </div>
   </div>
+</div>
 
-  <!-- DETAIL + EDIT MODAL (unified) -->
-  <div class="modal fade" id="detailModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header" style="background: #1e3a5f;">
-          <h5 class="modal-title text-white fw-bold">
-            <i class="bi bi-person-badge me-2"></i><span id="modalTitle">Employee Details</span>
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="closeModalBtn"></button>
-        </div>
-        <div class="modal-body p-0" id="detailModalBody">
-          <!-- dynamic content: view or edit mode -->
-        </div>
-        <div class="modal-footer" id="modalFooter">
-          <!-- buttons dynamically generated -->
+<!-- Directory List -->
+<div class="container mt-4 mb-5">
+  <div id="dirList" class="row g-3"></div>
+</div>
+
+<footer class="text-center text-muted mt-5 py-3">
+  <small>&copy; Grafix Print Hub</small>
+</footer>
+
+<!-- ── Detail / Edit Modal ───────────────────────────────────── -->
+<div id="empModal" class="modal-backdrop-custom" style="display:none;" onclick="handleModalBgClick(event)">
+  <div class="dir-modal" onclick="event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="dir-modal-header" id="modalHeader">
+      <div id="modalAvatarWrap"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="dir-modal-title" id="modalName">—</div>
+        <div class="dir-modal-sub" id="modalSub">—</div>
+      </div>
+      <button class="btn-modal-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- View Section -->
+    <div class="dir-modal-body view-section" id="viewSection">
+      <div class="detail-grid" id="detailGrid"></div>
+    </div>
+
+    <!-- Edit Section -->
+    <div class="dir-modal-body edit-section" id="editSection">
+      <div class="photo-update-row">
+        <img id="editPhotoPreview" class="photo-update-preview" src="">
+        <div>
+          <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Update Photo (Optional)</label>
+          <input type="file" id="editPhotoInput" class="form-control form-control-sm" accept="image/*" style="max-width:220px;">
         </div>
       </div>
+      <div class="edit-form-grid">
+        <div>
+          <label>Employee Name</label>
+          <input type="text" id="editName">
+        </div>
+        <div>
+          <label>Employee ID</label>
+          <input type="text" id="editEmpId" disabled style="background:#f9fafb;cursor:not-allowed;">
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="editStatus">
+            <option value="Full Time">Full Time</option>
+            <option value="Part Time">Part Time</option>
+          </select>
+        </div>
+        <div>
+          <label>Department</label>
+          <select id="editDept">
+            <option value="Front Office">Front Office</option>
+            <option value="Workshop">Workshop</option>
+          </select>
+        </div>
+        <div>
+          <label>Date Joined</label>
+          <input type="date" id="editJoinDate">
+        </div>
+        <div>
+          <label>NIC</label>
+          <input type="text" id="editNic">
+        </div>
+        <div class="full-col">
+          <label>Address</label>
+          <input type="text" id="editAddress">
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" id="editEmail">
+        </div>
+        <div>
+          <label>Contact Number</label>
+          <input type="text" id="editContact">
+        </div>
+        <div class="full-col">
+          <label>Remarks</label>
+          <textarea id="editRemarks" rows="3"></textarea>
+        </div>
+      </div>
     </div>
+
+    <!-- Delete Confirm Box -->
+    <div class="delete-confirm-box" id="deleteConfirmBox">
+      <p><i class="bi bi-exclamation-triangle-fill me-2"></i>Are you sure you want to delete <strong id="deleteNameLabel"></strong>? This cannot be undone.</p>
+      <div class="d-flex gap-2 justify-content-center">
+        <button class="btn btn-sm btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Yes, Delete</button>
+        <button class="btn btn-sm btn-secondary" onclick="cancelDelete()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="dir-modal-actions" id="modalActions">
+      <button class="btn btn-edit" id="btnEdit" onclick="enterEditMode()"><i class="bi bi-pencil me-1"></i>Edit</button>
+      <button class="btn btn-save" id="btnSave" onclick="saveEmployee()" style="display:none;"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+      <button class="btn btn-cancel-edit" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none;"><i class="bi bi-x me-1"></i>Cancel</button>
+      <button class="btn btn-delete" id="btnDelete" onclick="promptDelete()"><i class="bi bi-trash me-1"></i>Delete</button>
+    </div>
+
   </div>
+</div>
 
-  <footer class="text-center text-muted mt-5 py-3">
-    <small>&copy; Grafix Print Hub · HR Management</small>
-  </footer>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-  <script src="../../js/firebase-config.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+<script src="../../js/firebase-config.js"></script>
 
-  <script src="../../js/hr-script.js"></script>
+<!-- HR Shared Script (popup helper) -->
+<script src="../../js/hr-script.js"></script>
+
+<!-- Directory Script -->
+<script src="../../js/hr-directory.js"></script>
 
 <script src="../../js/navbar-loader.js"></script>
 <script src="../../js/signin.js"></script>
-    
-  
 </body>
 </html>
