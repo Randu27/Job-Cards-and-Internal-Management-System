@@ -607,337 +607,336 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // ================================================
-  // VIEW PAGE — Employee Records Grid View
-  // ================================================
-  if (document.getElementById("employeeGrid")) {
-        // Global variables
-    let employees = [];          // store all employees from Firestore
-    let filteredEmployees = [];
-    let currentEditId = null;
-    let currentEmployeeData = null;
-    let detailModal = null;
+// VIEW PAGE — Employee Records Grid View
+// ================================================
+if (document.getElementById("employeeGrid")) {
+    // Global variables
+  let employees = [];          // store all employees from Firestore
+  let filteredEmployees = [];
+  let currentEditId = null;
+  let currentEmployeeData = null;
+  let detailModal = null;
 
-    // DOM elements
-    const loadingDiv = document.getElementById('viewLoading');
-    const emptyDiv = document.getElementById('viewEmpty');
-    const gridContainer = document.getElementById('employeeGrid');
-    const searchInput = document.getElementById('viewSearchInput');
-    const deptFilter = document.getElementById('deptFilter');
-    const statusFilter = document.getElementById('statusFilter');
-    const totalSpan = document.getElementById('totalCount');
-    const activeSpan = document.getElementById('activeCount');
-    const inactiveSpan = document.getElementById('inactiveCount');
+  // DOM elements
+  const loadingDiv = document.getElementById('viewLoading');
+  const emptyDiv = document.getElementById('viewEmpty');
+  const gridContainer = document.getElementById('employeeGrid');
+  const searchInput = document.getElementById('viewSearchInput');
+  const deptFilter = document.getElementById('deptFilter');
+  const statusFilter = document.getElementById('statusFilter');
+  const totalSpan = document.getElementById('totalCount');
+  const activeSpan = document.getElementById('activeCount');
+  const inactiveSpan = document.getElementById('inactiveCount');
 
-    // Helper: get reference to Firestore collection
-    function getEmployeesCollection() {
-      if (!window.db) {
-        console.error("Firestore not initialized, check firebase-config.js");
-        return null;
-      }
-      return window.db.collection("employees");
+  // Helper: get reference to Firestore collection
+  function getEmployeesCollection() {
+    if (!window.db) {
+      console.error("Firestore not initialized, check firebase-config.js");
+      return null;
     }
+    return window.db.collection("employees");
+  }
 
-    // Load employees from Firestore (collection "employees")
-    async function loadEmployees() {
-      if (!window.db) {
-        console.warn("Waiting for Firebase...");
-        setTimeout(() => loadEmployees(), 300);
-        return;
-      }
-      try {
-        loadingDiv.style.display = "flex";
-        gridContainer.style.display = "none";
-        emptyDiv.style.display = "none";
-        const snapshot = await getEmployeesCollection().get();
+  // Load employees from Firestore (collection "employees")
+  async function loadEmployees() {
+    if (!window.db) {
+      console.warn("Waiting for Firebase...");
+      setTimeout(() => loadEmployees(), 300);
+      return;
+    }
+    try {
+      loadingDiv.style.display = "flex";
+      gridContainer.style.display = "none";
+      emptyDiv.style.display = "none";
+      const snapshot = await getEmployeesCollection().get();
+      employees = [];
+      snapshot.forEach(doc => {
+        employees.push({ id: doc.id, ...doc.data() });
+      });
+      // if no employees, optionally seed demo data for testing (only if empty)
+      if (employees.length === 0) {
+        await seedDemoEmployees();
+        const newSnapshot = await getEmployeesCollection().get();
         employees = [];
-        snapshot.forEach(doc => {
-          employees.push({ id: doc.id, ...doc.data() });
-        });
-        // if no employees, optionally seed demo data for testing (only if empty)
-        if (employees.length === 0) {
-          await seedDemoEmployees();
-          const newSnapshot = await getEmployeesCollection().get();
-          employees = [];
-          newSnapshot.forEach(doc => employees.push({ id: doc.id, ...doc.data() }));
-        }
-        applyFiltersAndRender();
-      } catch (error) {
-        console.error("Error loading employees:", error);
-        loadingDiv.innerHTML = `<div class="alert alert-danger">Failed to load data: ${error.message}</div>`;
+        newSnapshot.forEach(doc => employees.push({ id: doc.id, ...doc.data() }));
+      }
+      applyFiltersAndRender();
+    } catch (error) {
+      console.error("Error loading employees:", error);
+      loadingDiv.innerHTML = `<div class="alert alert-danger">Failed to load data: ${error.message}</div>`;
+    }
+  }
+
+  // Optional demo seed for testing purposes (creates two example employees if collection empty)
+  async function seedDemoEmployees() {
+    const collection = getEmployeesCollection();
+    const sample = [
+      {
+        name: "Amila Perera",
+        id: "EMP1001",
+        department: "Front Office",
+        position: "Customer Relations",
+        status: "FullTime",
+        email: "amila@grafix.lk",
+        contact: "0771234567",
+        joinDate: "2022-01-15"
+      },
+      {
+        name: "Nuwan Rathnayake",
+        id: "EMP1002",
+        department: "Workshop",
+        position: "Senior Printer",
+        status: "PartTime",
+        email: "nuwan@grafix.lk",
+        contact: "0769876543",
+        joinDate: "2023-06-10"
+      }
+    ];
+    for (const emp of sample) {
+      const exists = await collection.where("id", "==", emp.id).get();
+      if (exists.empty) {
+        await collection.doc(emp.id).set(emp);
       }
     }
+  }
 
-    // Optional demo seed for testing purposes (creates two example employees if collection empty)
-    async function seedDemoEmployees() {
-      const collection = getEmployeesCollection();
-      const sample = [
-        {
-          name: "Amila Perera",
-          employeeId: "EMP1001",
-          department: "Front Office",
-          position: "Customer Relations",
-          employmentType: "FullTime",
-          email: "amila@grafix.lk",
-          phone: "0771234567",
-          joinDate: "2022-01-15"
-        },
-        {
-          name: "Nuwan Rathnayake",
-          employeeId: "EMP1002",
-          department: "Workshop",
-          position: "Senior Printer",
-          employmentType: "PartTime",
-          email: "nuwan@grafix.lk",
-          phone: "0769876543",
-          joinDate: "2023-06-10"
-        }
-      ];
-      for (const emp of sample) {
-        const exists = await collection.where("employeeId", "==", emp.employeeId).get();
-        if (exists.empty) {
-          await collection.add(emp);
-        }
+  // Filters + search + render cards
+  function applyFiltersAndRender() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const dept = deptFilter.value;
+    const status = statusFilter.value;
+
+    filteredEmployees = employees.filter(emp => {
+      let match = true;
+      if (searchTerm) {
+        match = (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
+                (emp.id && emp.id.toLowerCase().includes(searchTerm)) ||
+                (emp.department && emp.department.toLowerCase().includes(searchTerm));
+        if (!match) return false;
       }
-    }
-
-    // Filters + search + render cards
-    function applyFiltersAndRender() {
-      const searchTerm = searchInput.value.toLowerCase();
-      const dept = deptFilter.value;
-      const status = statusFilter.value;
-
-      filteredEmployees = employees.filter(emp => {
-        let match = true;
-        if (searchTerm) {
-          match = (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
-                  (emp.employeeId && emp.employeeId.toLowerCase().includes(searchTerm)) ||
-                  (emp.department && emp.department.toLowerCase().includes(searchTerm));
-          if (!match) return false;
-        }
-        if (dept && emp.department !== dept) return false;
-        if (status) {
-          if (status === "FullTime" && emp.employmentType !== "FullTime") return false;
-          if (status === "PartTime" && emp.employmentType !== "PartTime") return false;
-        }
-        return true;
-      });
-
-      updateStats();
-      if (filteredEmployees.length === 0) {
-        gridContainer.style.display = "none";
-        emptyDiv.style.display = "block";
-        loadingDiv.style.display = "none";
-      } else {
-        gridContainer.style.display = "grid";
-        emptyDiv.style.display = "none";
-        loadingDiv.style.display = "none";
-        renderEmployeeCards(filteredEmployees);
+      if (dept && emp.department !== dept) return false;
+      if (status) {
+        if (status === "FullTime" && emp.status !== "FullTime") return false;
+        if (status === "PartTime" && emp.status !== "PartTime") return false;
       }
-    }
-
-    function updateStats() {
-      totalSpan.innerText = employees.length;
-      const fullTimeCount = employees.filter(e => e.employmentType === "FullTime").length;
-      const partTimeCount = employees.filter(e => e.employmentType === "PartTime").length;
-      activeSpan.innerText = fullTimeCount;
-      inactiveSpan.innerText = partTimeCount;
-    }
-
-    function renderEmployeeCards(empList) {
-      gridContainer.innerHTML = "";
-      empList.forEach(emp => {
-        const card = document.createElement("div");
-        card.className = "employee-card";
-        const statusClass = emp.employmentType === "FullTime" ? "status-ft" : "status-pt";
-        const statusText = emp.employmentType === "FullTime" ? "Full Time" : "Part Time";
-        card.innerHTML = `
-          <div class="card-header-custom">
-            <span class="emp-id"><i class="bi bi-upc-scan"></i> ${emp.employeeId || 'N/A'}</span>
-            <span class="status-badge ${statusClass}">${statusText}</span>
-          </div>
-          <div class="emp-name">${escapeHtml(emp.name || 'Unnamed')}</div>
-          <div class="emp-dept"><i class="bi bi-building"></i> ${escapeHtml(emp.department || '—')} · ${escapeHtml(emp.position || '—')}</div>
-          <div class="card-actions">
-            <button class="btn btn-outline-primary btn-sm view-detail-btn" data-id="${emp.id}"><i class="bi bi-eye"></i> View</button>
-            <button class="btn btn-outline-secondary btn-sm edit-detail-btn" data-id="${emp.id}"><i class="bi bi-pencil-square"></i> Edit</button>
-            <button class="btn btn-outline-danger btn-sm delete-employee-btn" data-id="${emp.id}" data-name="${escapeHtml(emp.name)}"><i class="bi bi-trash3"></i> Delete</button>
-          </div>
-        `;
-        gridContainer.appendChild(card);
-      });
-
-      // attach event listeners for view/edit/delete
-      document.querySelectorAll('.view-detail-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = btn.getAttribute('data-id');
-          openDetailModal(id, 'view');
-        });
-      });
-      document.querySelectorAll('.edit-detail-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = btn.getAttribute('data-id');
-          openDetailModal(id, 'edit');
-        });
-      });
-      document.querySelectorAll('.delete-employee-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = btn.getAttribute('data-id');
-          const name = btn.getAttribute('data-name');
-          confirmDelete(id, name);
-        });
-      });
-    }
-
-    async function openDetailModal(empId, mode = 'view') {
-      if (!detailModal) detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
-      const employee = employees.find(emp => emp.id === empId);
-      if (!employee) return;
-      currentEditId = empId;
-      currentEmployeeData = { ...employee };
-      const modalBody = document.getElementById('detailModalBody');
-      const modalFooter = document.getElementById('modalFooter');
-      const modalTitleSpan = document.getElementById('modalTitle');
-      
-      if (mode === 'view') {
-        modalTitleSpan.innerText = "Employee Details";
-        modalBody.innerHTML = renderDetailView(employee);
-        modalFooter.innerHTML = `
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="switchToEditBtn"><i class="bi bi-pencil"></i> Edit Employee</button>
-        `;
-        document.getElementById('switchToEditBtn')?.addEventListener('click', () => {
-          detailModal.hide();
-          setTimeout(() => openDetailModal(empId, 'edit'), 300);
-        });
-      } 
-      else { // edit mode
-        modalTitleSpan.innerText = "Edit Employee";
-        modalBody.innerHTML = renderEditForm(employee);
-        modalFooter.innerHTML = `
-          <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
-          <button type="button" class="btn btn-success" id="saveUpdateBtn"><i class="bi bi-check-lg"></i> Update Employee</button>
-        `;
-        document.getElementById('cancelEditBtn')?.addEventListener('click', () => {
-          detailModal.hide();
-        });
-        document.getElementById('saveUpdateBtn')?.addEventListener('click', async () => {
-          await saveUpdatedEmployee(empId);
-        });
-      }
-      detailModal.show();
-    }
-
-    function renderDetailView(emp) {
-      return `
-        <div class="detail-section">
-          <div><span class="detail-label"><i class="bi bi-person-badge"></i> Full Name:</span> ${escapeHtml(emp.name || '—')}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-upc-scan"></i> Employee ID:</span> ${escapeHtml(emp.employeeId || '—')}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-building"></i> Department:</span> ${escapeHtml(emp.department || '—')}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-briefcase"></i> Position:</span> ${escapeHtml(emp.position || '—')}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-clock-history"></i> Employment:</span> ${emp.employmentType === 'FullTime' ? 'Full Time' : 'Part Time'}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-envelope"></i> Email:</span> ${escapeHtml(emp.email || '—')}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-telephone"></i> Phone:</span> ${escapeHtml(emp.phone || '—')}</div>
-          <div class="mt-2"><span class="detail-label"><i class="bi bi-calendar3"></i> Join Date:</span> ${emp.joinDate ? emp.joinDate : '—'}</div>
-        </div>
-      `;
-    }
-
-    function renderEditForm(emp) {
-      return `
-        <div class="detail-section edit-mode">
-          <div class="mb-3"><label class="fw-bold">Full Name *</label><input type="text" id="editName" class="form-control" value="${escapeHtml(emp.name || '')}"></div>
-          <div class="mb-3"><label class="fw-bold">Employee ID *</label><input type="text" id="editEmpId" class="form-control" value="${escapeHtml(emp.employeeId || '')}"></div>
-          <div class="mb-3"><label class="fw-bold">Department</label>
-            <select id="editDept" class="form-select"><option value="Front Office" ${emp.department === 'Front Office' ? 'selected' : ''}>Front Office</option><option value="Workshop" ${emp.department === 'Workshop' ? 'selected' : ''}>Workshop</option></select>
-          </div>
-          <div class="mb-3"><label class="fw-bold">Position</label><input type="text" id="editPosition" class="form-control" value="${escapeHtml(emp.position || '')}"></div>
-          <div class="mb-3"><label class="fw-bold">Employment Type</label>
-            <select id="editEmpType" class="form-select"><option value="FullTime" ${emp.employmentType === 'FullTime' ? 'selected' : ''}>Full Time</option><option value="PartTime" ${emp.employmentType === 'PartTime' ? 'selected' : ''}>Part Time</option></select>
-          </div>
-          <div class="mb-3"><label class="fw-bold">Email</label><input type="email" id="editEmail" class="form-control" value="${escapeHtml(emp.email || '')}"></div>
-          <div class="mb-3"><label class="fw-bold">Phone</label><input type="text" id="editPhone" class="form-control" value="${escapeHtml(emp.phone || '')}"></div>
-          <div class="mb-3"><label class="fw-bold">Join Date</label><input type="date" id="editJoinDate" class="form-control" value="${emp.joinDate || ''}"></div>
-        </div>
-      `;
-    }
-
-    async function saveUpdatedEmployee(id) {
-      const updatedData = {
-        name: document.getElementById('editName')?.value.trim() || "No Name",
-        employeeId: document.getElementById('editEmpId')?.value.trim() || "",
-        department: document.getElementById('editDept')?.value,
-        position: document.getElementById('editPosition')?.value.trim() || "",
-        employmentType: document.getElementById('editEmpType')?.value,
-        email: document.getElementById('editEmail')?.value.trim() || "",
-        phone: document.getElementById('editPhone')?.value.trim() || "",
-        joinDate: document.getElementById('editJoinDate')?.value || "",
-      };
-      if (!updatedData.name || !updatedData.employeeId) {
-        alert("Name and Employee ID are required.");
-        return;
-      }
-      try {
-        await getEmployeesCollection().doc(id).update(updatedData);
-        // update local array
-        const index = employees.findIndex(emp => emp.id === id);
-        if (index !== -1) employees[index] = { id, ...updatedData };
-        applyFiltersAndRender();
-        if (detailModal) detailModal.hide();
-        alert("Employee updated successfully!");
-      } catch (err) {
-        console.error("Update error:", err);
-        alert("Update failed: " + err.message);
-      }
-    }
-
-    async function confirmDelete(id, name) {
-      const userConfirmed = confirm(`⚠️ Permanently delete "${name}"? This action cannot be undone.`);
-      if (!userConfirmed) return;
-      try {
-        await getEmployeesCollection().doc(id).delete();
-        employees = employees.filter(emp => emp.id !== id);
-        applyFiltersAndRender();
-        if (detailModal) detailModal.hide();
-        alert("Employee record deleted.");
-      } catch (err) {
-        alert("Delete error: " + err.message);
-      }
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-      }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-        return c;
-      });
-    }
-
-    // Event listeners for search & filters
-    searchInput.addEventListener('input', () => applyFiltersAndRender());
-    deptFilter.addEventListener('change', () => applyFiltersAndRender());
-    statusFilter.addEventListener('change', () => applyFiltersAndRender());
-
-    // Wait for firebase config
-    window.addEventListener('load', () => {
-      const waitForFirebase = setInterval(() => {
-        if (window.db && window.firebase) {
-          clearInterval(waitForFirebase);
-          loadEmployees();
-        } else if (typeof firebase !== 'undefined' && firebase.apps.length && !window.db) {
-          console.warn("re-check firebase-config, ensure db export");
-        }
-      }, 400);
-      setTimeout(() => {
-        if (employees.length === 0 && window.db) loadEmployees();
-      }, 1500);
+      return true;
     });
 
-    loadEmployees();
+    updateStats();
+    if (filteredEmployees.length === 0) {
+      gridContainer.style.display = "none";
+      emptyDiv.style.display = "block";
+      loadingDiv.style.display = "none";
+    } else {
+      gridContainer.style.display = "grid";
+      emptyDiv.style.display = "none";
+      loadingDiv.style.display = "none";
+      renderEmployeeCards(filteredEmployees);
+    }
   }
+
+  function updateStats() {
+    totalSpan.innerText = employees.length;
+    const fullTimeCount = employees.filter(e => e.status === "FullTime").length;
+    const partTimeCount = employees.filter(e => e.status === "PartTime").length;
+    activeSpan.innerText = fullTimeCount;
+    inactiveSpan.innerText = partTimeCount;
+  }
+
+  function renderEmployeeCards(empList) {
+    gridContainer.innerHTML = "";
+    empList.forEach(emp => {
+      const card = document.createElement("div");
+      card.className = "employee-card";
+      const statusClass = emp.status === "FullTime" ? "status-ft" : "status-pt";
+      const statusText = emp.status === "FullTime" ? "Full Time" : "Part Time";
+      card.innerHTML = `
+        <div class="card-header-custom">
+          <span class="emp-id"><i class="bi bi-upc-scan"></i> ${emp.id || 'N/A'}</span>
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+        <div class="emp-name">${escapeHtml(emp.name || 'Unnamed')}</div>
+        <div class="emp-dept"><i class="bi bi-building"></i> ${escapeHtml(emp.department || '—')} · ${escapeHtml(emp.position || '—')}</div>
+        <div class="card-actions">
+          <button class="btn btn-outline-primary btn-sm view-detail-btn" data-id="${emp.id}"><i class="bi bi-eye"></i> View</button>
+          <button class="btn btn-outline-secondary btn-sm edit-detail-btn" data-id="${emp.id}"><i class="bi bi-pencil-square"></i> Edit</button>
+          <button class="btn btn-outline-danger btn-sm delete-employee-btn" data-id="${emp.id}" data-name="${escapeHtml(emp.name)}"><i class="bi bi-trash3"></i> Delete</button>
+        </div>
+      `;
+      gridContainer.appendChild(card);
+    });
+
+    // attach event listeners for view/edit/delete
+    document.querySelectorAll('.view-detail-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        openDetailModal(id, 'view');
+      });
+    });
+    document.querySelectorAll('.edit-detail-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        openDetailModal(id, 'edit');
+      });
+    });
+    document.querySelectorAll('.delete-employee-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        confirmDelete(id, name);
+      });
+    });
+  }
+
+  async function openDetailModal(empId, mode = 'view') {
+    if (!detailModal) detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    const employee = employees.find(emp => emp.id === empId);
+    if (!employee) return;
+    currentEditId = empId;
+    currentEmployeeData = { ...employee };
+    const modalBody = document.getElementById('detailModalBody');
+    const modalFooter = document.getElementById('modalFooter');
+    const modalTitleSpan = document.getElementById('modalTitle');
+    
+    if (mode === 'view') {
+      modalTitleSpan.innerText = "Employee Details";
+      modalBody.innerHTML = renderDetailView(employee);
+      modalFooter.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="switchToEditBtn"><i class="bi bi-pencil"></i> Edit Employee</button>
+      `;
+      document.getElementById('switchToEditBtn')?.addEventListener('click', () => {
+        detailModal.hide();
+        setTimeout(() => openDetailModal(empId, 'edit'), 300);
+      });
+    } 
+    else { // edit mode
+      modalTitleSpan.innerText = "Edit Employee";
+      modalBody.innerHTML = renderEditForm(employee);
+      modalFooter.innerHTML = `
+        <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+        <button type="button" class="btn btn-success" id="saveUpdateBtn"><i class="bi bi-check-lg"></i> Update Employee</button>
+      `;
+      document.getElementById('cancelEditBtn')?.addEventListener('click', () => {
+        detailModal.hide();
+      });
+      document.getElementById('saveUpdateBtn')?.addEventListener('click', async () => {
+        await saveUpdatedEmployee(empId);
+      });
+    }
+    detailModal.show();
+  }
+
+  function renderDetailView(emp) {
+    return `
+      <div class="detail-section">
+        <div><span class="detail-label"><i class="bi bi-person-badge"></i> Full Name:</span> ${escapeHtml(emp.name || '—')}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-upc-scan"></i> Employee ID:</span> ${escapeHtml(emp.id || '—')}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-building"></i> Department:</span> ${escapeHtml(emp.department || '—')}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-briefcase"></i> Position:</span> ${escapeHtml(emp.position || '—')}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-clock-history"></i> Employment:</span> ${emp.status === 'FullTime' ? 'Full Time' : 'Part Time'}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-envelope"></i> Email:</span> ${escapeHtml(emp.email || '—')}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-telephone"></i> Phone:</span> ${escapeHtml(emp.contact || '—')}</div>
+        <div class="mt-2"><span class="detail-label"><i class="bi bi-calendar3"></i> Join Date:</span> ${emp.joinDate ? emp.joinDate : '—'}</div>
+      </div>
+    `;
+  }
+
+  function renderEditForm(emp) {
+    return `
+      <div class="detail-section edit-mode">
+        <div class="mb-3"><label class="fw-bold">Full Name *</label><input type="text" id="editName" class="form-control" value="${escapeHtml(emp.name || '')}"></div>
+        <div class="mb-3"><label class="fw-bold">Employee ID *</label><input type="text" id="editEmpId" class="form-control" value="${escapeHtml(emp.id || '')}" readonly></div>
+        <div class="mb-3"><label class="fw-bold">Department</label>
+          <select id="editDept" class="form-select"><option value="Front Office" ${emp.department === 'Front Office' ? 'selected' : ''}>Front Office</option><option value="Workshop" ${emp.department === 'Workshop' ? 'selected' : ''}>Workshop</option></select>
+        </div>
+        <div class="mb-3"><label class="fw-bold">Position</label><input type="text" id="editPosition" class="form-control" value="${escapeHtml(emp.position || '')}"></div>
+        <div class="mb-3"><label class="fw-bold">Employment Type</label>
+          <select id="editEmpType" class="form-select"><option value="FullTime" ${emp.status === 'FullTime' ? 'selected' : ''}>Full Time</option><option value="PartTime" ${emp.status === 'PartTime' ? 'selected' : ''}>Part Time</option></select>
+        </div>
+        <div class="mb-3"><label class="fw-bold">Email</label><input type="email" id="editEmail" class="form-control" value="${escapeHtml(emp.email || '')}"></div>
+        <div class="mb-3"><label class="fw-bold">Phone</label><input type="text" id="editPhone" class="form-control" value="${escapeHtml(emp.contact || '')}"></div>
+        <div class="mb-3"><label class="fw-bold">Join Date</label><input type="date" id="editJoinDate" class="form-control" value="${emp.joinDate || ''}"></div>
+      </div>
+    `;
+  }
+
+  async function saveUpdatedEmployee(id) {
+    const updatedData = {
+      name: document.getElementById('editName')?.value.trim() || "No Name",
+      status: document.getElementById('editEmpType')?.value,
+      department: document.getElementById('editDept')?.value,
+      position: document.getElementById('editPosition')?.value.trim() || "",
+      email: document.getElementById('editEmail')?.value.trim() || "",
+      contact: document.getElementById('editPhone')?.value.trim() || "",
+      joinDate: document.getElementById('editJoinDate')?.value || "",
+    };
+    if (!updatedData.name) {
+      alert("Name is required.");
+      return;
+    }
+    try {
+      await getEmployeesCollection().doc(id).update(updatedData);
+      // update local array
+      const index = employees.findIndex(emp => emp.id === id);
+      if (index !== -1) employees[index] = { id, ...updatedData };
+      applyFiltersAndRender();
+      if (detailModal) detailModal.hide();
+      alert("Employee updated successfully!");
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("Update failed: " + err.message);
+    }
+  }
+
+  async function confirmDelete(id, name) {
+    const userConfirmed = confirm(`⚠️ Permanently delete "${name}"? This action cannot be undone.`);
+    if (!userConfirmed) return;
+    try {
+      await getEmployeesCollection().doc(id).delete();
+      employees = employees.filter(emp => emp.id !== id);
+      applyFiltersAndRender();
+      if (detailModal) detailModal.hide();
+      alert("Employee record deleted.");
+    } catch (err) {
+      alert("Delete error: " + err.message);
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+      return c;
+    });
+  }
+
+  // Event listeners for search & filters
+  searchInput.addEventListener('input', () => applyFiltersAndRender());
+  deptFilter.addEventListener('change', () => applyFiltersAndRender());
+  statusFilter.addEventListener('change', () => applyFiltersAndRender());
+
+  // Wait for firebase config
+  window.addEventListener('load', () => {
+    const waitForFirebase = setInterval(() => {
+      if (window.db && window.firebase) {
+        clearInterval(waitForFirebase);
+        loadEmployees();
+      } else if (typeof firebase !== 'undefined' && firebase.apps.length && !window.db) {
+        console.warn("re-check firebase-config, ensure db export");
+      }
+    }, 400);
+    setTimeout(() => {
+      if (employees.length === 0 && window.db) loadEmployees();
+    }, 1500);
+  });
+
+  loadEmployees();
+}
 
   // ================================================
   // PRINT PAGE — only runs if reportArea exists
