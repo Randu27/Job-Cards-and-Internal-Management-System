@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Employee Records | Grafix Print Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>HR Manage | Grafix Print Hub</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
   <link rel="stylesheet" href="../../css/hr-style.css">
+  <link rel="stylesheet" href="../../css/menu.css" >
 </head>
+
 <body>
 
   <!-- NAVBAR -->
@@ -18,18 +21,18 @@
           <i class="bi bi-list fs-4"></i>
         </button>
         <a class="navbar-brand d-flex align-items-center" href="#">
-          <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
+          <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2" onerror="this.src='https://via.placeholder.com/65?text=GPH'">
           Grafix Print Hub
         </a>
       </div>
     </div>
   </nav>
 
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR (offcanvas) -->
   <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
     <div class="offcanvas-header border-bottom border-secondary">
       <h5 class="offcanvas-title fw-bold text-black">Main Menu</h5>
-      <button type="button" class="btn-close btn-close-black" data-bs-dismiss="offcanvas"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body p-0">
       <ul class="nav flex-column mt-3">
@@ -45,18 +48,18 @@
   <!-- HERO -->
   <div class="hero-section">
     <div class="container text-center">
-      <h1 class="display-4">Employee Records</h1>
+      <h1 class="display-4">Employee Directory</h1>
+      <p class="lead text-secondary">View, edit, update or remove employee records</p>
     </div>
   </div>
 
-   <!-- Back to dashboard -->
-<div class="container mt-3">
-  <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
-    <i class="bi bi-arrow-left"></i> Back to Dashboard
-  </a>
-</div>
-<br>
-
+  <!-- Back to dashboard -->
+  <div class="container mt-3">
+    <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+  <br>
 
   <!-- MAIN CONTENT -->
   <div class="container mb-5">
@@ -64,9 +67,9 @@
     <!-- Search + Stats Bar -->
     <div class="view-topbar">
       <div class="view-stats" id="viewStats">
-          <span class="view-stat-badge"><i class="bi bi-people-fill"></i> <span id="totalCount">0</span> Total</span>
-          <span class="view-stat-badge active"><i class="bi bi-briefcase-fill"></i> <span id="activeCount">0</span> Full Time</span>
-          <span class="view-stat-badge inactive"><i class="bi bi-clock-fill"></i> <span id="inactiveCount">0</span> Part Time</span>
+        <span class="view-stat-badge"><i class="bi bi-people-fill"></i> <span id="totalCount">0</span> Total</span>
+        <span class="view-stat-badge active"><i class="bi bi-briefcase-fill"></i> <span id="activeCount">0</span> Full Time</span>
+        <span class="view-stat-badge inactive"><i class="bi bi-clock-fill"></i> <span id="inactiveCount">0</span> Part Time</span>
       </div>
       <div class="view-search-wrap">
         <i class="bi bi-search view-search-icon"></i>
@@ -94,7 +97,7 @@
 
     <!-- Empty State -->
     <div id="viewEmpty" class="view-empty" style="display:none;">
-      <i class="bi bi-person-x view-empty-icon"></i>
+      <i class="bi bi-person-x view-empty-icon" style="font-size: 3rem;"></i>
       <h5>No employees found</h5>
       <p class="text-muted">Try adjusting your search or filters.</p>
     </div>
@@ -104,24 +107,29 @@
 
   </div>
 
-  <!-- DETAIL MODAL -->
-  <div class="modal fade" id="detailModal" tabindex="-1">
+  <!-- DETAIL + EDIT MODAL (unified) -->
+  <div class="modal fade" id="detailModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" style="background: #1e3a5f;">
           <h5 class="modal-title text-white fw-bold">
-            <i class="bi bi-person-badge me-2"></i>Employee Details
+            <i class="bi bi-person-badge me-2"></i><span id="modalTitle">Employee Details</span>
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="closeModalBtn"></button>
         </div>
-        <div class="modal-body p-0" id="detailModalBody"></div>
+        <div class="modal-body p-0" id="detailModalBody">
+          <!-- dynamic content: view or edit mode -->
+        </div>
+        <div class="modal-footer" id="modalFooter">
+          <!-- buttons dynamically generated -->
+        </div>
       </div>
     </div>
   </div>
 
   <footer class="text-center text-muted mt-5 py-3">
-        <small>&copy; Grafix Print Hub </small>
-    </footer>
+    <small>&copy; Grafix Print Hub · HR Management</small>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -129,6 +137,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
   <script src="../../js/firebase-config.js"></script>
+
   <script src="../../js/hr-script.js"></script>
+
+<script src="../../js/navbar-loader.js"></script>
+<script src="../../js/signin.js"></script>
+    
+  
 </body>
 </html>
