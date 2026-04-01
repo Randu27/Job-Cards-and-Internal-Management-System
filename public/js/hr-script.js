@@ -1307,3 +1307,181 @@ if (document.getElementById("reportArea")) {
 
   loadPrintData();
 }
+
+// ===============================
+// HR - Email Helper Functions
+// ===============================
+
+// Add this to your existing hr-script.js file
+// This function can be called from anywhere to send emails
+
+async function sendEmployeeEmail(recipients, subject, body, options = {}) {
+  // recipients: array of {id, name, email}
+  // subject: email subject
+  // body: email body
+  // options: { saveToFirestore: true, simulate: false }
+  
+  const saveToFirestore = options.saveToFirestore !== false;
+  const simulate = options.simulate === true;
+  
+  if (!recipients || recipients.length === 0) {
+    throw new Error('No recipients specified');
+  }
+  
+  if (!subject || !body) {
+    throw new Error('Subject and body are required');
+  }
+  
+  let successCount = 0;
+  let failCount = 0;
+  const errors = [];
+  
+  try {
+    // Save email record to Firestore if enabled
+    if (saveToFirestore) {
+      const emailRecord = {
+        subject: subject,
+        body: body,
+        recipients: recipients.map(r => ({ id: r.id, name: r.name, email: r.email })),
+        recipientCount: recipients.length,
+        sentBy: firebase.auth().currentUser?.email || 'System',
+        sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: simulate ? 'simulated' : 'sent'
+      };
+      
+      await firebase.firestore().collection('emails').add(emailRecord);
+    }
+    
+    if (simulate) {
+      console.log(`[SIMULATE] Would send email to ${recipients.length} recipients`);
+      console.log('Subject:', subject);
+      console.log('Body:', body);
+      return { success: true, successCount: recipients.length, failCount: 0, errors: [] };
+    }
+    
+    // Here you would integrate with actual email service
+    // For production, you should use a cloud function or email API
+    
+    // For now, we'll log to Firestore for each recipient
+    for (const recipient of recipients) {
+      try {
+        await firebase.firestore().collection('emailLogs').add({
+          to: recipient.email,
+          toName: recipient.name,
+          toId: recipient.id,
+          subject: subject,
+          body: body,
+          sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+          sentBy: firebase.auth().currentUser?.email || 'System',
+          status: 'sent'
+        });
+        successCount++;
+      } catch (err) {
+        failCount++;
+        errors.push({ recipient: recipient.email, error: err.message });
+        console.error(`Failed to log email for ${recipient.email}:`, err);
+      }
+    }
+    
+    return {
+      success: failCount === 0,
+      successCount,
+      failCount,
+      errors
+    };
+    
+  } catch (error) {
+    console.error('Error in sendEmployeeEmail:', error);
+    throw error;
+  }
+}
+
+// Helper function to get all employees with email addresses
+async function getAllEmployeesWithEmails() {
+  try {
+    const snapshot = await firebase.firestore()
+      .collection('employees')
+      .where('email', '!=', '')
+      .orderBy('name')
+      .get();
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name || '',
+      email: doc.data().email || '',
+      department: doc.data().department || '',
+      status: doc.data().status || ''
+    }));
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    throw error;
+  }
+}
+
+// Helper function to get employees by department
+async function getEmployeesByDepartment(department) {
+  try {
+    const snapshot = await firebase.firestore()
+      .collection('employees')
+      .where('department', '==', department)
+      .where('email', '!=', '')
+      .get();
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name || '',
+      email: doc.data().email || '',
+      department: doc.data().department || '',
+      status: doc.data().status || ''
+    }));
+  } catch (error) {
+    console.error('Error fetching employees by department:', error);
+    throw error;
+  }
+}
+
+// Helper function to send bulk email templates
+async function sendTemplateEmail(templateName, recipients, customData = {}) {
+  // Predefined email templates
+  const templates = {
+    'welcome': {
+      subject: 'Welcome to Grafix Print Hub!',
+      body: (name) => `Dear ${name},\n\nWelcome to the Grafix Print Hub team! We're excited to have you onboard.\n\nBest regards,\nHR Department`
+    },
+    'announcement': {
+      subject: 'Company Announcement',
+      body: (name, announcement) => `Dear ${name},\n\n${announcement}\n\nBest regards,\nManagement`
+    },
+    'holiday': {
+      subject: 'Upcoming Holiday Notice',
+      body: (name, holidayDetails) => `Dear ${name},\n\nPlease be informed that ${holidayDetails}\n\nBest regards,\nHR Department`
+    },
+    'meeting': {
+      subject: 'Meeting Invitation',
+      body: (name, meetingDetails) => `Dear ${name},\n\nYou are invited to a meeting: ${meetingDetails}\n\nBest regards,\nManagement`
+    }
+  };
+  
+  const template = templates[templateName];
+  if (!template) {
+    throw new Error(`Template "${templateName}" not found`);
+  }
+  
+  const results = [];
+  
+  for (const recipient of recipients) {
+    const personalizedBody = template.body(recipient.name, customData.message || '');
+    const result = await sendEmployeeEmail([recipient], template.subject, personalizedBody, { saveToFirestore: true });
+    results.push({ recipient: recipient.email, ...result });
+  }
+  
+  return results;
+}
+
+// Export functions for use in other scripts
+window.hrEmail = {
+  sendEmployeeEmail,
+  getAllEmployeesWithEmails,
+  getEmployeesByDepartment,
+  sendTemplateEmail
+};
