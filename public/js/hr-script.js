@@ -81,6 +81,17 @@ function getStatusBadgeClass(status) {
   return dbStatus === "fulltime" ? "badge-fulltime" : "badge-parttime";
 }
 
+// Escape HTML to prevent XSS
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Validation functions (reusable across pages)
 const Validators = {
   name: (v) => /^[a-zA-Z\s.\-']{2,}$/.test(v.trim()),
@@ -120,17 +131,6 @@ function getFirebaseErrorMessage(code) {
     "resource-exhausted": "Too many requests. Please wait a moment and try again.",
   };
   return messages[code] || `An unexpected error occurred (${code || "unknown"}). Please try again.`;
-}
-
-// Escape HTML to prevent XSS
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 // ===============================
@@ -322,10 +322,13 @@ if (document.getElementById("addEmployeeForm")) {
           return;
         }
 
+        // Convert status to database format (FullTime/PartTime)
+        const dbStatus = formatStatusForDatabase(empStatus.value);
+
         // Save to Firestore
         await firebase.firestore().collection("employees").doc(empId.value.trim()).set({
           name: empName.value.trim(),
-          status: empStatus.value,
+          status: dbStatus,
           department: empDept.value,
           joinDate: empJoinDate.value,
           nic: empNic.value.trim(),
@@ -675,6 +678,7 @@ if (document.getElementById("employeeForm")) {
 // HR - Employee Directory Page
 // ===============================
 
+// Check for directory page elements (hr-empdirectory.html)
 if (document.getElementById("dirList")) {
   
   let allEmployees = [];
@@ -884,5 +888,422 @@ if (document.getElementById("dirList")) {
     if (editEmail) editEmail.value = emp.email || "";
     if (editContact) editContact.value = emp.contact || "";
     if (editRemarks) editRemarks.value = emp.remarks || "";
+
+    const editPhotoPreview = document.getElementById("editPhotoPreview");
+    if (editPhotoPreview) {
+      editPhotoPreview.src = emp.image || "https://via.placeholder.com/60";
+      editPhotoPreview.style.display = "block";
+    }
+
+    const editPhotoInput = document.getElementById("editPhotoInput");
+    if (editPhotoInput) {
+      editPhotoInput.value = "";
+      editPhotoInput.onchange = function () {
+        const file = this.files[0];
+        if (file && editPhotoPreview) {
+          const reader = new FileReader();
+          reader.onload = e => { editPhotoPreview.src = e.target.result; };
+          reader.readAsDataURL(file);
+        }
+      };
+    }
+
+    showEditMode();
+  };
+
+  window.cancelEditMode = function () {
+    isEditMode = false;
+    const emp = allEmployees.find(e => e.id === currentEmpId);
+    if (emp) populateViewMode(emp);
+    showViewMode();
+    cancelDelete();
+  };
+
+  window.saveEmployee = async function () {
+    const name = document.getElementById("editName")?.value || "";
+    const status = document.getElementById("editStatus")?.value || "";
+    const dept = document.getElementById("editDept")?.value || "";
+    const joinDate = document.getElementById("editJoinDate")?.value || "";
+    const nic = document.getElementById("editNic")?.value || "";
+    const address = document.getElementById("editAddress")?.value || "";
+    const email = document.getElementById("editEmail")?.value || "";
+    const contact = document.getElementById("editContact")?.value || "";
+    const remarks = document.getElementById("editRemarks")?.value || "";
+
+    if (!name.trim() || !Validators.name(name))
+      return showPopup("error", "Validation Error", "<strong>Employee Name</strong> is invalid.");
+    if (!status)
+      return showPopup("error", "Validation Error", "Please select an <strong>Employment Status</strong>.");
+    if (!dept)
+      return showPopup("error", "Validation Error", "Please select a <strong>Department</strong>.");
+    if (!joinDate || !Validators.date(joinDate))
+      return showPopup("error", "Validation Error", "<strong>Date Joined</strong> cannot be a future date.");
+    if (!Validators.nic(nic))
+      return showPopup("error", "Validation Error", "<strong>NIC</strong> format is invalid.");
+    if (!Validators.address(address))
+      return showPopup("error", "Validation Error", "<strong>Address</strong> must be at least 5 characters.");
+    if (!Validators.email(email))
+      return showPopup("error", "Validation Error", "<strong>Email</strong> address is invalid.");
+    if (!Validators.contact(contact))
+      return showPopup("error", "Validation Error", "<strong>Contact Number</strong> is not a valid Sri Lankan number.");
+
+    const saveBtn = document.getElementById("btnSave");
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Saving…`;
+    }
+
+    try {
+      let imageUrl = allEmployees.find(e => e.id === currentEmpId)?.image || "";
+
+      const photoFile = document.getElementById("editPhotoInput")?.files[0];
+      if (photoFile) {
+        try {
+          const ref = firebase.storage().ref("employees/" + currentEmpId);
+          await ref.put(photoFile);
+          imageUrl = await ref.getDownloadURL();
+        } catch (imgErr) {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>Save Changes`;
+          }
+          showPopup("error", "Image Upload Failed", getFirebaseErrorMessage(imgErr.code));
+          return;
+        }
+      }
+
+      const dbStatus = formatStatusForDatabase(status);
+
+      const updated = {
+        name: name.trim(),
+        status: dbStatus,
+        department: dept,
+        joinDate: joinDate,
+        nic: nic.trim(),
+        address: address.trim(),
+        email: email.trim(),
+        contact: contact.trim(),
+        remarks: remarks.trim(),
+        image: imageUrl,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      await firebase.firestore().collection("employees").doc(currentEmpId).update(updated);
+
+      const idx = allEmployees.findIndex(e => e.id === currentEmpId);
+      if (idx !== -1) allEmployees[idx] = { id: currentEmpId, ...allEmployees[idx], ...updated };
+
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>Save Changes`;
+      }
+
+      isEditMode = false;
+      populateViewMode(allEmployees[idx]);
+      showViewMode();
+      applyFilters();
+      showPopup("success", "Employee Updated!", `<strong>${name.trim()}</strong>'s details have been updated.`);
+
+    } catch (err) {
+      console.error(err);
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<i class="bi bi-check-lg me-1"></i>Save Changes`;
+      }
+      showPopup("error", "Update Failed", getFirebaseErrorMessage(err.code));
+    }
+  };
+
+  window.promptDelete = function () {
+    const emp = allEmployees.find(e => e.id === currentEmpId);
+    const deleteNameLabel = document.getElementById("deleteNameLabel");
+    if (deleteNameLabel) deleteNameLabel.textContent = emp ? emp.name : currentEmpId;
+    const box = document.getElementById("deleteConfirmBox");
+    if (box) box.classList.add("active");
+  };
+
+  window.cancelDelete = function () {
+    const box = document.getElementById("deleteConfirmBox");
+    if (box) box.classList.remove("active");
+  };
+
+  window.confirmDelete = async function () {
+    const btn = document.getElementById("confirmDeleteBtn");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Deleting…";
+    }
+
+    try {
+      const emp = allEmployees.find(e => e.id === currentEmpId);
+      if (emp?.image) {
+        try {
+          await firebase.storage().ref("employees/" + currentEmpId).delete();
+        } catch (_) { }
+      }
+
+      await firebase.firestore().collection("employees").doc(currentEmpId).delete();
+
+      const deletedName = emp?.name || currentEmpId;
+      allEmployees = allEmployees.filter(e => e.id !== currentEmpId);
+      applyFilters();
+      closeModal();
+      showPopup("success", "Employee Deleted", `<strong>${deletedName}</strong> has been removed from the system.`);
+
+    } catch (err) {
+      console.error(err);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Yes, Delete";
+      }
+      showPopup("error", "Delete Failed", getFirebaseErrorMessage(err.code));
+    }
+  };
+
+  function showViewMode() {
+    const viewSection = document.getElementById("viewSection");
+    const editSection = document.getElementById("editSection");
+    const btnEdit = document.getElementById("btnEdit");
+    const btnSave = document.getElementById("btnSave");
+    const btnCancelEdit = document.getElementById("btnCancelEdit");
+    const btnDelete = document.getElementById("btnDelete");
+    
+    if (viewSection) viewSection.classList.remove("hidden");
+    if (editSection) editSection.classList.remove("active");
+    if (btnEdit) btnEdit.style.display = "";
+    if (btnSave) btnSave.style.display = "none";
+    if (btnCancelEdit) btnCancelEdit.style.display = "none";
+    if (btnDelete) btnDelete.style.display = "";
+    cancelDelete();
   }
+
+  function showEditMode() {
+    const viewSection = document.getElementById("viewSection");
+    const editSection = document.getElementById("editSection");
+    const btnEdit = document.getElementById("btnEdit");
+    const btnSave = document.getElementById("btnSave");
+    const btnCancelEdit = document.getElementById("btnCancelEdit");
+    const btnDelete = document.getElementById("btnDelete");
+    
+    if (viewSection) viewSection.classList.add("hidden");
+    if (editSection) editSection.classList.add("active");
+    if (btnEdit) btnEdit.style.display = "none";
+    if (btnSave) btnSave.style.display = "";
+    if (btnCancelEdit) btnCancelEdit.style.display = "";
+    if (btnDelete) btnDelete.style.display = "none";
+    cancelDelete();
+  }
+
+  window.closeModal = function () {
+    const modal = document.getElementById("empModal");
+    if (modal) modal.style.display = "none";
+    document.body.style.overflow = "";
+    currentEmpId = null;
+    isEditMode = false;
+    cancelDelete();
+  };
+
+  window.handleModalBgClick = function (e) {
+    if (e.target === document.getElementById("empModal")) closeModal();
+  };
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("empModal");
+      if (modal && modal.style.display !== "none") closeModal();
+    }
+  });
+
+  if (searchInput) searchInput.addEventListener("input", applyFilters);
+  if (filterDept) filterDept.addEventListener("change", applyFilters);
+  if (filterStatus) filterStatus.addEventListener("change", applyFilters);
+
+  document.addEventListener("DOMContentLoaded", loadDirectory);
+}
+
+// ===============================
+// HR - Print Report Page
+// ===============================
+
+if (document.getElementById("reportArea")) {
+
+  const reportArea = document.getElementById("reportArea");
+  const printLoading = document.getElementById("printLoading");
+  const printEmpty = document.getElementById("printEmpty");
+  const reportThead = document.getElementById("reportThead");
+  const reportTbody = document.getElementById("reportTbody");
+  const deptFilter = document.getElementById("printDeptFilter");
+  const statusFilter = document.getElementById("printStatusFilter");
+  const colToggles = document.getElementById("colToggles");
+  const printBtn = document.getElementById("printBtn");
+  const exportCsvBtn = document.getElementById("exportCsvBtn");
+  const reportDate = document.getElementById("reportDate");
+
+  let allEmployees = [];
+
+  const COLUMNS = [
+    { key: "id", label: "Employee ID", on: true },
+    { key: "name", label: "Name", on: true },
+    { key: "department", label: "Department", on: true },
+    { key: "status", label: "Status", on: true },
+    { key: "joinDate", label: "Date Joined", on: true },
+    { key: "nic", label: "NIC", on: true },
+    { key: "contact", label: "Contact", on: true },
+    { key: "email", label: "Email", on: true },
+    { key: "address", label: "Address", on: false },
+    { key: "remarks", label: "Remarks", on: false },
+  ];
+
+  if (colToggles) {
+    COLUMNS.forEach((col, i) => {
+      const lbl = document.createElement("label");
+      lbl.className = `print-col-toggle ${col.on ? "on" : ""}`;
+      lbl.innerHTML = `<input type="checkbox" ${col.on ? "checked" : ""}> ${col.label}`;
+      const input = lbl.querySelector("input");
+      input.addEventListener("change", function () {
+        COLUMNS[i].on = this.checked;
+        lbl.classList.toggle("on", this.checked);
+        renderTable(getFiltered());
+      });
+      colToggles.appendChild(lbl);
+    });
+  }
+
+  function activeCols() { return COLUMNS.filter(c => c.on); }
+
+  function getFiltered() {
+    const dept = deptFilter?.value.toLowerCase() || "";
+    const stat = statusFilter?.value.toLowerCase() || "";
+    return allEmployees.filter(emp => {
+      const matchDept = !dept || (emp.department || "").toLowerCase() === dept;
+      let matchStat = !stat;
+      if (stat === "fulltime") {
+        matchStat = (emp.status || "").toLowerCase() === "fulltime";
+      } else if (stat === "parttime") {
+        matchStat = (emp.status || "").toLowerCase() === "parttime";
+      }
+      return matchDept && matchStat;
+    });
+  }
+
+  function updateSummary(employees) {
+    const fullTime = employees.filter(e => (e.status || "").toLowerCase() === "fulltime").length;
+    const partTime = employees.length - fullTime;
+    const depts = new Set(employees.map(e => e.department).filter(Boolean)).size;
+    
+    const pTotal = document.getElementById("pTotal");
+    const pFullTime = document.getElementById("pFullTime");
+    const pPartTime = document.getElementById("pPartTime");
+    const pDepts = document.getElementById("pDepts");
+    
+    if (pTotal) pTotal.textContent = employees.length;
+    if (pFullTime) pFullTime.textContent = fullTime;
+    if (pPartTime) pPartTime.textContent = partTime;
+    if (pDepts) pDepts.textContent = depts;
+  }
+
+  function formatStatus(status) {
+    if (!status) return "—";
+    if (status.toLowerCase() === "fulltime") return "Full Time";
+    if (status.toLowerCase() === "parttime") return "Part Time";
+    return status;
+  }
+
+  function renderTable(employees) {
+    const cols = activeCols();
+
+    if (reportThead) {
+      reportThead.innerHTML = `<tr>${cols.map(c => `<th>${c.label}</th>`).join("")}</tr>`;
+    }
+
+    if (reportTbody) {
+      if (employees.length === 0) {
+        reportTbody.innerHTML = "";
+        if (printEmpty) printEmpty.style.display = "block";
+      } else {
+        if (printEmpty) printEmpty.style.display = "none";
+        reportTbody.innerHTML = employees.map((emp) => `
+          <tr>
+            ${cols.map(c => {
+              if (c.key === "status") {
+                const isFullTime = (emp.status || "").toLowerCase() === "fulltime";
+                return `<td><span class="report-status-badge ${isFullTime ? "active" : "inactive"}">${formatStatus(emp.status)}</span></td>`;
+              }
+              return `<td>${escapeHtml(emp[c.key] || "—")}</td>`;
+            }).join("")}
+          </tr>
+        `).join("");
+      }
+    }
+
+    updateSummary(employees);
+  }
+
+  async function loadPrintData() {
+    if (printLoading) printLoading.style.display = "block";
+    if (reportArea) reportArea.style.display = "none";
+
+    try {
+      const snapshot = await firebase.firestore().collection("employees").orderBy("name").get();
+      allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      if (printLoading) printLoading.style.display = "none";
+      if (reportArea) reportArea.style.display = "block";
+
+      if (reportDate) {
+        reportDate.textContent = "Generated: " + new Date().toLocaleString("en-GB", {
+          day: "2-digit", month: "long", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        });
+      }
+
+      renderTable(getFiltered());
+
+    } catch (err) {
+      console.error(err);
+      if (printLoading) printLoading.style.display = "none";
+      if (reportArea) reportArea.style.display = "block";
+      if (printEmpty) {
+        printEmpty.style.display = "block";
+        const emptyTitle = printEmpty.querySelector("h5");
+        if (emptyTitle) emptyTitle.textContent = "Failed to load data";
+      }
+    }
+  }
+
+  if (deptFilter) deptFilter.addEventListener("change", () => renderTable(getFiltered()));
+  if (statusFilter) statusFilter.addEventListener("change", () => renderTable(getFiltered()));
+
+  if (printBtn) {
+    printBtn.addEventListener("click", () => {
+      if (reportDate) {
+        reportDate.textContent = "Generated: " + new Date().toLocaleString("en-GB", {
+          day: "2-digit", month: "long", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        });
+      }
+      window.print();
+    });
+  }
+
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener("click", () => {
+      const cols = activeCols();
+      const employees = getFiltered();
+      const header = cols.map(c => `"${c.label}"`).join(",");
+      const rows = employees.map(emp =>
+        cols.map(c => `"${(emp[c.key] || "").toString().replace(/"/g, '""')}"`).join(",")
+      );
+      const csv = [header, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  loadPrintData();
 }
