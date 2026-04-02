@@ -502,22 +502,86 @@ async function saveTransaction() {
 
 
 
+/**
+ * Helper: Calculates Income, Expenses, and Profit for the last 6 months
+ * based on the current date (April 2026).
+ */
+function getMonthlyData() {
+    const months = [];
+    const incomeData = [];
+    const expenseData = [];
 
-function generatePDF() {
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const mName = d.toLocaleString('default', { month: 'short' });
+        const ym = d.toISOString().substring(0, 7); // Format: "2026-04"
+        
+        months.push(mName);
+        
+        // Filter masterRecords for this specific month
+        const monthly = masterRecords.filter(r => r.date.startsWith(ym));
+        let inc = 0, exp = 0;
+        
+        monthly.forEach(r => {
+            if (r.type === 'Order') inc += r.amount;
+            else exp += r.amount;
+        });
+
+        incomeData.push(inc);
+        expenseData.push(exp);
+    }
+    return { months, incomeData, expenseData };
+}
+
+
+
+//Helper Function to genereate PDF to collect the six months dates
+function getMonthlyData() {
+    const months = [];
+    const incomeData = [];
+    const expenseData = [];
+
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const mName = d.toLocaleString('default', { month: 'short' });
+        const ym = d.toISOString().substring(0, 7); // "2026-04"
+        
+        months.push(mName);
+        
+        // Filter masterRecords for the specific month
+        const monthly = masterRecords.filter(r => r.date.startsWith(ym));
+        let inc = 0, exp = 0;
+        
+        monthly.forEach(r => {
+            if (r.type === 'Order') inc += r.amount;
+            else exp += r.amount;
+        });
+
+        incomeData.push(inc);
+        expenseData.push(exp);
+    }
+    return { months, incomeData, expenseData };
+}
+
+
+
+//Generate PDF with charts
+
+async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
 
     const type = document.getElementById('reportType').value;
-    const start = document.getElementById('reportDateStart').value;
-    const end = document.getElementById('reportDateEnd').value;
+    const startInput = document.getElementById('reportDateStart').value;
+    const endInput = document.getElementById('reportDateEnd').value;
 
-    // 1. Filter the masterRecords based on the form selection
+    // Filter local records based on UI inputs
     let reportData = masterRecords.filter(record => {
         const matchesType = (type === "All" || record.type === type);
-        let matchesDate = true;
-        if (start && end) {
-            matchesDate = record.date >= start && record.date <= end;
-        }
+        let matchesDate = (startInput && endInput) ? (record.date >= startInput && record.date <= endInput) : true;
         return matchesType && matchesDate;
     });
 
@@ -526,52 +590,142 @@ function generatePDF() {
         return;
     }
 
-    // 2. Add Header Content
-    doc.setFontSize(18);
-    doc.text("Grafix Print Hub - Financial Report", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Report Type: ${type} | Date Range: ${start || 'All'} to ${end || 'Present'}`, 14, 30);
+    // --- CALCULATE SUMMARY TOTALS ---
+    let totalInc = 0, totalExp = 0;
+    reportData.forEach(r => r.type === 'Order' ? totalInc += r.amount : totalExp += r.amount);
+    const netProfit = totalInc - totalExp;
 
-    // 3. Setup Table Data
-    const tableColumn = ["ID", "Type", "Date", "Description", "Amount (Rs.)"];
-    const tableRows = [];
-
-    let totalAmount = 0;
-
-    reportData.forEach(record => {
-        const rowData = [
-            record.id,
-            record.type,
-            record.date,
-            record.description,
-            record.amount.toLocaleString()
-        ];
-        tableRows.push(rowData);
+    /**
+     * REUSABLE HEADER FUNCTION
+     * Displays Site Name, Report Subject, and Time/Date Metadata
+     */
+    const drawHeader = (pageTitle) => {
+        // Dark Background Header
+        doc.setFillColor(33, 37, 41); 
+        doc.rect(0, 0, pageWidth, 45, 'F');
         
-        // Summing up (Orders are positive, Bills are negative for Net Total)
-        if (record.type === 'Order') totalAmount += record.amount;
-        else totalAmount -= record.amount;
-    });
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("GRAFIX PRINT HUB", 14, 20); 
+        
+        doc.setFontSize(10);
+        doc.text(pageTitle, 14, 28);
+        
+        // Metadata Block (Right-aligned)
+        doc.setFontSize(8);
+        doc.text(`REPORT TYPE: ${type.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
+        doc.text(`TIME PERIOD: ${startInput || 'START'} TO ${endInput || 'TODAY'}`, pageWidth - 14, 22, { align: 'right' });
+        doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
+    };
 
-    // 4. Generate Table
+    // --- PAGE 1: ANALYTICS ---
+    drawHeader("SYSTEM GENERATED FINANCIAL ANALYSIS");
+    doc.setTextColor(0, 0, 0);
+
+    if (type === "All") {
+        // Text Summary
+        doc.setFontSize(12);
+        doc.text("Business Performance Summary", 14, 60);
+        doc.setFontSize(10);
+        doc.text(`Total Income (Orders): Rs. ${totalInc.toLocaleString()}`, 14, 70);
+        doc.text(`Total Expenses (Bills): Rs. ${totalExp.toLocaleString()}`, 14, 77);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Net Profit: Rs. ${netProfit.toLocaleString()}`, 14, 87);
+        doc.setFont(undefined, 'normal');
+
+        // Prepare 6-Month Data
+        const trend = getMonthlyData();
+        const profitTrendData = trend.incomeData.map((inc, i) => inc - trend.expenseData[i]);
+
+        // Draw Pie Chart (Income vs Expense)
+        const ctxPie = document.getElementById('pdfPieChart').getContext('2d');
+        const pieChart = new Chart(ctxPie, {
+            type: 'pie',
+            data: {
+                labels: ['Income', 'Expenses'],
+                datasets: [{ data: [totalInc, totalExp], backgroundColor: ['#198754', '#dc3545'] }]
+            },
+            options: { animation: false, responsive: false }
+        });
+
+        // Draw Bar Chart (Profit Trend)
+        const ctxBar = document.getElementById('pdfBarChart').getContext('2d');
+        const barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: trend.months,
+                datasets: [{ label: 'Monthly Net Profit (Rs.)', data: profitTrendData, backgroundColor: '#0d6efd' }]
+            },
+            options: { animation: false, responsive: false }
+        });
+
+        // Wait for rendering to complete
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // Add Images to PDF
+        doc.addImage(document.getElementById('pdfPieChart').toDataURL('image/png'), 'PNG', 135, 55, 55, 55);
+        doc.setFontSize(11);
+        doc.text("6-Month Net Profit Performance Trend", 14, 115);
+        doc.addImage(document.getElementById('pdfBarChart').toDataURL('image/png'), 'PNG', 14, 120, 180, 75);
+
+        pieChart.destroy();
+        barChart.destroy();
+
+        // Move to New Page for the list
+        doc.addPage();
+        drawHeader("DETAILED TRANSACTION LOG");
+        var tableY = 55;
+
+    } else {
+        // LOGIC FOR BILLS OR ORDERS ONLY (Single Page)
+        const trend = getMonthlyData();
+        const label = type === "Bill" ? "Total Expenditure" : "Total Income";
+        const val = type === "Bill" ? totalExp : totalInc;
+        
+        doc.setFontSize(13);
+        doc.text(`${label}: Rs. ${val.toLocaleString()}`, 14, 60);
+
+        const ctxBar = document.getElementById('pdfBarChart').getContext('2d');
+        const barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: trend.months,
+                datasets: [{ 
+                    label: type === "Bill" ? 'Monthly Bills' : 'Monthly Orders', 
+                    data: type === "Bill" ? trend.expenseData : trend.incomeData, 
+                    backgroundColor: type === "Bill" ? '#dc3545' : '#198754' 
+                }]
+            },
+            options: { animation: false, responsive: false }
+        });
+
+        await new Promise(r => setTimeout(r, 800));
+        doc.addImage(document.getElementById('pdfBarChart').toDataURL('image/png'), 'PNG', 14, 70, 180, 75);
+        barChart.destroy();
+        var tableY = 155;
+    }
+
+    // --- TRANSACTION TABLE ---
     doc.autoTable({
-        head: [tableColumn],
-        body: tableRows,
-        startY: 40,
+        head: [["ID", "Type", "Date", "Description", "Amount (Rs.)"]],
+        body: reportData.map(r => [r.id, r.type, r.date, r.description, r.amount.toLocaleString()]),
+        startY: tableY,
         theme: 'striped',
-        headStyles: { fillColor: [0, 0, 0] }
+        headStyles: { fillColor: [33, 37, 41] },
+        styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // 5. Add Total Summary at the bottom
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(12);
-    doc.text(`Total Summary: Rs. ${totalAmount.toLocaleString()}`, 14, finalY);
+    // --- FOOTER (Automatic Page Numbering) ---
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Grafix Print Hub | Cloud Audit | Page ${i} of ${pageCount}`, pageWidth / 2, 287, { align: 'center' });
+    }
 
-    // 6. Save PDF
-    doc.save(`Grafix_Report_${new Date().getTime()}.pdf`);
+    // Save PDF with unique timestamp
+    doc.save(`Grafix_Audit_${type}_${new Date().getTime()}.pdf`);
 }
-
-
-
 
 
