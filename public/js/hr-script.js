@@ -1313,29 +1313,22 @@ if (document.getElementById("reportArea")) {
       // REUSABLE HEADER FUNCTION
       // ======================
       const drawHeader = (pageTitle, startDate, endDate) => {
-        // Dark Background Header
-        doc.setFillColor(33, 37, 41);
+           // Dark Background Header
+        doc.setFillColor(33, 37, 41); 
         doc.rect(0, 0, pageWidth, 45, 'F');
         
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
-        doc.setFont(undefined, 'bold');
-        doc.text("GRAFIX PRINT HUB", 14, 20);
+        doc.text("GRAFIX PRINT HUB", 14, 20); 
         
         doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        doc.text(pageTitle, 14, 32);
+        doc.text(pageTitle, 14, 28);
         
         // Metadata Block (Right-aligned)
         doc.setFontSize(8);
-        doc.text(`REPORT TYPE: ${pageTitle}`, pageWidth - 14, 15, { align: 'right' });
-        doc.text(`TIME PERIOD: ${startDate || 'ALL TIME'} TO ${endDate || 'CURRENT'}`, pageWidth - 14, 22, { align: 'right' });
+        doc.text(`REPORT TYPE: ${type.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
         doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
-        
-        // Add a line separator
-        doc.setDrawColor(200, 200, 200);
-        doc.line(14, 38, pageWidth - 14, 38);
-      };
+    }; 
       
       // ======================
       // DRAW TABLE FUNCTION
