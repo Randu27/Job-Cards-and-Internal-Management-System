@@ -503,72 +503,130 @@ async function saveTransaction() {
 
 
 
-function generatePDF() {
+async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
 
     const type = document.getElementById('reportType').value;
-    const start = document.getElementById('reportDateStart').value;
-    const end = document.getElementById('reportDateEnd').value;
+    const startInput = document.getElementById('reportDateStart').value;
+    const endInput = document.getElementById('reportDateEnd').value;
 
-    // 1. Filter the masterRecords based on the form selection
+    // 1. Filter Data based on User Selection
     let reportData = masterRecords.filter(record => {
         const matchesType = (type === "All" || record.type === type);
-        let matchesDate = true;
-        if (start && end) {
-            matchesDate = record.date >= start && record.date <= end;
-        }
+        let matchesDate = (startInput && endInput) ? (record.date >= startInput && record.date <= endInput) : true;
         return matchesType && matchesDate;
     });
 
     if (reportData.length === 0) {
-        alert("No records found for the selected criteria.");
+        alert("No records found for the selected period.");
         return;
     }
 
-    // 2. Add Header Content
-    doc.setFontSize(18);
-    doc.text("Grafix Print Hub - Financial Report", 14, 20);
+    // 2. HEADER DESIGN
+    doc.setFillColor(33, 37, 41); // Dark background for header
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text("GRAFIX PRINT HUB", 14, 22);
     doc.setFontSize(10);
-    doc.text(`Report Type: ${type} | Date Range: ${start || 'All'} to ${end || 'Present'}`, 14, 30);
+    doc.text("FINANCIAL ANALYTICS & SUMMARY", 14, 30);
+    doc.text(`DATE RANGE: ${startInput || 'ALL'} TO ${endInput || 'TODAY'}`, 14, 38);
+    doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 70, 22);
 
-    // 3. Setup Table Data
-    const tableColumn = ["ID", "Type", "Date", "Description", "Amount (Rs.)"];
-    const tableRows = [];
+    // 3. ANALYTICS SECTION (Charts)
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    let chartY = 55;
 
-    let totalAmount = 0;
-
-    reportData.forEach(record => {
-        const rowData = [
-            record.id,
-            record.type,
-            record.date,
-            record.description,
-            record.amount.toLocaleString()
-        ];
-        tableRows.push(rowData);
-        
-        // Summing up (Orders are positive, Bills are negative for Net Total)
-        if (record.type === 'Order') totalAmount += record.amount;
-        else totalAmount -= record.amount;
+    // A. Generate 6-Month Comparison (Bar Chart)
+    const trend = getMonthlyData(); // Helper function below
+    const ctxBar = document.getElementById('pdfBarChart').getContext('2d');
+    const barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: trend.months,
+            datasets: [
+                { label: 'Income', data: trend.incomeData, backgroundColor: '#198754' },
+                { label: 'Expenses', data: trend.expenseData, backgroundColor: '#dc3545' }
+            ]
+        },
+        options: { animation: false, responsive: false }
     });
 
-    // 4. Generate Table
+    // Wait for render, then add image
+    await new Promise(resolve => setTimeout(resolve, 600));
+    const barImg = document.getElementById('pdfBarChart').toDataURL('image/png');
+    doc.text("6-Month Performance Trend", 14, chartY);
+    doc.addImage(barImg, 'PNG', 14, chartY + 5, 180, 60);
+
+    // B. For "All" Report - Add Pie Chart
+    if (type === "All") {
+        let totalInc = 0, totalExp = 0;
+        reportData.forEach(r => r.type === 'Order' ? totalInc += r.amount : totalExp += r.amount);
+
+        const ctxPie = document.getElementById('pdfPieChart').getContext('2d');
+        const pieChart = new Chart(ctxPie, {
+            type: 'pie',
+            data: {
+                labels: ['Income', 'Expenses'],
+                datasets: [{ data: [totalInc, totalExp], backgroundColor: ['#198754', '#dc3545'] }]
+            },
+            options: { animation: false, responsive: false }
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 400));
+        const pieImg = document.getElementById('pdfPieChart').toDataURL('image/png');
+        doc.text("Income vs Expense Ratio", 130, 135);
+        doc.addImage(pieImg, 'PNG', 140, 140, 40, 40);
+        pieChart.destroy();
+    }
+
+    // 4. DATA TABLE (Main Table)
+    const tableColumn = ["ID", "Type", "Date", "Description", "Amount (Rs.)"];
+    const tableRows = reportData.map(r => [r.id, r.type, r.date, r.description, r.amount.toLocaleString()]);
+
     doc.autoTable({
         head: [tableColumn],
         body: tableRows,
-        startY: 40,
+        startY: (type === "All") ? 185 : 130,
         theme: 'striped',
-        headStyles: { fillColor: [0, 0, 0] }
+        headStyles: { fillColor: [33, 37, 41] },
+        styles: { fontSize: 9 }
     });
 
-    // 5. Add Total Summary at the bottom
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(12);
-    doc.text(`Total Summary: Rs. ${totalAmount.toLocaleString()}`, 14, finalY);
+    // 5. FOOTER
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Grafix Print Hub | Page ${i} of ${pageCount}`, pageWidth / 2, 285, { align: 'center' });
+    }
 
-    // 6. Save PDF
     doc.save(`Grafix_Report_${new Date().getTime()}.pdf`);
+    barChart.destroy();
+}
+
+// Helper function to calculate last 6 months
+function getMonthlyData() {
+    const months = [];
+    const incomeData = [];
+    const expenseData = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const mName = d.toLocaleString('default', { month: 'short' });
+        const ym = d.toISOString().substring(0, 7);
+        months.push(mName);
+        const monthly = masterRecords.filter(r => r.date.startsWith(ym));
+        let inc = 0, exp = 0;
+        monthly.forEach(r => r.type === 'Order' ? inc += r.amount : exp += r.amount);
+        incomeData.push(inc);
+        expenseData.push(exp);
+    }
+    return { months, incomeData, expenseData };
 }
 
 
