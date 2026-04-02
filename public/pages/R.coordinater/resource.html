@@ -4,40 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resource Coordination - Grafix Print Hub</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../css/menu.css">
- <style>
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <style>
         :root {
             --primary-color: #ffe785;
-    --secondary-color: #fdfcf0;
-    --dark-slate: #34495e;
+            --secondary-color: #fdfcf0;
+            --dark-bg: #2c3e50;
         }
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
         .navbar { background-color: var(--primary-color); }
-        .navbar-brand { color: #000000 !important; font-weight: 700; }
-        .bi-list { color: #000000 !important; }
+        .navbar-brand { color: #000 !important; font-weight: 700; }
+        .bi-list { color: #000 !important; }
         .offcanvas { background-color: var(--primary-color); width: 280px !important; }
-        .hero-section { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 50px 0; border-radius: 15px; }
-        .feature-card { border: none; border-radius: 15px; transition: 0.3s; }
-        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
-        /* New styles for log and actions */
-        #activityLog { max-height: 200px; overflow-y: auto; }
-        .log-entry { padding: 5px 0; border-bottom: 1px solid #eee; }
+        .nav-link { color: #000; padding: 15px 20px; transition: 0.3s; text-decoration: none; display: block; }
+        .nav-link:hover, .nav-link.active { color: #fff !important; background: #34495e; }
+
+        .hero-section { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px 0; }
+
+        .feature-card { border: none; border-radius: 15px; transition: transform 0.3s, box-shadow 0.3s; }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,0.12); }
+
+        .badge { padding: 8px 12px; border-radius: 6px; font-weight: 500; }
+        .btn-dark { background-color: var(--dark-bg); border: none; }
+        .btn-dark:hover { background-color: #1a252f; }
+
+        #activityLog { max-height: 250px; overflow-y: auto; padding-right: 5px; }
+        #activityLog::-webkit-scrollbar { width: 5px; }
+        #activityLog::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .log-entry { padding: 5px 0; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+
+        @keyframes highlightUpdate {
+            0%   { background-color: rgba(255, 231, 133, 0.6); }
+            100% { background-color: transparent; }
+        }
+        .updated-row { animation: highlightUpdate 1.5s ease-out; }
+
+        #loadingOverlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(255,255,255,0.6); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        #loadingOverlay.show { display: flex; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center; z-index: 1050;
+        }
+        .modal-box {
+            background: #fff; border-radius: 12px;
+            padding: 30px; max-width: 350px; width: 90%; text-align: center;
+        }
+        .modal-btn-confirm-red { background: #dc3545; color: #fff; border: none; border-radius: 8px; padding: 8px 20px; margin-right: 8px; cursor: pointer; }
+        .modal-btn-cancel { background: #6c757d; color: #fff; border: none; border-radius: 8px; padding: 8px 20px; cursor: pointer; }
+
+        .view-detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .view-detail-label { color: #6c757d; font-size: 0.85rem; }
+        .view-detail-value { font-weight: 600; }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white; border: none; border-radius: 8px;
+            padding: 10px 16px; font-size: 0.9rem; transition: 0.3s; width: 100%;
+        }
+        .btn-pdf:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(231,76,60,0.4); color: white; }
+
+        .btn-alert {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white; border: none; border-radius: 8px;
+            padding: 10px 16px; font-size: 0.9rem; transition: 0.3s; width: 100%;
+        }
+        .btn-alert:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(243,156,18,0.4); color: white; }
+
+        .action-btn-group { display: flex; gap: 4px; justify-content: center; }
+
+        /* Toast notification */
+        #toastContainer {
+            position: fixed; top: 80px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .toast-msg {
+            padding: 12px 20px; border-radius: 10px; color: white;
+            font-size: 0.88rem; font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-success { background: #27ae60; }
+        .toast-warning { background: #e67e22; }
+        .toast-danger  { background: #e74c3c; }
+        .toast-info    { background: #2980b9; }
+
+        /* Low stock warning banner */
+        #lowStockBanner {
+            display: none;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white; padding: 10px 20px;
+            border-radius: 10px; margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        #lowStockBanner.show { display: block; }
     </style>
 </head>
 <body>
 
+<!-- Toast container -->
+<div id="toastContainer"></div>
 
+<!-- Navbar -->
 <nav class="navbar navbar-dark shadow-sm sticky-top">
     <div class="container">
         <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+            <button class="btn btn-outline-dark me-3" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
                 <i class="bi bi-list fs-4"></i>
             </button>
             <a class="navbar-brand d-flex align-items-center" href="#">
@@ -59,166 +148,555 @@
     </div>
 </div>
 
+<div id="loadingOverlay">
+    <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Loading…</span></div>
+</div>
 
-<main class="container mt-4">
-    <div class="hero-section text-center mb-4 shadow">
-        <h1 class="display-5 fw-bold">Resource Coordination</h1>
-        <p class="lead">Inventory Monitoring & Low-Stock Alerts</p>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card feature-card shadow-sm p-4">
-                <h4 class="mb-3">Update Stock</h4>
-                <div class="mb-3">
-                    <label class="form-label">Material Name</label>
-                    <input type="text" id="materialName" class="form-control" placeholder="e.g. Cyan Ink">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Quantity to Add</label>
-                    <input type="number" id="materialQty" class="form-control" value="1">
-                </div>
-                <button class="btn btn-dark w-100" onclick="updateStock()">
-                    <i class="bi bi-plus-circle me-2"></i>Update Stock
-                </button>
+<!-- VIEW Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0" style="background:linear-gradient(135deg,#2c3e50,#34495e);border-radius:16px 16px 0 0;">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-eye me-2"></i>Resource Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-
-            <div class="card feature-card shadow-sm p-4 mt-4">
-                <h4 class="mb-3">Recent Activity</h4>
-                <div id="activityLog" class="small text-muted">
-                    <div class="log-entry">No recent updates.</div>
+            <div class="modal-body p-4">
+                <div class="view-detail-row">
+                    <span class="view-detail-label">Resource Name</span>
+                    <span class="view-detail-value" id="viewName">—</span>
                 </div>
+                <div class="view-detail-row">
+                    <span class="view-detail-label">Current Stock</span>
+                    <span class="view-detail-value" id="viewQty">—</span>
+                </div>
+                <div class="view-detail-row">
+                    <span class="view-detail-label">Status</span>
+                    <span id="viewStatus">—</span>
+                </div>
+                <div class="view-detail-row">
+                    <span class="view-detail-label">Last Updated</span>
+                    <span class="view-detail-value" id="viewUpdated">—</span>
+                </div>
+                <div class="view-detail-row" style="border:none;">
+                    <span class="view-detail-label">Document ID</span>
+                    <span class="view-detail-value text-muted small" id="viewDocId">—</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="col-md-8">
-            <div class="card feature-card shadow-sm p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="m-0">Current Stock</h4>
-                    <input type="text" id="stockSearch" class="form-control form-control-sm w-50" placeholder="Search resources..." onkeyup="filterStock()">
+<!-- EDIT Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0" style="background:linear-gradient(135deg,#f39c12,#e67e22);border-radius:16px 16px 0 0;">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-pencil me-2"></i>Edit Resource</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="editDocId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Resource Name</label>
+                    <input type="text" id="editName" class="form-control" placeholder="e.g. Cyan Ink">
                 </div>
-                <table class="table align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Resource</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th class="text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stockTableBody">
-                        <tr>
-                            <td>A4 Glossy Paper</td>
-                            <td>500</td>
-                            <td><span class="badge bg-success">Healthy</span></td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteRow(this)"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Cyan Ink</td>
-                            <td>12</td>
-                            <td><span class="badge bg-danger">Low Stock</span></td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteRow(this)"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Stock Quantity</label>
+                    <input type="number" id="editQty" class="form-control" min="0">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-warning text-white fw-bold" onclick="saveEdit()">
+                    <i class="bi bi-check-lg me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main -->
+<main>
+    <div class="hero-section text-center mb-4 shadow">
+        <h1 class="fw-bold">Resource Coordination</h1>
+        <p class="mb-0 opacity-75" id="syncStatus">
+            <i class="bi bi-cloud-check me-1"></i>Connected to Firebase
+        </p>
+    </div>
+
+    <div class="container mt-4">
+
+        <!-- Low stock warning banner -->
+        <div id="lowStockBanner">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Low Stock Warning!</strong>
+            <span id="lowStockList"></span>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left column -->
+            <div class="col-md-4">
+                <!-- ADD -->
+                <div class="card feature-card shadow-sm p-4">
+                    <h4 class="mb-3"><i class="bi bi-plus-circle me-2 text-success"></i>Add Stock</h4>
+                    <div class="mb-3">
+                        <label class="form-label">Material Name</label>
+                        <input type="text" id="materialName" class="form-control" placeholder="e.g. Cyan Ink">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity to Add</label>
+                        <input type="number" id="materialQty" class="form-control" value="1" min="1">
+                    </div>
+                    <button class="btn btn-dark w-100" onclick="updateStock()">
+                        <i class="bi bi-plus-circle me-2"></i>Add / Update Stock
+                    </button>
+                </div>
+
+                <!-- Email Alert -->
+                <div class="card feature-card shadow-sm p-4 mt-4">
+                    <h4 class="mb-2"><i class="bi bi-envelope-exclamation me-2 text-warning"></i>Low Stock Alert</h4>
+                    <p class="text-muted small mb-3">
+                        Automatically sends an email when items drop below 50 units.
+                        Click below to manually send an alert now.
+                    </p>
+                    <button class="btn-alert" onclick="sendLowStockEmail(true)">
+                        <i class="bi bi-send me-2"></i>Send Alert Email Now
+                    </button>
+                </div>
+
+                <!-- PDF Export -->
+                <div class="card feature-card shadow-sm p-4 mt-4">
+                    <h4 class="mb-2"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Export Report</h4>
+                    <p class="text-muted small mb-3">Download the full stock inventory as a PDF report.</p>
+                    <button class="btn-pdf" onclick="exportPDF()">
+                        <i class="bi bi-download me-2"></i>Download PDF Report
+                    </button>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="card feature-card shadow-sm p-4 mt-4">
+                    <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>Recent Activity</h4>
+                    <div id="activityLog" class="small text-muted">
+                        <div class="log-entry">No recent updates.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right column: table -->
+            <div class="col-md-8">
+                <div class="card feature-card shadow-sm p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h4 class="m-0">Current Stock</h4>
+                        <input type="text" id="stockSearch" class="form-control form-control-sm"
+                               style="max-width:220px;"
+                               placeholder="🔍 Search resources…" onkeyup="filterStock()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Resource</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <div class="spinner-border spinner-border-sm me-2"></div>
+                                        Loading from Firebase…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </main>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+<script src="../../js/firebase-config.js"></script>
 <script src="../../js/navbar-loader.js"></script>
 <script src="../../js/signin.js"></script>
 
-
 <script>
-    function updateStock() {
-        const nameInput = document.getElementById('materialName');
-        const qtyInput = document.getElementById('materialQty');
-        const tableBody = document.getElementById('stockTableBody');
+/* ================================================================
+   Resource Coordination – Full CRUD + PDF Export + Email Alerts
+   ================================================================ */
 
-        const name = nameInput.value.trim();
-        const qty = parseInt(qtyInput.value);
+// ── EmailJS Config ──
+const EMAILJS_SERVICE_ID  = "service_vegoayv";
+const EMAILJS_TEMPLATE_ID = "m9ss5a8";
+const EMAILJS_PUBLIC_KEY  = "4QLPsopzRof8LrR3S";
 
-        if (!name || isNaN(qty)) {
-            alert("Please enter a valid material and quantity.");
-            return;
+// ── Firestore Config ──
+const STOCK_COLLECTION = "stock";
+let stockDB;
+let allDocs = [];
+let emailAlertSentFor = new Set(); // track which items already triggered email
+
+/* ── Init EmailJS ── */
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+/* ── Toast notification ── */
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast-msg toast-${type}`;
+    toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'info-circle'} me-2"></i>${message}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+/* ── Loading overlay ── */
+function showLoading(show) {
+    document.getElementById('loadingOverlay').classList.toggle('show', show);
+}
+
+/* ── Status badge ── */
+function statusBadge(qty) {
+    return qty > 50
+        ? `<span class="badge bg-success">Healthy</span>`
+        : `<span class="badge bg-danger">Low Stock</span>`;
+}
+
+/* ── Activity log ── */
+function addLog(message, textColor = 'text-dark') {
+    const log = document.getElementById('activityLog');
+    if (log.innerText.includes("No recent updates")) log.innerHTML = "";
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${textColor}`;
+    entry.innerHTML = `<strong>${time}</strong>: ${message}`;
+    log.prepend(entry);
+}
+
+/* ── Check & send low stock email alert ── */
+function checkLowStock(docs) {
+    const lowItems = docs.filter(d => d.data().qty <= 50);
+
+    // Update banner
+    const banner = document.getElementById('lowStockBanner');
+    const list   = document.getElementById('lowStockList');
+    if (lowItems.length > 0) {
+        list.textContent = ' ' + lowItems.map(d => `${d.data().name} (${d.data().qty} left)`).join(', ');
+        banner.classList.add('show');
+    } else {
+        banner.classList.remove('show');
+    }
+
+    // Send email only for NEW low stock items (not already alerted)
+    const newLowItems = lowItems.filter(d => !emailAlertSentFor.has(d.id));
+    if (newLowItems.length > 0) {
+        newLowItems.forEach(d => emailAlertSentFor.add(d.id));
+        sendLowStockEmail(false, newLowItems);
+    }
+
+    // Remove from alerted set if stock is back above 50
+    docs.filter(d => d.data().qty > 50).forEach(d => emailAlertSentFor.delete(d.id));
+}
+
+/* ── Send low stock email via EmailJS ── */
+async function sendLowStockEmail(manual = false, specificItems = null) {
+    const lowItems = specificItems || allDocs.filter(d => d.data().qty <= 50);
+
+    if (lowItems.length === 0) {
+        if (manual) showToast('No low stock items found! All stock is healthy.', 'success');
+        return;
+    }
+
+    const itemsList = lowItems
+        .map(d => `• ${d.data().name}: ${d.data().qty} units remaining`)
+        .join('\n');
+
+    try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            low_stock_items: itemsList,
+            date: new Date().toLocaleString()
+        });
+        showToast(`Low stock alert sent for ${lowItems.length} item(s)!`, 'warning');
+        addLog(`Email alert sent: ${lowItems.length} low stock item(s)`, 'text-warning');
+    } catch (err) {
+        console.error("EmailJS error:", err);
+        if (manual) showToast('Failed to send email. Check console.', 'danger');
+    }
+}
+
+/* ── ① CREATE / UPDATE ── */
+async function updateStock() {
+    const nameInput = document.getElementById('materialName');
+    const qtyInput  = document.getElementById('materialQty');
+    const name = nameInput.value.trim();
+    const qty  = parseInt(qtyInput.value);
+
+    if (!name || isNaN(qty) || qty < 1) {
+        alert("Please enter a valid material name and a positive quantity.");
+        return;
+    }
+
+    showLoading(true);
+    try {
+        const snapshot = await stockDB.collection(STOCK_COLLECTION)
+            .where("nameLower", "==", name.toLowerCase()).get();
+
+        if (!snapshot.empty) {
+            const docRef     = snapshot.docs[0].ref;
+            const currentQty = snapshot.docs[0].data().qty;
+            await docRef.update({
+                qty:       currentQty + qty,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            addLog(`Stock increased: ${name} (+${qty})`, 'text-primary');
+            showToast(`${name} updated (+${qty})`, 'success');
+        } else {
+            await stockDB.collection(STOCK_COLLECTION).add({
+                name:      name,
+                nameLower: name.toLowerCase(),
+                qty:       qty,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            addLog(`New resource added: ${name} (${qty})`, 'text-success');
+            showToast(`${name} added to inventory!`, 'success');
         }
+        nameInput.value = "";
+        qtyInput.value  = "1";
+    } catch (err) {
+        console.error("updateStock error:", err);
+        alert("Failed to update stock: " + err.message);
+    } finally {
+        showLoading(false);
+    }
+}
 
-        let found = false;
-        const rows = tableBody.getElementsByTagName('tr');
+/* ── ② READ / Render ── */
+function renderTable(docs) {
+    allDocs = docs;
+    checkLowStock(docs);
 
-        for (let row of rows) {
-            const resourceName = row.cells[0].innerText;
-            if (resourceName.toLowerCase() === name.toLowerCase()) {
-                let currentStock = parseInt(row.cells[1].innerText);
-                let newStock = currentStock + qty;
-                row.cells[1].innerText = newStock;
-                updateBadge(row.cells[2].querySelector('.badge'), newStock);
-                found = true;
-                break;
+    const tbody = document.getElementById('stockTableBody');
+    tbody.innerHTML = '';
+
+    if (docs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No stock items yet. Add one above!</td></tr>`;
+        return;
+    }
+
+    docs.forEach(doc => {
+        const { name, qty } = doc.data();
+        const safeName = name.replace(/'/g, "\\'");
+        const row = document.createElement('tr');
+        row.dataset.id   = doc.id;
+        row.dataset.name = name;
+        row.innerHTML = `
+            <td class="fw-semibold">${name}</td>
+            <td>${qty}</td>
+            <td>${statusBadge(qty)}</td>
+            <td>
+                <div class="action-btn-group">
+                    <button class="btn btn-sm btn-outline-info" title="View"
+                        onclick="viewItem('${doc.id}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" title="Edit"
+                        onclick="openEdit('${doc.id}', '${safeName}', ${qty})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" title="Delete"
+                        onclick="deleteItem('${doc.id}', '${safeName}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>`;
+        tbody.appendChild(row);
+    });
+}
+
+/* ── Real-time listener ── */
+function startRealtimeListener() {
+    stockDB.collection(STOCK_COLLECTION).onSnapshot(
+        snapshot => {
+            renderTable(snapshot.docs);
+            document.getElementById('syncStatus').innerHTML =
+                `<i class="bi bi-cloud-check me-1"></i>Synced with Firebase`;
+        },
+        error => {
+            console.error("Listener error:", error);
+            document.getElementById('syncStatus').innerHTML =
+                `<i class="bi bi-cloud-slash me-1"></i>Sync error`;
+        }
+    );
+}
+
+/* ── ③ VIEW ── */
+function viewItem(docId) {
+    const doc = allDocs.find(d => d.id === docId);
+    if (!doc) return;
+    const { name, qty, updatedAt } = doc.data();
+    document.getElementById('viewName').textContent    = name;
+    document.getElementById('viewQty').textContent     = qty;
+    document.getElementById('viewStatus').innerHTML    = statusBadge(qty);
+    document.getElementById('viewDocId').textContent   = docId;
+    document.getElementById('viewUpdated').textContent =
+        updatedAt ? updatedAt.toDate().toLocaleString() : 'Not recorded';
+    new bootstrap.Modal(document.getElementById('viewModal')).show();
+}
+
+/* ── ④ EDIT ── */
+function openEdit(docId, name, qty) {
+    document.getElementById('editDocId').value = docId;
+    document.getElementById('editName').value  = name;
+    document.getElementById('editQty').value   = qty;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+async function saveEdit() {
+    const docId   = document.getElementById('editDocId').value;
+    const newName = document.getElementById('editName').value.trim();
+    const newQty  = parseInt(document.getElementById('editQty').value);
+
+    if (!newName || isNaN(newQty) || newQty < 0) {
+        alert("Please enter a valid name and quantity.");
+        return;
+    }
+
+    showLoading(true);
+    try {
+        await stockDB.collection(STOCK_COLLECTION).doc(docId).update({
+            name:      newName,
+            nameLower: newName.toLowerCase(),
+            qty:       newQty,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        addLog(`Edited: ${newName} → qty ${newQty}`, 'text-warning');
+        showToast(`${newName} updated successfully!`, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+    } catch (err) {
+        console.error("saveEdit error:", err);
+        alert("Failed to save changes: " + err.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+/* ── ⑤ DELETE ── */
+async function deleteItem(docId, name) {
+    if (!confirm(`Remove "${name}" from inventory?`)) return;
+    showLoading(true);
+    try {
+        await stockDB.collection(STOCK_COLLECTION).doc(docId).delete();
+        addLog(`Removed: ${name}`, 'text-danger');
+        showToast(`${name} removed from inventory`, 'danger');
+    } catch (err) {
+        console.error("deleteItem error:", err);
+        alert("Failed to delete: " + err.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+/* ── ⑥ SEARCH ── */
+function filterStock() {
+    const term = document.getElementById('stockSearch').value.toLowerCase();
+    document.querySelectorAll('#stockTableBody tr').forEach(row => {
+        const name = (row.dataset.name || "").toLowerCase();
+        row.style.display = name.includes(term) ? '' : 'none';
+    });
+}
+
+/* ── ⑦ PDF EXPORT ── */
+function exportPDF() {
+    if (allDocs.length === 0) { alert("No stock data to export!"); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFillColor(44, 62, 80);
+    doc.rect(0, 0, 210, 35, 'F');
+    doc.setTextColor(255, 231, 133);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Grafix Print Hub', 14, 15);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Resource Coordination – Stock Report', 14, 26);
+    doc.setFontSize(9);
+    doc.setTextColor(200, 200, 200);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32);
+
+    // Stats
+    const total   = allDocs.length;
+    const healthy = allDocs.filter(d => d.data().qty > 50).length;
+    const low     = total - healthy;
+    doc.setTextColor(44, 62, 80);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Items: ${total}   |   Healthy: ${healthy}   |   Low Stock: ${low}`, 14, 45);
+
+    // Table
+    const tableData = allDocs.map((d, i) => {
+        const { name, qty, updatedAt } = d.data();
+        return [i + 1, name, qty, qty > 50 ? 'Healthy' : 'Low Stock',
+            updatedAt ? updatedAt.toDate().toLocaleDateString() : 'N/A'];
+    });
+
+    doc.autoTable({
+        startY: 52,
+        head: [['#', 'Resource Name', 'Qty', 'Status', 'Last Updated']],
+        body: tableData,
+        headStyles: { fillColor: [44, 62, 80], textColor: [255, 231, 133], fontStyle: 'bold', fontSize: 10 },
+        bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+        alternateRowStyles: { fillColor: [253, 252, 240] },
+        columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } },
+        didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 3) {
+                data.cell.styles.textColor = data.cell.text[0] === 'Low Stock' ? [220, 53, 69] : [25, 135, 84];
+                data.cell.styles.fontStyle = 'bold';
             }
         }
+    });
 
-        if (!found) {
-            const newRow = tableBody.insertRow();
-            newRow.innerHTML = `
-                <td>${name}</td>
-                <td>${qty}</td>
-                <td><span class="badge ${qty > 50 ? 'bg-success' : 'bg-danger'}">${qty > 50 ? 'Healthy' : 'Low Stock'}</span></td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteRow(this)"><i class="bi bi-trash"></i></button>
-                </td>
-            `;
-        }
-
-        addLog(`Added ${qty} to ${name}`, 'text-dark');
-        nameInput.value = "";
-        qtyInput.value = "1";
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Grafix Print Hub – Stock Report  |  Page ${i} of ${pageCount}`,
+            doc.internal.pageSize.width / 2, 290, { align: 'center' });
     }
 
-    function deleteRow(btn) {
-        if (confirm("Remove this resource from inventory?")) {
-            const row = btn.closest('tr');
-            const name = row.cells[0].innerText;
-            addLog(`Deleted resource: ${name}`, 'text-danger');
-            row.remove();
-        }
-    }
+    doc.save(`GrafixPrintHub_Stock_${new Date().toISOString().slice(0,10)}.pdf`);
+    addLog('PDF Report downloaded', 'text-danger');
+    showToast('PDF downloaded successfully!', 'success');
+}
 
-    function updateBadge(badge, stock) {
-        if (stock > 50) {
-            badge.className = "badge bg-success";
-            badge.innerText = "Healthy";
-        } else {
-            badge.className = "badge bg-danger";
-            badge.innerText = "Low Stock";
-        }
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        stockDB = firebase.firestore();
+        startRealtimeListener();
+    } catch (e) {
+        console.error("Firebase init error:", e);
+        document.getElementById('syncStatus').innerHTML =
+            `<i class="bi bi-exclamation-triangle me-1"></i>Firebase not configured`;
+        document.getElementById('stockTableBody').innerHTML =
+            `<tr><td colspan="4" class="text-center text-danger py-3">
+                Firebase config error – check firebase-config.js</td></tr>`;
     }
-
-    function addLog(message, textColor) {
-        const log = document.getElementById('activityLog');
-        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        if (log.innerText === "No recent updates.") log.innerHTML = "";
-        
-        const entry = document.createElement('div');
-        entry.className = `log-entry ${textColor}`;
-        entry.innerHTML = `<strong>${timestamp}:</strong> ${message}`;
-        log.prepend(entry);
-    }
-
-    function filterStock() {
-        const filter = document.getElementById('stockSearch').value.toLowerCase();
-        const rows = document.getElementById('stockTableBody').getElementsByTagName('tr');
-        for (let row of rows) {
-            const text = row.cells[0].innerText.toLowerCase();
-            row.style.display = text.includes(filter) ? "" : "none";
-        }
-    }
+});
 </script>
 
 </body>
