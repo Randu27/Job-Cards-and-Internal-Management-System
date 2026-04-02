@@ -1122,7 +1122,7 @@ if (document.getElementById("dirList")) {
 }
 
 // ===============================
-// HR - Print Report Page
+// HR - Print Report Page with jsPDF
 // ===============================
 
 if (document.getElementById("reportArea")) {
@@ -1137,6 +1137,7 @@ if (document.getElementById("reportArea")) {
   const colToggles = document.getElementById("colToggles");
   const printBtn = document.getElementById("printBtn");
   const exportCsvBtn = document.getElementById("exportCsvBtn");
+  const exportPdfBtn = document.getElementById("exportPdfBtn"); // New PDF button
   const reportDate = document.getElementById("reportDate");
 
   let allEmployees = [];
@@ -1271,9 +1272,275 @@ if (document.getElementById("reportArea")) {
     }
   }
 
+  // ===============================
+  // NEW PDF GENERATION FUNCTION with Custom Header/Footer
+  // ===============================
+  
+  /**
+   * Generate PDF Report with Custom Header and Footer
+   */
+  async function generatePDF() {
+    // Show loading indicator
+    if (printLoading) printLoading.style.display = "block";
+    
+    try {
+      // Get filtered employees data
+      const employees = getFiltered();
+      
+      if (employees.length === 0) {
+        alert("No data available to generate PDF.");
+        if (printLoading) printLoading.style.display = "none";
+        return;
+      }
+      
+      // Get filter values for report metadata
+      const deptValue = deptFilter?.options[deptFilter.selectedIndex]?.text || "ALL";
+      const statusValue = statusFilter?.options[statusFilter.selectedIndex]?.text || "ALL";
+      const reportType = `Employee Report - ${deptValue} / ${statusValue}`;
+      
+      // Initialize jsPDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
+      // ======================
+      // REUSABLE HEADER FUNCTION
+      // ======================
+      const drawHeader = (pageTitle, startDate, endDate) => {
+        // Dark Background Header
+        doc.setFillColor(33, 37, 41);
+        doc.rect(0, 0, pageWidth, 45, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont(undefined, 'bold');
+        doc.text("GRAFIX PRINT HUB", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(pageTitle, 14, 32);
+        
+        // Metadata Block (Right-aligned)
+        doc.setFontSize(8);
+        doc.text(`REPORT TYPE: ${pageTitle}`, pageWidth - 14, 15, { align: 'right' });
+        doc.text(`TIME PERIOD: ${startDate || 'ALL TIME'} TO ${endDate || 'CURRENT'}`, pageWidth - 14, 22, { align: 'right' });
+        doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
+        
+        // Add a line separator
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 38, pageWidth - 14, 38);
+      };
+      
+      // ======================
+      // DRAW TABLE FUNCTION
+      // ======================
+      // Replace the entire drawTable function with this:
+
+const drawTable = (startY) => {
+  const cols = activeCols();
+  const colLabels = cols.map(c => c.label);
+  const colKeys  = cols.map(c => c.key);
+
+  const usableWidth = pageWidth - 28; // 14mm margin each side
+
+  // ── Calculate natural widths first ──────────────────────────────
+  doc.setFontSize(8);
+  const naturalWidths = colLabels.map((label, i) => {
+    const headerW = doc.getTextWidth(label) + 6;
+    const maxContentW = employees.reduce((max, emp) => {
+      let value = emp[colKeys[i]] || "—";
+      if (colKeys[i] === "status") value = formatStatus(emp.status);
+      return Math.max(max, doc.getTextWidth(String(value)) + 6);
+    }, 0);
+    return Math.max(headerW, maxContentW, 18); // minimum 18mm
+  });
+
+  // ── Scale widths to fill the full usable width ───────────────────
+  const totalNatural = naturalWidths.reduce((a, b) => a + b, 0);
+  const scale = usableWidth / Math.max(totalNatural, usableWidth);
+  const colWidths = naturalWidths.map(w => w * scale);
+
+  // ── Draw table header row ────────────────────────────────────────
+  let currentY = startY;
+  let currentX = 14;
+
+  doc.setFontSize(9);
+  doc.setFont(undefined, 'bold');
+
+  colLabels.forEach((label, i) => {
+    // Fill first, then text on top
+    doc.setFillColor(52, 58, 64);
+    doc.setDrawColor(100, 100, 100);
+    doc.rect(currentX, currentY, colWidths[i], 10, 'FD');
+
+    doc.setTextColor(255, 255, 255);
+    doc.text(label, currentX + 3, currentY + 6.5);
+    currentX += colWidths[i];
+  });
+
+  currentY += 10;
+
+  // ── Draw table body rows ─────────────────────────────────────────
+  doc.setFontSize(8);
+  doc.setFont(undefined, 'normal');
+
+  employees.forEach((emp, rowIndex) => {
+    // Calculate row height (handle wrapped text)
+    let rowHeight = 8;
+    colKeys.forEach((key, i) => {
+      let value = emp[key] || "—";
+      if (key === "status") value = formatStatus(emp.status);
+      const lines = doc.splitTextToSize(String(value), colWidths[i] - 4);
+      rowHeight = Math.max(rowHeight, lines.length * 5 + 3);
+    });
+
+    // Page break check
+    if (currentY + rowHeight > pageHeight - 25) {
+      doc.addPage();
+      drawHeader(reportType, deptValue, statusValue);
+      currentY = 50;
+
+      // Redraw column headers on new page
+      currentX = 14;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      colLabels.forEach((label, i) => {
+        doc.setFillColor(52, 58, 64);
+        doc.setDrawColor(100, 100, 100);
+        doc.rect(currentX, currentY, colWidths[i], 10, 'FD');
+        doc.setTextColor(255, 255, 255);
+        doc.text(label, currentX + 3, currentY + 6.5);
+        currentX += colWidths[i];
+      });
+      currentY += 10;
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+    }
+
+    // Draw each cell: fill rect FIRST, then text
+    currentX = 14;
+    colKeys.forEach((key, i) => {
+      let value = emp[key] || "—";
+      if (key === "status") value = formatStatus(emp.status);
+      const lines = doc.splitTextToSize(String(value), colWidths[i] - 4);
+
+      // Alternating row fill
+      doc.setFillColor(rowIndex % 2 === 0 ? 245 : 255,
+                       rowIndex % 2 === 0 ? 247 : 255,
+                       rowIndex % 2 === 0 ? 250 : 255);
+      doc.setDrawColor(210, 210, 210);
+      doc.rect(currentX, currentY, colWidths[i], rowHeight, 'FD'); // fill + border
+
+      // Text drawn AFTER rect
+      doc.setTextColor(30, 30, 30);
+      doc.text(lines, currentX + 3, currentY + 5);
+
+      currentX += colWidths[i];
+    });
+
+    currentY += rowHeight;
+  });
+
+  return currentY;
+};
+      
+      // ======================
+      // DRAW FOOTER FUNCTION
+      // ======================
+      const addFooter = () => {
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.setFont(undefined, 'normal');
+          doc.text(
+            `Grafix Print Hub | Employee Management System | Page ${i} of ${pageCount}`,
+            pageWidth / 2,
+            pageHeight - 10,
+            { align: 'center' }
+          );
+        }
+      };
+      
+      // ======================
+      // DRAW SUMMARY SECTION (Footer-like content before page numbers)
+      // ======================
+      const drawSummary = (yPosition) => {
+        const fullTime = employees.filter(e => (e.status || "").toLowerCase() === "fulltime").length;
+        const partTime = employees.length - fullTime;
+        const depts = new Set(employees.map(e => e.department).filter(Boolean)).size;
+        
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'bold');
+        doc.text("REPORT SUMMARY", 14, yPosition);
+        
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(`• Total Employees: ${employees.length}`, 14, yPosition + 6);
+        doc.text(`• Full Time Employees: ${fullTime}`, 14, yPosition + 12);
+        doc.text(`• Part Time Employees: ${partTime}`, 14, yPosition + 18);
+        doc.text(`• Total Departments: ${depts}`, 14, yPosition + 24);
+        
+        // Add a line separator
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, yPosition + 30, pageWidth - 14, yPosition + 30);
+        
+        return yPosition + 35;
+      };
+      
+      // ======================
+      // GENERATE THE COMPLETE PDF
+      // ======================
+      
+      // Draw header on first page
+      drawHeader(reportType, deptValue, statusValue);
+      
+      // Draw the main table
+      let endY = drawTable(50);
+      
+      // Draw summary section
+      if (endY + 40 < pageHeight - 20) {
+        drawSummary(endY + 5);
+      } else {
+        // Add new page for summary if not enough space
+        doc.addPage();
+        drawHeader(reportType, deptValue, statusValue);
+        drawSummary(50);
+      }
+      
+      // Add footers with page numbers
+      addFooter();
+      
+      // Save the PDF
+      const timestamp = new Date().getTime();
+      const fileName = `Employee_Report_${deptValue}_${statusValue}_${timestamp}.pdf`;
+      doc.save(fileName);
+      
+      if (printLoading) printLoading.style.display = "none";
+      
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      alert("Failed to generate PDF. Please try again.");
+      if (printLoading) printLoading.style.display = "none";
+    }
+  }
+  
+  // ======================
+  // EVENT LISTENERS
+  // ======================
+  
   if (deptFilter) deptFilter.addEventListener("change", () => renderTable(getFiltered()));
   if (statusFilter) statusFilter.addEventListener("change", () => renderTable(getFiltered()));
-
+  
+  // Original print button (browser print)
   if (printBtn) {
     printBtn.addEventListener("click", () => {
       if (reportDate) {
@@ -1285,7 +1552,13 @@ if (document.getElementById("reportArea")) {
       window.print();
     });
   }
-
+  
+  // New PDF export button with custom header/footer
+  if (exportPdfBtn) {
+    exportPdfBtn.addEventListener("click", generatePDF);
+  }
+  
+  // CSV export handler
   if (exportCsvBtn) {
     exportCsvBtn.addEventListener("click", () => {
       const cols = activeCols();
@@ -1304,184 +1577,7 @@ if (document.getElementById("reportArea")) {
       URL.revokeObjectURL(url);
     });
   }
-
+  
   loadPrintData();
 }
 
-// ===============================
-// HR - Email Helper Functions
-// ===============================
-
-// Add this to your existing hr-script.js file
-// This function can be called from anywhere to send emails
-
-async function sendEmployeeEmail(recipients, subject, body, options = {}) {
-  // recipients: array of {id, name, email}
-  // subject: email subject
-  // body: email body
-  // options: { saveToFirestore: true, simulate: false }
-  
-  const saveToFirestore = options.saveToFirestore !== false;
-  const simulate = options.simulate === true;
-  
-  if (!recipients || recipients.length === 0) {
-    throw new Error('No recipients specified');
-  }
-  
-  if (!subject || !body) {
-    throw new Error('Subject and body are required');
-  }
-  
-  let successCount = 0;
-  let failCount = 0;
-  const errors = [];
-  
-  try {
-    // Save email record to Firestore if enabled
-    if (saveToFirestore) {
-      const emailRecord = {
-        subject: subject,
-        body: body,
-        recipients: recipients.map(r => ({ id: r.id, name: r.name, email: r.email })),
-        recipientCount: recipients.length,
-        sentBy: firebase.auth().currentUser?.email || 'System',
-        sentAt: firebase.firestore.FieldValue.serverTimestamp(),
-        status: simulate ? 'simulated' : 'sent'
-      };
-      
-      await firebase.firestore().collection('emails').add(emailRecord);
-    }
-    
-    if (simulate) {
-      console.log(`[SIMULATE] Would send email to ${recipients.length} recipients`);
-      console.log('Subject:', subject);
-      console.log('Body:', body);
-      return { success: true, successCount: recipients.length, failCount: 0, errors: [] };
-    }
-    
-    // Here you would integrate with actual email service
-    // For production, you should use a cloud function or email API
-    
-    // For now, we'll log to Firestore for each recipient
-    for (const recipient of recipients) {
-      try {
-        await firebase.firestore().collection('emailLogs').add({
-          to: recipient.email,
-          toName: recipient.name,
-          toId: recipient.id,
-          subject: subject,
-          body: body,
-          sentAt: firebase.firestore.FieldValue.serverTimestamp(),
-          sentBy: firebase.auth().currentUser?.email || 'System',
-          status: 'sent'
-        });
-        successCount++;
-      } catch (err) {
-        failCount++;
-        errors.push({ recipient: recipient.email, error: err.message });
-        console.error(`Failed to log email for ${recipient.email}:`, err);
-      }
-    }
-    
-    return {
-      success: failCount === 0,
-      successCount,
-      failCount,
-      errors
-    };
-    
-  } catch (error) {
-    console.error('Error in sendEmployeeEmail:', error);
-    throw error;
-  }
-}
-
-// Helper function to get all employees with email addresses
-async function getAllEmployeesWithEmails() {
-  try {
-    const snapshot = await firebase.firestore()
-      .collection('employees')
-      .where('email', '!=', '')
-      .orderBy('name')
-      .get();
-    
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name || '',
-      email: doc.data().email || '',
-      department: doc.data().department || '',
-      status: doc.data().status || ''
-    }));
-  } catch (error) {
-    console.error('Error fetching employees:', error);
-    throw error;
-  }
-}
-
-// Helper function to get employees by department
-async function getEmployeesByDepartment(department) {
-  try {
-    const snapshot = await firebase.firestore()
-      .collection('employees')
-      .where('department', '==', department)
-      .where('email', '!=', '')
-      .get();
-    
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name || '',
-      email: doc.data().email || '',
-      department: doc.data().department || '',
-      status: doc.data().status || ''
-    }));
-  } catch (error) {
-    console.error('Error fetching employees by department:', error);
-    throw error;
-  }
-}
-
-// Helper function to send bulk email templates
-async function sendTemplateEmail(templateName, recipients, customData = {}) {
-  // Predefined email templates
-  const templates = {
-    'welcome': {
-      subject: 'Welcome to Grafix Print Hub!',
-      body: (name) => `Dear ${name},\n\nWelcome to the Grafix Print Hub team! We're excited to have you onboard.\n\nBest regards,\nHR Department`
-    },
-    'announcement': {
-      subject: 'Company Announcement',
-      body: (name, announcement) => `Dear ${name},\n\n${announcement}\n\nBest regards,\nManagement`
-    },
-    'holiday': {
-      subject: 'Upcoming Holiday Notice',
-      body: (name, holidayDetails) => `Dear ${name},\n\nPlease be informed that ${holidayDetails}\n\nBest regards,\nHR Department`
-    },
-    'meeting': {
-      subject: 'Meeting Invitation',
-      body: (name, meetingDetails) => `Dear ${name},\n\nYou are invited to a meeting: ${meetingDetails}\n\nBest regards,\nManagement`
-    }
-  };
-  
-  const template = templates[templateName];
-  if (!template) {
-    throw new Error(`Template "${templateName}" not found`);
-  }
-  
-  const results = [];
-  
-  for (const recipient of recipients) {
-    const personalizedBody = template.body(recipient.name, customData.message || '');
-    const result = await sendEmployeeEmail([recipient], template.subject, personalizedBody, { saveToFirestore: true });
-    results.push({ recipient: recipient.email, ...result });
-  }
-  
-  return results;
-}
-
-// Export functions for use in other scripts
-window.hrEmail = {
-  sendEmployeeEmail,
-  getAllEmployeesWithEmails,
-  getEmployeesByDepartment,
-  sendTemplateEmail
-};
