@@ -534,12 +534,9 @@ function getMonthlyData() {
     return { months, incomeData, expenseData };
 }
 
-/**
- * Main PDF Generation Function
- */
-/**
- * 1. HELPER: Calculate 6-Month Data for Charts
- */
+
+
+//Helper Function to genereate PDF to collect the six months dates
 function getMonthlyData() {
     const months = [];
     const incomeData = [];
@@ -568,9 +565,10 @@ function getMonthlyData() {
     return { months, incomeData, expenseData };
 }
 
-/**
- * 2. MASTER FUNCTION: Generate PDF Report
- */
+
+
+//Generate PDF with charts
+
 async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -580,7 +578,7 @@ async function generatePDF() {
     const startInput = document.getElementById('reportDateStart').value;
     const endInput = document.getElementById('reportDateEnd').value;
 
-    // Filter local records
+    // Filter local records based on UI inputs
     let reportData = masterRecords.filter(record => {
         const matchesType = (type === "All" || record.type === type);
         let matchesDate = (startInput && endInput) ? (record.date >= startInput && record.date <= endInput) : true;
@@ -592,42 +590,54 @@ async function generatePDF() {
         return;
     }
 
-    // --- CALCULATE TOTALS ---
+    // --- CALCULATE SUMMARY TOTALS ---
     let totalInc = 0, totalExp = 0;
     reportData.forEach(r => r.type === 'Order' ? totalInc += r.amount : totalExp += r.amount);
     const netProfit = totalInc - totalExp;
 
-    // --- REUSABLE HEADER FUNCTION ---
+    /**
+     * REUSABLE HEADER FUNCTION
+     * Displays Site Name, Report Subject, and Time/Date Metadata
+     */
     const drawHeader = (pageTitle) => {
+        // Dark Background Header
         doc.setFillColor(33, 37, 41); 
-        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.rect(0, 0, pageWidth, 45, 'F');
+        
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
-        doc.text("GRAFIX PRINT HUB", 14, 22);
+        doc.text("GRAFIX PRINT HUB", 14, 20); 
+        
         doc.setFontSize(10);
-        doc.text(pageTitle, 14, 32);
-        doc.text(`ISSUED: ${new Date().toLocaleDateString()}`, pageWidth - 55, 22);
+        doc.text(pageTitle, 14, 28);
+        
+        // Metadata Block (Right-aligned)
+        doc.setFontSize(8);
+        doc.text(`REPORT TYPE: ${type.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
+        doc.text(`TIME PERIOD: ${startInput || 'START'} TO ${endInput || 'TODAY'}`, pageWidth - 14, 22, { align: 'right' });
+        doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
     };
 
     // --- PAGE 1: ANALYTICS ---
-    drawHeader(`FINANCIAL ANALYSIS: ${type.toUpperCase()}`);
+    drawHeader("SYSTEM GENERATED FINANCIAL ANALYSIS");
     doc.setTextColor(0, 0, 0);
 
     if (type === "All") {
-        // Executive Summary Text
+        // Text Summary
         doc.setFontSize(12);
-        doc.text("Business Performance Summary", 14, 55);
+        doc.text("Business Performance Summary", 14, 60);
         doc.setFontSize(10);
-        doc.text(`Total Income: Rs. ${totalInc.toLocaleString()}`, 14, 65);
-        doc.text(`Total Expenses: Rs. ${totalExp.toLocaleString()}`, 14, 72);
+        doc.text(`Total Income (Orders): Rs. ${totalInc.toLocaleString()}`, 14, 70);
+        doc.text(`Total Expenses (Bills): Rs. ${totalExp.toLocaleString()}`, 14, 77);
         doc.setFont(undefined, 'bold');
-        doc.text(`Net Profit: Rs. ${netProfit.toLocaleString()}`, 14, 82);
+        doc.text(`Net Profit: Rs. ${netProfit.toLocaleString()}`, 14, 87);
         doc.setFont(undefined, 'normal');
 
-        // Prepare Charts
+        // Prepare 6-Month Data
         const trend = getMonthlyData();
         const profitTrendData = trend.incomeData.map((inc, i) => inc - trend.expenseData[i]);
 
+        // Draw Pie Chart (Income vs Expense)
         const ctxPie = document.getElementById('pdfPieChart').getContext('2d');
         const pieChart = new Chart(ctxPie, {
             type: 'pie',
@@ -638,40 +648,42 @@ async function generatePDF() {
             options: { animation: false, responsive: false }
         });
 
+        // Draw Bar Chart (Profit Trend)
         const ctxBar = document.getElementById('pdfBarChart').getContext('2d');
         const barChart = new Chart(ctxBar, {
             type: 'bar',
             data: {
                 labels: trend.months,
-                datasets: [{ label: 'Net Profit (Rs.)', data: profitTrendData, backgroundColor: '#0d6efd' }]
+                datasets: [{ label: 'Monthly Net Profit (Rs.)', data: profitTrendData, backgroundColor: '#0d6efd' }]
             },
             options: { animation: false, responsive: false }
         });
 
-        // Wait for rendering
+        // Wait for rendering to complete
         await new Promise(r => setTimeout(r, 1000));
         
-        // Add Images with specific spacing
-        doc.addImage(document.getElementById('pdfPieChart').toDataURL('image/png'), 'PNG', 135, 50, 55, 55);
+        // Add Images to PDF
+        doc.addImage(document.getElementById('pdfPieChart').toDataURL('image/png'), 'PNG', 135, 55, 55, 55);
         doc.setFontSize(11);
-        doc.text("6-Month Net Profit Trend", 14, 110);
-        doc.addImage(document.getElementById('pdfBarChart').toDataURL('image/png'), 'PNG', 14, 115, 180, 75);
+        doc.text("6-Month Net Profit Performance Trend", 14, 115);
+        doc.addImage(document.getElementById('pdfBarChart').toDataURL('image/png'), 'PNG', 14, 120, 180, 75);
 
         pieChart.destroy();
         barChart.destroy();
 
-        // START TABLE ON NEW PAGE
+        // Move to New Page for the list
         doc.addPage();
         drawHeader("DETAILED TRANSACTION LOG");
-        var tableY = 50;
+        var tableY = 55;
+
     } else {
-        // For Bills or Orders Only (One Page)
+        // LOGIC FOR BILLS OR ORDERS ONLY (Single Page)
         const trend = getMonthlyData();
         const label = type === "Bill" ? "Total Expenditure" : "Total Income";
         const val = type === "Bill" ? totalExp : totalInc;
         
         doc.setFontSize(13);
-        doc.text(`${label}: Rs. ${val.toLocaleString()}`, 14, 55);
+        doc.text(`${label}: Rs. ${val.toLocaleString()}`, 14, 60);
 
         const ctxBar = document.getElementById('pdfBarChart').getContext('2d');
         const barChart = new Chart(ctxBar, {
@@ -688,9 +700,9 @@ async function generatePDF() {
         });
 
         await new Promise(r => setTimeout(r, 800));
-        doc.addImage(document.getElementById('pdfBarChart').toDataURL('image/png'), 'PNG', 14, 65, 180, 75);
+        doc.addImage(document.getElementById('pdfBarChart').toDataURL('image/png'), 'PNG', 14, 70, 180, 75);
         barChart.destroy();
-        var tableY = 150;
+        var tableY = 155;
     }
 
     // --- TRANSACTION TABLE ---
@@ -700,20 +712,20 @@ async function generatePDF() {
         startY: tableY,
         theme: 'striped',
         headStyles: { fillColor: [33, 37, 41] },
-        styles: { fontSize: 9 }
+        styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // --- FOOTER ---
+    // --- FOOTER (Automatic Page Numbering) ---
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text(`Grafix Print Hub | Page ${i} of ${pageCount}`, pageWidth / 2, 287, { align: 'center' });
+        doc.text(`Grafix Print Hub | Cloud Audit | Page ${i} of ${pageCount}`, pageWidth / 2, 287, { align: 'center' });
     }
 
-    doc.save(`Grafix_Report_${type}.pdf`);
+    // Save PDF with unique timestamp
+    doc.save(`Grafix_Audit_${type}_${new Date().getTime()}.pdf`);
 }
-
 
 
