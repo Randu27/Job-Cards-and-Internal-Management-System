@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="../../css/hr-style.css">
   <link rel="stylesheet" href="../../css/menu.css">
   <style>
-    /* ── Directory-specific styles ─────────────────────────── */
     :root {
       --dir-accent: #4f46e5;
       --dir-accent-soft: #eef2ff;
@@ -20,7 +19,6 @@
       --transition: .22s cubic-bezier(.4,0,.2,1);
     }
 
-    /* Search bar */
     .search-wrap { position: relative; }
     .search-wrap .bi-search {
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -39,7 +37,6 @@
       outline: none;
     }
 
-    /* Filter selects */
     .filter-select {
       border-radius: 10px;
       border: 1.5px solid #d1d5db;
@@ -47,16 +44,18 @@
       transition: border-color var(--transition);
       cursor: pointer;
     }
-    .filter-select:focus { border-color: var(--dir-accent); box-shadow: 0 0 0 3px rgba(79,70,229,.13); outline: none; }
+    .filter-select:focus {
+      border-color: var(--dir-accent);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.13);
+      outline: none;
+    }
 
-    /* Result count badge */
     #resultCount {
       font-size: .85rem; color: #6b7280;
       display: flex; align-items: center; gap: 6px;
     }
     #resultCount span { font-weight: 700; color: var(--dir-accent); }
 
-    /* ── Employee Cards ──────────────────────────────────────── */
     .emp-card {
       background: #fff;
       border: 1.5px solid #e5e7eb;
@@ -117,7 +116,6 @@
     .badge-fulltime  { background: #dcfce7; color: #15803d; }
     .badge-parttime  { background: #fef9c3; color: #a16207; }
 
-    /* ── Empty / Loading states ──────────────────────────────── */
     .empty-state {
       text-align: center; padding: 60px 20px; color: #9ca3af;
     }
@@ -136,7 +134,8 @@
     .sk-line.short { width: 60%; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
-    /* ── Detail Modal ─────────────────────────────────────────── */
+    /* ══ MODAL ══════════════════════════════════════════════════ */
+
     .modal-backdrop-custom {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.45);
@@ -153,22 +152,24 @@
       border-radius: 20px;
       width: 100%; max-width: 680px;
       max-height: 90vh;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 25px 60px rgba(0,0,0,.25);
       animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
-      position: relative;
+      overflow: hidden;
     }
     @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
 
     .dir-modal-header {
-      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      background: #ffe785;
       border-radius: 20px 20px 0 0;
       padding: 28px 28px 24px;
-      color: #fff;
+      color: rgb(87, 86, 86);
       display: flex;
       gap: 20px;
       align-items: flex-start;
       position: relative;
+      flex-shrink: 0;
     }
     .dir-modal-avatar {
       width: 84px; height: 84px;
@@ -187,6 +188,7 @@
     }
     .dir-modal-title { font-size: 1.4rem; font-weight: 800; margin: 0; }
     .dir-modal-sub   { font-size: .9rem; opacity: .85; margin-top: 4px; }
+
     .btn-modal-close {
       position: absolute; top: 16px; right: 16px;
       background: rgba(255,255,255,.2); border: none; border-radius: 8px;
@@ -196,7 +198,40 @@
     }
     .btn-modal-close:hover { background: rgba(255,255,255,.35); }
 
-    .dir-modal-body { padding: 28px; }
+    .dir-modal-body {
+      padding: 24px 24px 0;
+      overflow-y: auto;
+      flex: 1;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    .dir-modal-body::-webkit-scrollbar { width: 5px; }
+    .dir-modal-body::-webkit-scrollbar-track { background: transparent; }
+    .dir-modal-body::-webkit-scrollbar-thumb {
+      background: rgba(79,70,229,.25);
+      border-radius: 99px;
+    }
+    .dir-modal-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(79,70,229,.5);
+    }
+
+    .form-section-label {
+      font-size: .68rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin: 20px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 0.5px solid #e5e7eb;
+    }
+    .form-section-label:first-child { margin-top: 0; }
+
+    .view-section { display: block; }
+    .view-section.hidden { display: none; }
+
+    .edit-section { display: none; }
+    .edit-section.active { display: block; }
 
     .detail-grid {
       display: grid; grid-template-columns: 1fr 1fr;
@@ -211,64 +246,93 @@
     }
     .detail-item.full { grid-column: 1 / -1; }
 
-    /* Edit form inside modal */
-    .edit-section { display: none; }
-    .edit-section.active { display: block; }
-    .view-section.hidden { display: none; }
+    .photo-update-row {
+      display: flex; align-items: center; gap: 14px;
+      background: #f9fafb;
+      border: 0.5px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    }
+    .photo-update-preview {
+      width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #e5e7eb;
+      flex-shrink: 0;
+    }
 
     .edit-form-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 4px;
     }
     .edit-form-grid .full-col { grid-column: 1 / -1; }
-    .edit-form-grid label { font-size: .82rem; font-weight: 600; color: #374151; margin-bottom: 4px; display: block; }
+
+    .edit-form-grid label {
+      font-size: .73rem; font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 4px; display: block;
+      letter-spacing: .03em;
+    }
     .edit-form-grid input,
     .edit-form-grid select,
     .edit-form-grid textarea {
-      width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px;
-      padding: 8px 12px; font-size: .9rem;
-      transition: border-color var(--transition);
+      width: 100%;
+      border: 0.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: .9rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+      background: #fff;
+      color: #111827;
     }
     .edit-form-grid input:focus,
     .edit-form-grid select:focus,
     .edit-form-grid textarea:focus {
-      border-color: var(--dir-accent); outline: none;
+      border-color: var(--dir-accent);
       box-shadow: 0 0 0 3px rgba(79,70,229,.12);
     }
-
-    /* Action buttons */
-    .dir-modal-actions {
-      display: flex; gap: 10px; flex-wrap: wrap;
-      padding: 0 28px 28px;
-      border-top: 1px solid #f3f4f6;
-      padding-top: 20px;
+    .edit-form-grid input:disabled {
+      background: #f9fafb;
+      color: #9ca3af;
+      cursor: not-allowed;
     }
+    .edit-form-grid textarea {
+      resize: vertical;
+      min-height: 72px;
+    }
+
+    .dir-modal-actions {
+      background: #fff;
+      border-top: 0.5px solid #e5e7eb;
+      display: flex; gap: 10px; flex-wrap: wrap;
+      padding: 14px 28px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
     .btn-edit   { background: var(--dir-accent); color: #fff; }
     .btn-edit:hover { background: #4338ca; color: #fff; }
     .btn-save   { background: var(--dir-success); color: #fff; }
     .btn-save:hover { background: #15803d; color: #fff; }
     .btn-cancel-edit { background: #f3f4f6; color: #374151; }
     .btn-cancel-edit:hover { background: #e5e7eb; }
-    .btn-delete { background: #fee2e2; color: var(--dir-danger); margin-left: auto; }
+    .btn-delete { background: #d23838; color: #fff; margin-left: auto; }
     .btn-delete:hover { background: var(--dir-danger); color: #fff; }
 
-    /* Delete confirm */
     .delete-confirm-box {
-      background: #fff5f5; border: 1.5px solid #fecaca;
+      background: #fff5f5;
+      border: 1.5px solid #fecaca;
       border-radius: 12px; padding: 18px;
       text-align: center; display: none;
-      margin: 0 28px 20px;
+      margin: 0 0 16px;
     }
     .delete-confirm-box.active { display: block; }
-    .delete-confirm-box p { font-size: .95rem; color: #991b1b; margin-bottom: 12px; font-weight: 600; }
-
-    /* Photo update */
-    .photo-update-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-    .photo-update-preview {
-      width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
-      border: 2px solid #e5e7eb;
+    .delete-confirm-box p {
+      font-size: .95rem; color: #991b1b;
+      margin-bottom: 12px; font-weight: 600;
     }
 
-    /* Responsive */
     @media (max-width: 575px) {
       .detail-grid, .edit-form-grid { grid-template-columns: 1fr; }
       .detail-item.full, .edit-form-grid .full-col { grid-column: auto; }
@@ -374,10 +438,13 @@
     <!-- View Section -->
     <div class="dir-modal-body view-section" id="viewSection">
       <div class="detail-grid" id="detailGrid"></div>
+      <div style="height:8px;"></div>
     </div>
 
     <!-- Edit Section -->
     <div class="dir-modal-body edit-section" id="editSection">
+
+      <!-- Photo upload tray -->
       <div class="photo-update-row">
         <img id="editPhotoPreview" class="photo-update-preview" src="">
         <div>
@@ -385,6 +452,9 @@
           <input type="file" id="editPhotoInput" class="form-control form-control-sm" accept="image/*" style="max-width:220px;">
         </div>
       </div>
+
+      <!-- Personal details -->
+      <div class="form-section-label">Personal Details</div>
       <div class="edit-form-grid">
         <div>
           <label>Employee Name</label>
@@ -392,7 +462,7 @@
         </div>
         <div>
           <label>Employee ID</label>
-          <input type="text" id="editEmpId" disabled style="background:#f9fafb;cursor:not-allowed;">
+          <input type="text" id="editEmpId" disabled>
         </div>
         <div>
           <label>Status</label>
@@ -420,6 +490,11 @@
           <label>Address</label>
           <input type="text" id="editAddress">
         </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="form-section-label">Contact</div>
+      <div class="edit-form-grid">
         <div>
           <label>Email</label>
           <input type="email" id="editEmail">
@@ -428,12 +503,20 @@
           <label>Contact Number</label>
           <input type="text" id="editContact">
         </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="form-section-label">Remarks</div>
+      <div class="edit-form-grid">
         <div class="full-col">
           <label>Remarks</label>
           <textarea id="editRemarks" rows="3"></textarea>
         </div>
       </div>
-    </div>
+
+      <div style="height:8px;"></div>
+
+    </div><!-- end edit-section -->
 
     <!-- Delete Confirm Box -->
     <div class="delete-confirm-box" id="deleteConfirmBox">
@@ -452,8 +535,8 @@
       <button class="btn btn-delete" id="btnDelete" onclick="promptDelete()"><i class="bi bi-trash me-1"></i>Delete</button>
     </div>
 
-  </div>
-</div>
+  </div><!-- end dir-modal -->
+</div><!-- end modal-backdrop-custom -->
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -465,12 +548,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 <script src="../../js/firebase-config.js"></script>
 
-<!-- HR Shared Script (popup helper) -->
 <script src="../../js/hr-script.js"></script>
-
-<!-- Directory Script -->
 <script src="../../js/hr-directory.js"></script>
-
 <script src="../../js/navbar-loader.js"></script>
 <script src="../../js/signin.js"></script>
 </body>
