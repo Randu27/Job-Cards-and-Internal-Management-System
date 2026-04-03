@@ -1280,11 +1280,9 @@ if (document.getElementById("reportArea")) {
    * Generate PDF Report with Custom Header and Footer
    */
   async function generatePDF() {
-    // Show loading indicator
     if (printLoading) printLoading.style.display = "block";
     
     try {
-      // Get filtered employees data
       const employees = getFiltered();
       
       if (employees.length === 0) {
@@ -1293,12 +1291,20 @@ if (document.getElementById("reportArea")) {
         return;
       }
       
-      // Get filter values for report metadata
-      const deptValue = deptFilter?.options[deptFilter.selectedIndex]?.text || "ALL";
-      const statusValue = statusFilter?.options[statusFilter.selectedIndex]?.text || "ALL";
-      const reportType = `Employee Report - ${deptValue} / ${statusValue}`;
-      
-      // Initialize jsPDF
+      const deptValue = deptFilter?.options[deptFilter.selectedIndex]?.text || "All Departments";
+      const statusValue = statusFilter?.options[statusFilter.selectedIndex]?.text || "All Status";
+      const reportType = `Employee Report`;
+
+      // ── Time period label built from active filters ──
+      let timePeriod = "All Time";
+      if (deptValue !== "All Departments" && statusValue !== "All Status") {
+        timePeriod = `${deptValue} · ${statusValue}`;
+      } else if (deptValue !== "All Departments") {
+        timePeriod = `Dept: ${deptValue}`;
+      } else if (statusValue !== "All Status") {
+        timePeriod = `Status: ${statusValue}`;
+      }
+
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: 'landscape',
@@ -1313,23 +1319,68 @@ if (document.getElementById("reportArea")) {
       // REUSABLE HEADER FUNCTION
       // ======================
       const drawHeader = (pageTitle) => {
-           // Dark Background Header
-        doc.setFillColor(33, 37, 41); 
+
+        // Dark background band
+        doc.setFillColor(33, 37, 41);
         doc.rect(0, 0, pageWidth, 45, 'F');
-        
+
+        // Company name — large white bold
         doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
         doc.setFontSize(22);
-        doc.text("GRAFIX PRINT HUB", 14, 20); 
-        
+        doc.text("GRAFIX PRINT HUB", 14, 20);
+
+        // Report subtitle — smaller white regular
+        doc.setFont(undefined, 'normal');
         doc.setFontSize(10);
-        doc.text(pageTitle, 14, 28);
-        
-        // Metadata Block (Right-aligned)
+        doc.text(pageTitle, 14, 30);
+
+        // ── RIGHT SIDE METADATA ──
+
+        // REPORT TYPE label — white, small caps style
         doc.setFontSize(8);
-        doc.text(`REPORT TYPE: ${pageTitle.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
-        doc.text(`TIME PERIOD: ${startInput || 'START'} TO ${endInput || 'TODAY'}`, pageWidth - 14, 22, { align: 'right' });
-        doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
-    }; 
+        doc.setTextColor(200, 200, 200);
+        doc.text(
+          `REPORT TYPE: ${pageTitle.toUpperCase()}`,
+          pageWidth - 14, 15,
+          { align: 'right' }
+        );
+
+        // TIME PERIOD — slightly brighter white
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(8);
+        doc.text(
+          `TIME PERIOD: ${timePeriod.toUpperCase()}`,
+          pageWidth - 14, 23,
+          { align: 'right' }
+        );
+
+        // Red underline beneath TIME PERIOD text
+        const timePeriodText = `TIME PERIOD: ${timePeriod.toUpperCase()}`;
+        const timePeriodWidth = doc.getTextWidth(timePeriodText);
+        doc.setDrawColor(220, 38, 38);       // red
+        doc.setLineWidth(0.6);
+        doc.line(
+          pageWidth - 14 - timePeriodWidth,  // start x (left edge of text)
+          24.5,                               // y just below the text baseline
+          pageWidth - 14,                     // end x (right margin)
+          24.5
+        );
+
+        // GENERATED timestamp — dimmed gray
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(180, 180, 180);
+        doc.text(
+          `GENERATED: ${new Date().toLocaleString()}`,
+          pageWidth - 14, 31,
+          { align: 'right' }
+        );
+
+        // Reset line width back to default
+        doc.setLineWidth(0.2);
+      };
       
       // ======================
       // DRAW TABLE FUNCTION
