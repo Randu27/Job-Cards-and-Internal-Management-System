@@ -1327,6 +1327,7 @@ if (document.getElementById("reportArea")) {
         // Metadata Block (Right-aligned)
         doc.setFontSize(8);
         doc.text(`REPORT TYPE: ${pageTitle.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
+        doc.text(`TIME PERIOD: ${startInput || 'START'} TO ${endInput || 'TODAY'}`, pageWidth - 14, 22, { align: 'right' });
         doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
     }; 
       
