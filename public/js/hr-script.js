@@ -1275,10 +1275,7 @@ if (document.getElementById("reportArea")) {
   // ===============================
   // NEW PDF GENERATION FUNCTION with Custom Header/Footer
   // ===============================
-  
-  /**
-   * Generate PDF Report with Custom Header and Footer
-   */
+
   async function generatePDF() {
     if (printLoading) printLoading.style.display = "block";
     
@@ -1291,18 +1288,34 @@ if (document.getElementById("reportArea")) {
         return;
       }
       
-      const deptValue = deptFilter?.options[deptFilter.selectedIndex]?.text || "All Departments";
+      const deptValue   = deptFilter?.options[deptFilter.selectedIndex]?.text     || "All Departments";
       const statusValue = statusFilter?.options[statusFilter.selectedIndex]?.text || "All Status";
-      const reportType = `Employee Report`;
+      const reportType  = `Employee Report`;
 
-      // ── Time period label built from active filters ──
-      let timePeriod = "All Time";
-      if (deptValue !== "All Departments" && statusValue !== "All Status") {
-        timePeriod = `${deptValue} · ${statusValue}`;
-      } else if (deptValue !== "All Departments") {
-        timePeriod = `Dept: ${deptValue}`;
-      } else if (statusValue !== "All Status") {
-        timePeriod = `Status: ${statusValue}`;
+      // ── Date filter inputs ──────────────────────────────────
+      const startDateEl = document.getElementById("startDateFilter");
+      const endDateEl   = document.getElementById("endDateFilter");
+      const startVal    = startDateEl?.value; // "2024-01-01"
+      const endVal      = endDateEl?.value;   // "2026-04-03"
+
+      // Format "2024-01-01" → "01 Jan 2024"
+      const formatDate = (dateStr) => {
+        if (!dateStr) return null;
+        return new Date(dateStr).toLocaleDateString("en-GB", {
+          day: "2-digit", month: "short", year: "numeric"
+        });
+      };
+
+      // Build time period label from date inputs
+      let timePeriod;
+      if (startVal && endVal) {
+        timePeriod = `${formatDate(startVal)} — ${formatDate(endVal)}`;
+      } else if (startVal) {
+        timePeriod = `From ${formatDate(startVal)}`;
+      } else if (endVal) {
+        timePeriod = `Up to ${formatDate(endVal)}`;
+      } else {
+        timePeriod = "All Time";
       }
 
       const { jsPDF } = window.jspdf;
@@ -1312,7 +1325,7 @@ if (document.getElementById("reportArea")) {
         format: 'a4'
       });
       
-      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageWidth  = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       
       // ======================
@@ -1337,7 +1350,7 @@ if (document.getElementById("reportArea")) {
 
         // ── RIGHT SIDE METADATA ──
 
-        // REPORT TYPE label — white, small caps style
+        // REPORT TYPE — dimmed gray
         doc.setFontSize(8);
         doc.setTextColor(200, 200, 200);
         doc.text(
@@ -1346,29 +1359,25 @@ if (document.getElementById("reportArea")) {
           { align: 'right' }
         );
 
-        // TIME PERIOD — slightly brighter white
+        // TIME PERIOD — bright white + red underline
+        const timePeriodText = `TIME PERIOD: ${timePeriod.toUpperCase()}`;
         doc.setTextColor(255, 255, 255);
         doc.setFont(undefined, 'bold');
         doc.setFontSize(8);
-        doc.text(
-          `TIME PERIOD: ${timePeriod.toUpperCase()}`,
-          pageWidth - 14, 23,
-          { align: 'right' }
-        );
+        doc.text(timePeriodText, pageWidth - 14, 23, { align: 'right' });
 
-        // Red underline beneath TIME PERIOD text
-        const timePeriodText = `TIME PERIOD: ${timePeriod.toUpperCase()}`;
+        // Red underline beneath TIME PERIOD
         const timePeriodWidth = doc.getTextWidth(timePeriodText);
-        doc.setDrawColor(220, 38, 38);       // red
+        doc.setDrawColor(220, 38, 38);   // red color
         doc.setLineWidth(0.6);
         doc.line(
-          pageWidth - 14 - timePeriodWidth,  // start x (left edge of text)
-          24.5,                               // y just below the text baseline
-          pageWidth - 14,                     // end x (right margin)
+          pageWidth - 14 - timePeriodWidth, // left edge of text
+          24.5,                              // just below baseline
+          pageWidth - 14,                    // right margin
           24.5
         );
 
-        // GENERATED timestamp — dimmed gray
+        // GENERATED — dimmed gray
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8);
         doc.setTextColor(180, 180, 180);
@@ -1378,122 +1387,119 @@ if (document.getElementById("reportArea")) {
           { align: 'right' }
         );
 
-        // Reset line width back to default
+        // Reset line width
         doc.setLineWidth(0.2);
       };
       
       // ======================
       // DRAW TABLE FUNCTION
       // ======================
-      // Replace the entire drawTable function with this:
+      const drawTable = (startY) => {
+        const cols      = activeCols();
+        const colLabels = cols.map(c => c.label);
+        const colKeys   = cols.map(c => c.key);
 
-const drawTable = (startY) => {
-  const cols = activeCols();
-  const colLabels = cols.map(c => c.label);
-  const colKeys  = cols.map(c => c.key);
+        const usableWidth = pageWidth - 28;
 
-  const usableWidth = pageWidth - 28; // 14mm margin each side
+        // Calculate natural widths
+        doc.setFontSize(8);
+        const naturalWidths = colLabels.map((label, i) => {
+          const headerW = doc.getTextWidth(label) + 6;
+          const maxContentW = employees.reduce((max, emp) => {
+            let value = emp[colKeys[i]] || "—";
+            if (colKeys[i] === "status") value = formatStatus(emp.status);
+            return Math.max(max, doc.getTextWidth(String(value)) + 6);
+          }, 0);
+          return Math.max(headerW, maxContentW, 18);
+        });
 
-  // ── Calculate natural widths first ──────────────────────────────
-  doc.setFontSize(8);
-  const naturalWidths = colLabels.map((label, i) => {
-    const headerW = doc.getTextWidth(label) + 6;
-    const maxContentW = employees.reduce((max, emp) => {
-      let value = emp[colKeys[i]] || "—";
-      if (colKeys[i] === "status") value = formatStatus(emp.status);
-      return Math.max(max, doc.getTextWidth(String(value)) + 6);
-    }, 0);
-    return Math.max(headerW, maxContentW, 18); // minimum 18mm
-  });
+        // Scale widths to fill usable width
+        const totalNatural = naturalWidths.reduce((a, b) => a + b, 0);
+        const scale        = usableWidth / Math.max(totalNatural, usableWidth);
+        const colWidths    = naturalWidths.map(w => w * scale);
 
-  // ── Scale widths to fill the full usable width ───────────────────
-  const totalNatural = naturalWidths.reduce((a, b) => a + b, 0);
-  const scale = usableWidth / Math.max(totalNatural, usableWidth);
-  const colWidths = naturalWidths.map(w => w * scale);
+        // Draw table header row
+        let currentY = startY;
+        let currentX = 14;
 
-  // ── Draw table header row ────────────────────────────────────────
-  let currentY = startY;
-  let currentX = 14;
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
 
-  doc.setFontSize(9);
-  doc.setFont(undefined, 'bold');
+        colLabels.forEach((label, i) => {
+          doc.setFillColor(52, 58, 64);
+          doc.setDrawColor(100, 100, 100);
+          doc.rect(currentX, currentY, colWidths[i], 10, 'FD');
+          doc.setTextColor(255, 255, 255);
+          doc.text(label, currentX + 3, currentY + 6.5);
+          currentX += colWidths[i];
+        });
 
-  colLabels.forEach((label, i) => {
-    // Fill first, then text on top
-    doc.setFillColor(52, 58, 64);
-    doc.setDrawColor(100, 100, 100);
-    doc.rect(currentX, currentY, colWidths[i], 10, 'FD');
+        currentY += 10;
 
-    doc.setTextColor(255, 255, 255);
-    doc.text(label, currentX + 3, currentY + 6.5);
-    currentX += colWidths[i];
-  });
+        // Draw table body rows
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
 
-  currentY += 10;
+        employees.forEach((emp, rowIndex) => {
+          // Calculate row height
+          let rowHeight = 8;
+          colKeys.forEach((key, i) => {
+            let value = emp[key] || "—";
+            if (key === "status") value = formatStatus(emp.status);
+            const lines = doc.splitTextToSize(String(value), colWidths[i] - 4);
+            rowHeight = Math.max(rowHeight, lines.length * 5 + 3);
+          });
 
-  // ── Draw table body rows ─────────────────────────────────────────
-  doc.setFontSize(8);
-  doc.setFont(undefined, 'normal');
+          // Page break check
+          if (currentY + rowHeight > pageHeight - 25) {
+            doc.addPage();
+            drawHeader(reportType);
+            currentY = 50;
 
-  employees.forEach((emp, rowIndex) => {
-    // Calculate row height (handle wrapped text)
-    let rowHeight = 8;
-    colKeys.forEach((key, i) => {
-      let value = emp[key] || "—";
-      if (key === "status") value = formatStatus(emp.status);
-      const lines = doc.splitTextToSize(String(value), colWidths[i] - 4);
-      rowHeight = Math.max(rowHeight, lines.length * 5 + 3);
-    });
+            // Redraw column headers on new page
+            currentX = 14;
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'bold');
+            colLabels.forEach((label, i) => {
+              doc.setFillColor(52, 58, 64);
+              doc.setDrawColor(100, 100, 100);
+              doc.rect(currentX, currentY, colWidths[i], 10, 'FD');
+              doc.setTextColor(255, 255, 255);
+              doc.text(label, currentX + 3, currentY + 6.5);
+              currentX += colWidths[i];
+            });
+            currentY += 10;
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+          }
 
-    // Page break check
-    if (currentY + rowHeight > pageHeight - 25) {
-      doc.addPage();
-      drawHeader(reportType);
-      currentY = 50;
+          // Draw each cell
+          currentX = 14;
+          colKeys.forEach((key, i) => {
+            let value = emp[key] || "—";
+            if (key === "status") value = formatStatus(emp.status);
+            const lines = doc.splitTextToSize(String(value), colWidths[i] - 4);
 
-      // Redraw column headers on new page
-      currentX = 14;
-      doc.setFontSize(9);
-      doc.setFont(undefined, 'bold');
-      colLabels.forEach((label, i) => {
-        doc.setFillColor(52, 58, 64);
-        doc.setDrawColor(100, 100, 100);
-        doc.rect(currentX, currentY, colWidths[i], 10, 'FD');
-        doc.setTextColor(255, 255, 255);
-        doc.text(label, currentX + 3, currentY + 6.5);
-        currentX += colWidths[i];
-      });
-      currentY += 10;
-      doc.setFontSize(8);
-      doc.setFont(undefined, 'normal');
-    }
+            // Alternating row fill
+            doc.setFillColor(
+              rowIndex % 2 === 0 ? 245 : 255,
+              rowIndex % 2 === 0 ? 247 : 255,
+              rowIndex % 2 === 0 ? 250 : 255
+            );
+            doc.setDrawColor(210, 210, 210);
+            doc.rect(currentX, currentY, colWidths[i], rowHeight, 'FD');
 
-    // Draw each cell: fill rect FIRST, then text
-    currentX = 14;
-    colKeys.forEach((key, i) => {
-      let value = emp[key] || "—";
-      if (key === "status") value = formatStatus(emp.status);
-      const lines = doc.splitTextToSize(String(value), colWidths[i] - 4);
+            doc.setTextColor(30, 30, 30);
+            doc.text(lines, currentX + 3, currentY + 5);
 
-      // Alternating row fill
-      doc.setFillColor(rowIndex % 2 === 0 ? 245 : 255,
-                       rowIndex % 2 === 0 ? 247 : 255,
-                       rowIndex % 2 === 0 ? 250 : 255);
-      doc.setDrawColor(210, 210, 210);
-      doc.rect(currentX, currentY, colWidths[i], rowHeight, 'FD'); // fill + border
+            currentX += colWidths[i];
+          });
 
-      // Text drawn AFTER rect
-      doc.setTextColor(30, 30, 30);
-      doc.text(lines, currentX + 3, currentY + 5);
+          currentY += rowHeight;
+        });
 
-      currentX += colWidths[i];
-    });
-
-    currentY += rowHeight;
-  });
-
-  return currentY;
-};
+        return currentY;
+      };
       
       // ======================
       // DRAW FOOTER FUNCTION
@@ -1515,12 +1521,12 @@ const drawTable = (startY) => {
       };
       
       // ======================
-      // DRAW SUMMARY SECTION (Footer-like content before page numbers)
+      // DRAW SUMMARY SECTION
       // ======================
       const drawSummary = (yPosition) => {
         const fullTime = employees.filter(e => (e.status || "").toLowerCase() === "fulltime").length;
         const partTime = employees.length - fullTime;
-        const depts = new Set(employees.map(e => e.department).filter(Boolean)).size;
+        const depts    = new Set(employees.map(e => e.department).filter(Boolean)).size;
         
         doc.setFontSize(9);
         doc.setTextColor(0, 0, 0);
@@ -1529,12 +1535,11 @@ const drawTable = (startY) => {
         
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
-        doc.text(`• Total Employees: ${employees.length}`, 14, yPosition + 6);
-        doc.text(`• Full Time Employees: ${fullTime}`, 14, yPosition + 12);
-        doc.text(`• Part Time Employees: ${partTime}`, 14, yPosition + 18);
-        doc.text(`• Total Departments: ${depts}`, 14, yPosition + 24);
+        doc.text(`• Total Employees: ${employees.length}`,  14, yPosition + 6);
+        doc.text(`• Full Time Employees: ${fullTime}`,      14, yPosition + 12);
+        doc.text(`• Part Time Employees: ${partTime}`,      14, yPosition + 18);
+        doc.text(`• Total Departments: ${depts}`,           14, yPosition + 24);
         
-        // Add a line separator
         doc.setDrawColor(200, 200, 200);
         doc.line(14, yPosition + 30, pageWidth - 14, yPosition + 30);
         
@@ -1544,29 +1549,22 @@ const drawTable = (startY) => {
       // ======================
       // GENERATE THE COMPLETE PDF
       // ======================
-      
-      // Draw header on first page
       drawHeader(reportType);
       
-      // Draw the main table
       let endY = drawTable(50);
       
-      // Draw summary section
       if (endY + 40 < pageHeight - 20) {
         drawSummary(endY + 5);
       } else {
-        // Add new page for summary if not enough space
         doc.addPage();
         drawHeader(reportType);
         drawSummary(50);
       }
       
-      // Add footers with page numbers
       addFooter();
       
-      // Save the PDF
       const timestamp = new Date().getTime();
-      const fileName = `Employee_Report_${deptValue}_${statusValue}_${timestamp}.pdf`;
+      const fileName  = `Employee_Report_${deptValue}_${statusValue}_${timestamp}.pdf`;
       doc.save(fileName);
       
       if (printLoading) printLoading.style.display = "none";
@@ -1582,10 +1580,9 @@ const drawTable = (startY) => {
   // EVENT LISTENERS
   // ======================
   
-  if (deptFilter) deptFilter.addEventListener("change", () => renderTable(getFiltered()));
+  if (deptFilter)   deptFilter.addEventListener("change",   () => renderTable(getFiltered()));
   if (statusFilter) statusFilter.addEventListener("change", () => renderTable(getFiltered()));
   
-  // Original print button (browser print)
   if (printBtn) {
     printBtn.addEventListener("click", () => {
       if (reportDate) {
@@ -1598,12 +1595,9 @@ const drawTable = (startY) => {
     });
   }
   
-  // New PDF export button with custom header/footer
   if (exportPdfBtn) {
     exportPdfBtn.addEventListener("click", generatePDF);
   }
   
-  
   loadPrintData();
 }
-
