@@ -327,32 +327,107 @@ function sortOrders(key) {
 // .............................. Print Table ................................//
 
 function printOrderTable() {
-    const tableHTML = document.getElementById('ordersTable').outerHTML;
-    const printWindow = window.open('', '', 'width=1000,height=700');
-    printWindow.document.write(`
-        <!DOCTYPE html><html>
-        <head>
-            <title>Order Table - Grafix Print Hub</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-            <style>
-                body { padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-                h4 { margin-bottom: 20px; color: #22244a; }
-                table { border-collapse: collapse; width: 100%; }
-                thead { background: #f1f3fb; display: table-header-group; }
-                thead th { font-size: 0.84rem; font-weight: 700; padding: 12px 10px; color: #6c757d; }
-                tbody td { font-size: 0.88rem; padding: 10px; }
-                tr { page-break-inside: avoid; }
-                @media print { body { padding: 10px; } }
-            </style>
-        </head>
-        <body>
-            <h4>Order History — Grafix Print Hub</h4>
-            ${tableHTML}
-        </body></html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+
+    if (!window.jspdf) {
+        alert('PDF library not loaded yet. Please try again in a moment.');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const PW = 297, PH = 210;
+    const ML = 14, MR = 14;
+    const now = new Date();
+
+    // ── Apply same date filter that's currently active ────────────────
+    const selectedDate = document.getElementById('dateFilter')?.value;
+    const timePeriod = selectedDate ? selectedDate : 'All Time';
+
+    let displayOrders;
+    if (selectedDate) {
+        displayOrders = allOrders.filter(order => {
+            if (!order.createdAt) return false;
+            const orderDate = new Date(order.createdAt.seconds * 1000);
+            const orderDateStr = orderDate.toISOString().split('T')[0];
+            return orderDateStr === selectedDate;
+        });
+    } else {
+        displayOrders = [...allOrders].reverse();
+    }
+
+    if (displayOrders.length === 0) {
+        alert('No orders to print for the selected period.');
+        return;
+    }
+
+    // ── HEADER ───────────────────────────────────────────────────────
+    doc.setFillColor(33, 37, 41);
+    doc.rect(0, 0, PW, 45, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('GRAFIX PRINT HUB', ML, 20);
+
+    doc.setFontSize(10);
+    doc.text('Order History Report', ML, 30);
+
+    doc.setFontSize(8);
+    doc.text('REPORT TYPE: ORDER TABLE', PW - 8, 13, { align: 'right' });
+    doc.text(`TIME PERIOD: ${timePeriod}`, PW - 8, 20, { align: 'right' });
+    doc.text(`GENERATED: ${now.toLocaleString()}`, PW - 8, 27, { align: 'right' });
+
+    // ── TABLE ─────────────────────────────────────────────────────────
+    const tableRows = displayOrders.map((order) => {
+        const orderNo = String(allOrders.findIndex(o => o.id === order.id) + 1).padStart(2, '0');
+        const amount = order.amountPaid ? `Rs. ${parseFloat(order.amountPaid).toLocaleString()}` : '—';
+        return [
+            orderNo,
+            order.customerName || '—',
+            order.contactNumber || '—',
+            order.address || '—',
+            order.companyName || '—',
+            order.paymentMethod || '—',
+            amount,
+            order.orderProcess || 'Pending',
+        ];
+    });
+
+    doc.autoTable({
+        head: [['No', 'Name', 'Contact No', 'Address', 'Company', 'Payment', 'Amount Paid', 'Order Process']],
+        body: tableRows,
+        startY: 55,
+        theme: 'striped',
+        headStyles: { fillColor: [33, 37, 41], textColor: 255, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: [17, 24, 39] },
+        alternateRowStyles: { fillColor: [243, 244, 246] },
+        columnStyles: {
+            0: { cellWidth: 12 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 28 },
+            3: { cellWidth: 50 },
+            4: { cellWidth: 30 },
+            5: { cellWidth: 32 },
+            6: { cellWidth: 28 },
+            7: { cellWidth: 28 },
+        },
+        margin: { left: ML, right: MR },
+        styles: { cellPadding: 3, overflow: 'ellipsize' },
+    });
+
+    // ── FOOTER ────────────────────────────────────────────────────────
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+            `Grafix Print Hub | Order History | Page ${i} of ${pageCount}`,
+            PW / 2, PH - 5, { align: 'center' }
+        );
+    }
+
+    // ── Save ──────────────────────────────────────────────────────────
+    doc.save(`GrafixPrintHub_OrderTable_${now.getTime()}.pdf`);
 }
 
 // .................... Delete..............................//
@@ -622,10 +697,10 @@ function getImageNaturalSize(base64DataUrl) {
 
 /**
  * Main export function — called by the "Download PDF" button.
+ * 
  */
-async function exportOrderToPDF() {
 
-    // ................... Guard: jsPDF must be loaded ...................//
+async function exportOrderToPDF() {
 
     if (!window.jspdf) {
         alert('PDF library not loaded yet. Please try again in a moment.');
@@ -633,7 +708,6 @@ async function exportOrderToPDF() {
     }
     const { jsPDF } = window.jspdf;
 
-    // ...................... Collect data from the open modal ....................//
     const getText = id => (document.getElementById(id)?.textContent || '').trim();
 
     const data = {
@@ -645,11 +719,9 @@ async function exportOrderToPDF() {
         payment: getText('detailPayment'),
         amount: getText('detailAmount'),
         size: getText('detailSize'),
-        process: getText('detailProcess'),   // plain text (badge stripped)
+        process: getText('detailProcess'),
         description: getText('detailDescription'),
     };
-
-    // ..............Pre-fetch sketch image (if any)
 
     const imgEl = document.getElementById('detailSketchImg');
     const hasImage = imgEl && imgEl.style.display !== 'none'
@@ -659,63 +731,43 @@ async function exportOrderToPDF() {
     let sketchSize = { w: 1, h: 1 };
 
     if (hasImage) {
-        // Show loading state on button while fetching
         const btn = document.getElementById('pdfBtn');
         const originalHTML = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>Preparing PDF…`;
-
         try {
             sketchBase64 = await fetchImageAsBase64(imgEl.src);
             sketchSize = await getImageNaturalSize(sketchBase64);
         } catch (err) {
             console.warn('Sketch image could not be loaded for PDF:', err);
-            sketchBase64 = null;   // continue without image — don't block PDF
+            sketchBase64 = null;
         }
-
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     }
 
-    //....................PDF constants & helpers .........................//
-
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-
-    const PW = 210, PH = 297;   // A4 dimensions
-    const ML = 16, MR = 16;     // left / right margin
-    const CW = PW - ML - MR;    // usable content width
-
-    // ......................Palette...........................//
+    const PW = 210, PH = 297;
+    const ML = 14, MR = 14;
+    const CW = PW - ML - MR;
 
     const C = {
-        purple: [79, 70, 229],   // indigo-600
-        purpleLight: [238, 242, 255],   // indigo-50
-        purpleMid: [199, 210, 254],   // indigo-200
-        green: [5, 150, 105],   // emerald-600
-        greenLight: [209, 250, 229],   // emerald-100
-        dark: [17, 24, 39],   // gray-900
-        mid: [75, 85, 99],   // gray-600
-        muted: [156, 163, 175],   // gray-400
-        light: [243, 244, 246],   // gray-100
-        white: [255, 255, 255],
-        amber: [217, 119, 6],   // amber-600
-        amberLight: [254, 243, 199],   // amber-50
-        red: [185, 28, 28],
-        redLight: [254, 226, 226],
+        purple: [79, 70, 229],
+        purpleLight: [238, 242, 255],
+        purpleMid: [199, 210, 254],
+        green: [5, 150, 105],
+        dark: [17, 24, 39],
+        muted: [156, 163, 175],
+        light: [243, 244, 246],
     };
 
-    // Helpers to set colors quickly
     const fill = (rgb) => doc.setFillColor(...rgb);
-    const stroke = (rgb) => doc.setDrawColor(...rgb);
     const text = (rgb) => doc.setTextColor(...rgb);
 
-    // Draw a filled rounded rectangle
     function roundRect(x, y, w, h, r, colorRgb) {
         fill(colorRgb);
         doc.roundedRect(x, y, w, h, r, r, 'F');
     }
-
-    // Write a label + value pair inside a card tile
 
     function drawTile(x, y, w, h, label, value) {
         roundRect(x, y, w, h, 3, C.light);
@@ -723,71 +775,53 @@ async function exportOrderToPDF() {
         doc.setFontSize(7);
         text(C.muted);
         doc.text(label.toUpperCase(), x + 4, y + 6);
-
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9.5);
         text(C.dark);
-        // Truncate long values gracefully
         const lines = doc.splitTextToSize(value || '—', w - 8);
-        doc.text(lines[0] || '—', x + 4, y + 13);   // show first line only in tile
+        doc.text(lines[0] || '—', x + 4, y + 13);
     }
 
-    let y = 0;   // running Y cursor
-
-    // ........................Header band ..............................//
-
-    fill(C.purple);
-    doc.rect(0, 0, PW, 32, 'F');
-
-    // Decorative circle top-right
-    fill([99, 102, 241]);   // slightly lighter indigo
-    doc.circle(PW - 10, -8, 24, 'F');
-    fill([129, 140, 248]);
-    doc.circle(PW - 28, 6, 10, 'F');
-
-    // Company name
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    text(C.white);
-    doc.text('Grafix Print Hub', ML, 14);
-
-    // Subtitle
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    text([199, 210, 254]);   // indigo-200
-    doc.text('Order Detail Report', ML, 21);
-
-    // Date — right aligned
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    let y = 0;
+
+    // ............ HEADER ..................//
+
+    doc.setFillColor(33, 37, 41);
+    doc.rect(0, 0, PW, 45, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('GRAFIX PRINT HUB', ML, 20);
+
+    doc.setFontSize(10);
+    doc.text('Order Detail Report', ML, 30);
+
+    // Right-side meta — anchored at PW - 8 so text isn't clipped at page edge
+
     doc.setFontSize(8);
-    text(C.white);
-    doc.text(dateStr, PW - MR, 21, { align: 'right' });
+    doc.text('REPORT TYPE: ORDER', PW - 8, 15, { align: 'right' });
+    doc.text(`CUSTOMER: ${data.name}`, PW - 8, 22, { align: 'right' });
+    doc.text(`GENERATED: ${now.toLocaleString()}`, PW - 8, 29, { align: 'right' });
 
-    // Green accent line
-    fill(C.green);
-    doc.rect(0, 32, PW, 2.5, 'F');
+    y = 60;
 
-    y = 44;
+    // ................ BODY................//
 
-
-    // ...................."Customer & Order Information" section title ...................//
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     text(C.dark);
     doc.text('Customer & Order Information', ML, y);
 
-    // Purple underline accent
     fill(C.purple);
     doc.rect(ML, y + 2, 52, 1.2, 'F');
 
     y += 10;
 
-    // ................... Two-column info tiles ..................//
     const TILE_H = 18;
     const TILE_GAP = 4;
     const HALF_W = (CW - TILE_GAP) / 2;
-
     const leftCol = ML;
     const rightCol = ML + HALF_W + TILE_GAP;
 
@@ -811,8 +845,7 @@ async function exportOrderToPDF() {
 
     y += Math.ceil(tileData.length / 2) * (TILE_H + TILE_GAP) + 4;
 
-
-    // .................... Address — full width tile ..............//
+    // Address
     const addrLines = doc.splitTextToSize(data.address || '—', CW - 8);
     const addrTileH = Math.max(18, addrLines.length * 5 + 10);
     roundRect(ML, y, CW, addrTileH, 3, C.light);
@@ -827,14 +860,11 @@ async function exportOrderToPDF() {
 
     y += addrTileH + 6;
 
-    // ............... Design Description — full width..................//
+    // Design Description
     const descLines = doc.splitTextToSize(data.description || '—', CW - 10);
     const descTileH = descLines.length * 5.2 + 16;
 
-    // Slightly tinted background for description
     roundRect(ML, y, CW, descTileH, 4, C.purpleLight);
-
-    // Left accent bar
     fill(C.purple);
     doc.roundedRect(ML, y, 3, descTileH, 1.5, 1.5, 'F');
 
@@ -842,7 +872,6 @@ async function exportOrderToPDF() {
     doc.setFontSize(7);
     text(C.muted);
     doc.text('DESIGN DESCRIPTION', ML + 7, y + 6);
-
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     text(C.dark);
@@ -850,63 +879,46 @@ async function exportOrderToPDF() {
 
     y += descTileH + 8;
 
-    //..................... Sketch / Original Design image ...................//
-
+    // Sketch image
     if (sketchBase64) {
-
-        // Check if we need a new page
         const MIN_IMG_SPACE = 40;
-        if (y + MIN_IMG_SPACE > PH - 20) {
-            doc.addPage();
-            y = 20;
-        }
+        if (y + MIN_IMG_SPACE > PH - 20) { doc.addPage(); y = 20; }
 
-        // Section title
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         text(C.dark);
         doc.text('Original Design / Sketch', ML, y);
-
         fill(C.green);
         doc.rect(ML, y + 2, 42, 1.2, 'F');
-
         y += 10;
 
-        // Scale image: max width = CW, max height = 85mm
-        const MAX_W = CW;
-        const MAX_H = 85;
+        const MAX_W = CW, MAX_H = 85;
         const ratio = sketchSize.h / sketchSize.w;
-        let imgW = MAX_W;
-        let imgH = imgW * ratio;
+        let imgW = MAX_W, imgH = imgW * ratio;
         if (imgH > MAX_H) { imgH = MAX_H; imgW = imgH / ratio; }
 
-        // Overflow to new page if needed
         if (y + imgH + 4 > PH - 20) { doc.addPage(); y = 20; }
 
-        // Shadow / border tile behind image
         roundRect(ML - 2, y - 2, imgW + 4, imgH + 4, 4, C.purpleMid);
-
-        // Detect PNG vs JPEG from data URL header
         const fmt = sketchBase64.startsWith('data:image/png') ? 'PNG' : 'JPEG';
         doc.addImage(sketchBase64, fmt, ML, y, imgW, imgH);
-
         y += imgH + 10;
     }
 
-    //  Footer band 
+    //........................FOOTER .........................//
 
-    // If content is near the bottom, footer is fixed to page bottom//
-    fill(C.purple);
-    doc.rect(0, PH - 12, PW, 12, 'F');
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+            `Grafix Print Hub | Order Record | Page ${i} of ${pageCount}`,
+            PW / 2, 287, { align: 'center' }
+        );
+    }
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    text(C.white);
-    doc.text('© Grafix Print Hub — Confidential Order Record', ML, PH - 4);
-    text([199, 210, 254]);
-    doc.text(`Generated: ${now.toLocaleString('en-GB')}`, PW - MR, PH - 4, { align: 'right' });
-
-    // .... browser opens native "Save As" dialog ...//
+    // ................... Save...................//
 
     const safeName = (data.name || 'Order').replace(/[^a-z0-9_\- ]/gi, '_').replace(/\s+/g, '_');
     doc.save(`GrafixPrintHub_${safeName}_Order.pdf`);
