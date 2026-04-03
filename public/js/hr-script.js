@@ -1312,7 +1312,7 @@ if (document.getElementById("reportArea")) {
       // ======================
       // REUSABLE HEADER FUNCTION
       // ======================
-      const drawHeader = (pageTitle, startDate, endDate) => {
+      const drawHeader = (pageTitle) => {
            // Dark Background Header
         doc.setFillColor(33, 37, 41); 
         doc.rect(0, 0, pageWidth, 45, 'F');
@@ -1326,7 +1326,7 @@ if (document.getElementById("reportArea")) {
         
         // Metadata Block (Right-aligned)
         doc.setFontSize(8);
-        doc.text(`REPORT TYPE: ${type.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
+        doc.text(`REPORT TYPE: ${pageTitle.toUpperCase()}`, pageWidth - 14, 15, { align: 'right' });
         doc.text(`GENERATED: ${new Date().toLocaleString()}`, pageWidth - 14, 29, { align: 'right' });
     }; 
       
@@ -1396,7 +1396,7 @@ const drawTable = (startY) => {
     // Page break check
     if (currentY + rowHeight > pageHeight - 25) {
       doc.addPage();
-      drawHeader(reportType, deptValue, statusValue);
+      drawHeader(reportType);
       currentY = 50;
 
       // Redraw column headers on new page
@@ -1494,7 +1494,7 @@ const drawTable = (startY) => {
       // ======================
       
       // Draw header on first page
-      drawHeader(reportType, deptValue, statusValue);
+      drawHeader(reportType);
       
       // Draw the main table
       let endY = drawTable(50);
@@ -1505,7 +1505,7 @@ const drawTable = (startY) => {
       } else {
         // Add new page for summary if not enough space
         doc.addPage();
-        drawHeader(reportType, deptValue, statusValue);
+        drawHeader(reportType);
         drawSummary(50);
       }
       
@@ -1551,25 +1551,6 @@ const drawTable = (startY) => {
     exportPdfBtn.addEventListener("click", generatePDF);
   }
   
-  // CSV export handler
-  if (exportCsvBtn) {
-    exportCsvBtn.addEventListener("click", () => {
-      const cols = activeCols();
-      const employees = getFiltered();
-      const header = cols.map(c => `"${c.label}"`).join(",");
-      const rows = employees.map(emp =>
-        cols.map(c => `"${(emp[c.key] || "").toString().replace(/"/g, '""')}"`).join(",")
-      );
-      const csv = [header, ...rows].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  }
   
   loadPrintData();
 }
