@@ -1400,10 +1400,10 @@ button#searchBtn:hover,
     font-family: var(--font-main);
 }
 .report-table thead tr {
-    background: linear-gradient(135deg, var(--accent-violet), var(--accent-indigo));
+    background: #ffe785;
 }
 .report-table thead th {
-    color: white;
+    color: rgb(87, 86, 86);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
