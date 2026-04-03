@@ -1359,23 +1359,14 @@ if (document.getElementById("reportArea")) {
           { align: 'right' }
         );
 
-        // TIME PERIOD — bright white + red underline
+        // TIME PERIOD 
         const timePeriodText = `TIME PERIOD: ${timePeriod.toUpperCase()}`;
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(200, 200, 200);
         doc.setFont(undefined, 'bold');
         doc.setFontSize(8);
         doc.text(timePeriodText, pageWidth - 14, 23, { align: 'right' });
 
-        // Red underline beneath TIME PERIOD
-        const timePeriodWidth = doc.getTextWidth(timePeriodText);
-        doc.setDrawColor(220, 38, 38);   // red color
-        doc.setLineWidth(0.6);
-        doc.line(
-          pageWidth - 14 - timePeriodWidth, // left edge of text
-          24.5,                              // just below baseline
-          pageWidth - 14,                    // right margin
-          24.5
-        );
+        
 
         // GENERATED — dimmed gray
         doc.setFont(undefined, 'normal');
