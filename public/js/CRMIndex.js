@@ -1,6 +1,11 @@
 // Customer data array (synced with Firestore)
 let customers = [];
 let currentDeleteId = null;
+let currentFilter = {
+    search: '',
+    type: '',
+    rating: ''
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     initializePage();
@@ -31,26 +36,21 @@ function showPage(pageName) {
     const mainDashboard = document.getElementById('mainDashboard');
     
     if (pageName === 'home') {
-        // Show main dashboard
         if (mainDashboard) mainDashboard.style.display = 'block';
-        // Hide all pages
         document.querySelectorAll('.page-container').forEach(page => {
             page.classList.remove('active-page');
         });
     } else {
-        // Hide main dashboard
         if (mainDashboard) mainDashboard.style.display = 'none';
-        // Show selected page
         const selectedPage = document.getElementById(`${pageName}Page`);
         if (selectedPage) {
             selectedPage.classList.add('active-page');
         }
         
-        // Load specific content based on page
         if (pageName === 'feedbacks') {
             loadFeedbacks();
         } else if (pageName === 'profiles') {
-            renderCustomersTable();
+            renderFilteredCustomersTable();
         } else if (pageName === 'reports') {
             previewReport();
         }
@@ -65,7 +65,7 @@ function loadCustomersFromFirestore() {
             customers.push({ id: doc.id, ...doc.data() });
         });
         updateStats();
-        renderCustomersTable();
+        renderFilteredCustomersTable();
         if (document.getElementById('feedbacksPage') && document.getElementById('feedbacksPage').classList.contains('active-page')) {
             loadFeedbacks();
         }
@@ -84,25 +84,83 @@ function updateStats() {
     document.getElementById('newFeedbacks').innerText = newFeedbacks;
 }
 
-// RENDER TABLE for Profiles page with icon buttons
-function renderCustomersTable() {
+// FILTER CUSTOMERS
+function filterCustomers() {
+    const searchTerm = currentFilter.search.toLowerCase();
+    const typeFilter = currentFilter.type;
+    const ratingFilter = currentFilter.rating;
+    
+    return customers.filter(c => {
+        // Search filter
+        const matchesSearch = searchTerm === '' || 
+            (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+            (c.email && c.email.toLowerCase().includes(searchTerm)) ||
+            (c.company && c.company.toLowerCase().includes(searchTerm)) ||
+            (c.phone && c.phone.includes(searchTerm));
+        
+        // Type filter
+        const matchesType = typeFilter === '' || (c.type === typeFilter);
+        
+        // Rating filter
+        let matchesRating = true;
+        if (ratingFilter !== '') {
+            const ratingValue = c.feedback ? parseInt(c.feedback.charAt(0)) : 5;
+            matchesRating = ratingValue === parseInt(ratingFilter);
+        }
+        
+        return matchesSearch && matchesType && matchesRating;
+    });
+}
+
+// Apply filters from UI
+function applyFilters() {
+    const searchInput = document.getElementById('customerSearch');
+    const typeSelect = document.getElementById('filterType');
+    const ratingSelect = document.getElementById('filterRating');
+    
+    currentFilter.search = searchInput ? searchInput.value : '';
+    currentFilter.type = typeSelect ? typeSelect.value : '';
+    currentFilter.rating = ratingSelect ? ratingSelect.value : '';
+    
+    renderFilteredCustomersTable();
+}
+
+// Reset all filters
+function resetFilters() {
+    currentFilter = { search: '', type: '', rating: '' };
+    
+    const searchInput = document.getElementById('customerSearch');
+    const typeSelect = document.getElementById('filterType');
+    const ratingSelect = document.getElementById('filterRating');
+    
+    if (searchInput) searchInput.value = '';
+    if (typeSelect) typeSelect.value = '';
+    if (ratingSelect) ratingSelect.value = '';
+    
+    renderFilteredCustomersTable();
+}
+
+// RENDER FILTERED TABLE for Profiles page
+function renderFilteredCustomersTable() {
     const tableBody = document.getElementById('customerTableBody');
     if (!tableBody) return;
     
+    const filteredCustomers = filterCustomers();
+    
     tableBody.innerHTML = '';
     
-    if (customers.length === 0) {
+    if (filteredCustomers.length === 0) {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox"></i> No customers found. Click "Add New" to add one.
-                </td
+                    <i class="bi bi-inbox"></i> No customers found. Try different search or filters.
+                </td>
             </tr>
         `;
         return;
     }
     
-    customers.forEach(c => {
+    filteredCustomers.forEach(c => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>
@@ -113,23 +171,38 @@ function renderCustomersTable() {
                         <small class="text-muted">${c.type || 'Regular'}</small>
                     </div>
                 </div>
-            </td>
-            <td>${c.company}</td>
-            <td>${c.email}</td>
-            <td>${c.phone}</td>
-            <td style="max-width: 200px; white-space: normal;">${c.address || 'Not specified'}</td>
-            <td><span class="badge bg-primary">${c.orders || 0} orders</span></td>
-            <td><span class="feedback-badge"><i class="bi bi-star-fill text-warning"></i> ${c.feedback || '5 ★'}</span></td>
+            </td
+            <td>${c.company}</td
+            <td>${c.email}</td
+            <td>${c.phone}</td
+            <td style="max-width: 200px; white-space: normal;">${c.address || 'Not specified'}</td
+            <td><span class="badge bg-primary">${c.orders || 0} orders</span></td
+            <td><span class="feedback-badge"><i class="bi bi-star-fill text-warning"></i> ${c.feedback || '5 ★'}</span></td
             <td>
                 <div class="action-icons">
                     <i class="bi bi-eye action-icon icon-view" onclick="viewCustomer('${c.id}')" title="View Details"></i>
                     <i class="bi bi-pencil action-icon icon-edit" onclick="openEditModal('${c.id}')" title="Edit Customer"></i>
                     <i class="bi bi-trash action-icon icon-delete" onclick="openDeleteModal('${c.id}', '${c.name}')" title="Delete Customer"></i>
                 </div>
-            </td>
+            </td
         `;
         tableBody.appendChild(row);
     });
+}
+
+// RENDER TABLE (alias for compatibility)
+function renderCustomersTable() {
+    renderFilteredCustomersTable();
+}
+
+// Validation functions
+function validatePhone(phone) {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone);
+}
+
+function validateOrders(orders) {
+    return orders >= 0;
 }
 
 // View Customer Details
@@ -182,7 +255,7 @@ function viewCustomer(id) {
     modal.show();
 }
 
-// Load Feedbacks with Customer Details and Colorful Borders
+// Load Feedbacks
 function loadFeedbacks() {
     const container = document.getElementById('feedbacksContainer');
     if (!container) return;
@@ -205,7 +278,6 @@ function loadFeedbacks() {
         const stars = getStarsFromFeedback(c.feedback);
         const feedbackCard = document.createElement('div');
         
-        // Determine card class based on customer type
         let cardClass = 'feedback-card';
         if (c.type === 'VIP') {
             cardClass += ' vip-card';
@@ -266,58 +338,121 @@ function loadFeedbacks() {
     });
 }
 
-// Preview Report
-function previewReport() {
-    const reportContent = generateReportHTML();
-    document.getElementById('reportContent').innerHTML = reportContent;
-    document.getElementById('reportPreview').style.display = 'block';
-}
-
-// Simple Report HTML Generation
+// Enhanced Report HTML Generation (Professional Summary)
 function generateReportHTML() {
     const totalCustomers = customers.length;
     const totalOrders = customers.reduce((sum, c) => sum + (c.orders || 0), 0);
     const avgOrders = totalCustomers > 0 ? (totalOrders / totalCustomers).toFixed(1) : 0;
     const vipCount = customers.filter(c => c.type === 'VIP').length;
+    const corporateCount = customers.filter(c => c.type === 'Corporate').length;
+    const newCount = customers.filter(c => c.type === 'New').length;
+    const regularCount = customers.filter(c => c.type === 'Regular' || !c.type).length;
+    
+    const fiveStarCount = customers.filter(c => c.feedback && c.feedback.includes('5')).length;
+    const fourStarCount = customers.filter(c => c.feedback && c.feedback.includes('4')).length;
+    const threeStarCount = customers.filter(c => c.feedback && c.feedback.includes('3')).length;
+    
+    const avgRating = totalCustomers > 0 ? 
+        (customers.reduce((sum, c) => sum + (c.feedback ? parseInt(c.feedback.charAt(0)) : 5), 0) / totalCustomers).toFixed(1) : 0;
+    
     const currentDate = new Date().toLocaleString();
+    const reportDate = new Date().toISOString().split('T')[0];
     
     return `
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h4>Grafix Print Hub</h4>
-            <h5>Customer Report</h5>
-            <p>Generated on: ${currentDate}</p>
-            <hr>
+        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #0d6efd;">
+            <h2 style="color: #2c3e50; margin-bottom: 5px;">GRAFIX PRINT HUB</h2>
+            <h4 style="color: #6c757d;">SYSTEM GENERATED CUSTOMER ANALYSIS</h4>
+            <p style="color: #7f8c8d; margin-top: 10px;">REPORT TYPE: CUSTOMER SUMMARY</p>
+            <p style="color: #7f8c8d;">TIME PERIOD: ${reportDate}</p>
+            <p style="color: #7f8c8d;">GENERATED: ${currentDate}</p>
         </div>
         
-        <div style="margin-bottom: 20px;">
-            <h6>Summary Statistics</h6>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <!-- Business Performance Summary -->
+        <div style="margin-bottom: 30px;">
+            <h5 style="color: #2c3e50; border-left: 4px solid #0d6efd; padding-left: 12px; margin-bottom: 20px;">Business Performance Summary</h5>
+            <div class="stats-summary-row" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="stat-summary-card" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div class="stat-summary-value" style="font-size: 28px; font-weight: 700;">${totalCustomers}</div>
+                    <div class="stat-summary-label" style="font-size: 11px; opacity: 0.9;">Total Customers</div>
+                </div>
+                <div class="stat-summary-card" style="flex: 1; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div class="stat-summary-value" style="font-size: 28px; font-weight: 700;">${totalOrders}</div>
+                    <div class="stat-summary-label" style="font-size: 11px; opacity: 0.9;">Total Orders</div>
+                </div>
+                <div class="stat-summary-card" style="flex: 1; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div class="stat-summary-value" style="font-size: 28px; font-weight: 700;">${avgOrders}</div>
+                    <div class="stat-summary-label" style="font-size: 11px; opacity: 0.9;">Avg Orders/Customer</div>
+                </div>
+                <div class="stat-summary-card" style="flex: 1; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div class="stat-summary-value" style="font-size: 28px; font-weight: 700;">${avgRating}</div>
+                    <div class="stat-summary-label" style="font-size: 11px; opacity: 0.9;">Avg Rating ★</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Distribution -->
+        <div style="margin-bottom: 25px;">
+            <h5 style="color: #2c3e50; border-left: 4px solid #198754; padding-left: 12px; margin-bottom: 15px;">Customer Distribution by Type</h5>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                 <tr style="background: #f8f9fa;">
-                    <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Metric</th>
-                    <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Value</th>
-                </tr>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Customer Type</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Count</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Percentage</th>
+                 </tr>
                 <tr>
-                    <td style="padding: 6px; border: 1px solid #ddd;">Total Customers</td>
-                    <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${totalCustomers}</td>
-                </tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">⭐ VIP</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${vipCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((vipCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
                 <tr>
-                    <td style="padding: 6px; border: 1px solid #ddd;">Total Orders</td>
-                    <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${totalOrders}</td>
-                </tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">🏢 Corporate</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${corporateCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((corporateCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
                 <tr>
-                    <td style="padding: 6px; border: 1px solid #ddd;">Average Orders per Customer</td>
-                    <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${avgOrders}</td>
-                </tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">🆕 New</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${newCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((newCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
                 <tr>
-                    <td style="padding: 6px; border: 1px solid #ddd;">VIP Customers</td>
-                    <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${vipCount}</td>
-                </tr>
-            </table>
+                    <td style="padding: 8px; border: 1px solid #ddd;">📋 Regular</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${regularCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((regularCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
+             </table>
         </div>
         
+        <!-- Feedback Distribution -->
+        <div style="margin-bottom: 25px;">
+            <h5 style="color: #2c3e50; border-left: 4px solid #ffc107; padding-left: 12px; margin-bottom: 15px;">Feedback Rating Distribution</h5>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Rating</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Count</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Percentage</th>
+                 </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">★★★★★ (5 Star)</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${fiveStarCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((fiveStarCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">★★★★☆ (4 Star)</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${fourStarCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((fourStarCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">★★★☆☆ (3 Star)</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${threeStarCount}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${totalCustomers > 0 ? ((threeStarCount/totalCustomers)*100).toFixed(1) : 0}%</td>
+                 </tr>
+             </table>
+        </div>
+        
+        <!-- Customer List Table -->
         <div>
-            <h6>Customer List</h6>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <h5 style="color: #2c3e50; border-left: 4px solid #0dcaf0; padding-left: 12px; margin-bottom: 15px;">Customer List</h5>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                 <thead>
                     <tr style="background: #f8f9fa;">
                         <th style="padding: 8px; border: 1px solid #ddd;">Name</th>
@@ -325,8 +460,9 @@ function generateReportHTML() {
                         <th style="padding: 8px; border: 1px solid #ddd;">Email</th>
                         <th style="padding: 8px; border: 1px solid #ddd;">Phone</th>
                         <th style="padding: 8px; border: 1px solid #ddd;">Orders</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Rating</th>
                         <th style="padding: 8px; border: 1px solid #ddd;">Type</th>
-                    </tr>
+                     </tr>
                 </thead>
                 <tbody>
                     ${customers.map(c => `
@@ -336,17 +472,25 @@ function generateReportHTML() {
                             <td style="padding: 6px; border: 1px solid #ddd;">${c.email}</td>
                             <td style="padding: 6px; border: 1px solid #ddd;">${c.phone}</td>
                             <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${c.orders || 0}</td>
+                            <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${c.feedback || '5 ★'}</td>
                             <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${c.type || 'Regular'}</td>
-                        </tr>
+                         </tr>
                     `).join('')}
                 </tbody>
-            </table>
+             </table>
         </div>
         
-        <div style="text-align: center; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd;">
-            <small>Grafix Print Hub - Confidential Report</small>
+        <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <small style="color: #7f8c8d;">&copy; Grafix Print Hub - Confidential Customer Report | Generated by CRM System</small>
         </div>
     `;
+}
+
+// Preview Report
+function previewReport() {
+    const reportContent = generateReportHTML();
+    document.getElementById('reportContent').innerHTML = reportContent;
+    document.getElementById('reportPreview').style.display = 'block';
 }
 
 // Generate and Download PDF Report
@@ -411,8 +555,67 @@ function setupEventListeners() {
     
     const addModal = document.getElementById('addCustomerModal');
     if (addModal) {
-        // Reset modal form when modal is hidden
         addModal.addEventListener('hidden.bs.modal', resetModalForm);
+    }
+    
+    // Add real-time phone validation
+    const phoneInput = document.getElementById('customerPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', validatePhoneField);
+    }
+    
+    // Add real-time orders validation
+    const ordersInput = document.getElementById('customerOrders');
+    if (ordersInput) {
+        ordersInput.addEventListener('input', validateOrdersField);
+    }
+}
+
+function validatePhoneField() {
+    const phoneInput = document.getElementById('customerPhone');
+    const phone = phoneInput.value.trim();
+    
+    if (phone && !validatePhone(phone)) {
+        phoneInput.classList.add('is-invalid-custom');
+        let errorDiv = phoneInput.nextElementSibling;
+        if (!errorDiv || !errorDiv.classList.contains('invalid-feedback-custom')) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback-custom';
+            phoneInput.parentNode.insertBefore(errorDiv, phoneInput.nextSibling);
+        }
+        errorDiv.innerText = 'Phone number must be exactly 10 digits';
+        return false;
+    } else {
+        phoneInput.classList.remove('is-invalid-custom');
+        const errorDiv = phoneInput.nextElementSibling;
+        if (errorDiv && errorDiv.classList.contains('invalid-feedback-custom')) {
+            errorDiv.remove();
+        }
+        return true;
+    }
+}
+
+function validateOrdersField() {
+    const ordersInput = document.getElementById('customerOrders');
+    const orders = parseInt(ordersInput.value) || 0;
+    
+    if (!validateOrders(orders)) {
+        ordersInput.classList.add('is-invalid-custom');
+        let errorDiv = ordersInput.nextElementSibling;
+        if (!errorDiv || !errorDiv.classList.contains('invalid-feedback-custom')) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback-custom';
+            ordersInput.parentNode.insertBefore(errorDiv, ordersInput.nextSibling);
+        }
+        errorDiv.innerText = 'Orders cannot be negative';
+        return false;
+    } else {
+        ordersInput.classList.remove('is-invalid-custom');
+        const errorDiv = ordersInput.nextElementSibling;
+        if (errorDiv && errorDiv.classList.contains('invalid-feedback-custom')) {
+            errorDiv.remove();
+        }
+        return true;
     }
 }
 
@@ -436,6 +639,18 @@ async function saveCustomer() {
         showToast('Please enter a valid email address!', 'danger');
         return;
     }
+    
+    // Validate phone number (exactly 10 digits)
+    if (!validatePhone(phone)) {
+        showToast('Phone number must be exactly 10 digits!', 'danger');
+        return;
+    }
+    
+    // Validate orders (non-negative)
+    if (!validateOrders(orders)) {
+        showToast('Orders cannot be negative!', 'danger');
+        return;
+    }
 
     const customerData = {
         name: name,
@@ -451,11 +666,9 @@ async function saveCustomer() {
 
     try {
         if (id) {
-            // UPDATE Operation
             await db.collection('customers').doc(id).update(customerData);
             showToast(`Customer "${name}" updated successfully!`, 'success');
         } else {
-            // CREATE Operation
             await db.collection('customers').add(customerData);
             showToast(`Customer "${name}" added successfully!`, 'success');
         }
@@ -463,10 +676,7 @@ async function saveCustomer() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
         modal.hide();
         
-        // Reset form after saving
         resetModalForm();
-        
-        // Reload customers
         loadCustomersFromFirestore();
 
     } catch (error) {
@@ -474,16 +684,13 @@ async function saveCustomer() {
     }
 }
 
-// Open Edit Modal - This function is called when clicking edit icon
 function openEditModal(id) {
     const customer = customers.find(c => c.id === id);
     if (!customer) return;
     
-    // Change modal title to "Update Customer"
     const modalLabel = document.getElementById('addCustomerModalLabel');
     modalLabel.innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Update Customer';
     
-    // Fill the form with customer data
     document.getElementById('customerId').value = customer.id;
     document.getElementById('customerName').value = customer.name;
     document.getElementById('customerCompany').value = customer.company;
@@ -494,7 +701,6 @@ function openEditModal(id) {
     document.getElementById('customerFeedback').value = customer.feedback || '5 ★';
     document.getElementById('customerType').value = customer.type || 'Regular';
     
-    // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
     modal.show();
 }
@@ -521,13 +727,10 @@ async function deleteCustomer() {
     }
 }
 
-// Reset Modal Form - This is called when modal is closed
 function resetModalForm() {
-    // Change modal title back to "Add New Customer"
     const modalLabel = document.getElementById('addCustomerModalLabel');
     modalLabel.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Add New Customer';
     
-    // Clear all form fields
     document.getElementById('customerId').value = '';
     document.getElementById('customerName').value = '';
     document.getElementById('customerCompany').value = '';
@@ -537,6 +740,14 @@ function resetModalForm() {
     document.getElementById('customerOrders').value = '0';
     document.getElementById('customerFeedback').value = '5 ★';
     document.getElementById('customerType').value = 'Regular';
+    
+    // Clear validation errors
+    document.querySelectorAll('.is-invalid-custom').forEach(el => {
+        el.classList.remove('is-invalid-custom');
+    });
+    document.querySelectorAll('.invalid-feedback-custom').forEach(el => {
+        el.remove();
+    });
 }
 
 function isValidEmail(email) {
