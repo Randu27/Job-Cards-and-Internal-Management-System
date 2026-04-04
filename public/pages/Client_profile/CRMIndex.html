@@ -8,45 +8,49 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
+    <!-- Chart.js for Dashboard Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- html2pdf for Report Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <link rel="stylesheet" href="../../css/CRMIndex.css">
     <link rel="stylesheet" href="../../css/menu.css">
 </head>
 <body>
     <nav class="navbar navbar-dark shadow-sm sticky-top">
-    <div class="container">
-        <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-                <i class="bi bi-list fs-4"></i>
-            </button>
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
-                Grafix Print Hub
-            </a>
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
+                    Grafix Print Hub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu"></div>
+    <div id="logoutModal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <h5>Confirm Logout</h5>
+            <p>Are you sure you want to leave?</p>
+            <button onclick="logout()" class="modal-btn-confirm-red">Logout</button>
+            <button onclick="closeLogoutModal()" class="modal-btn-cancel">Cancel</button>
         </div>
     </div>
-</nav>
-
-<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu"></div>
-<div id="logoutModal" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
-        <h5>Confirm Logout</h5>
-        <p>Are you sure you want to leave?</p>
-        <button onclick="logout()" class="modal-btn-confirm-red">Logout</button>
-        <button onclick="closeLogoutModal()" class="modal-btn-cancel">Cancel</button>
-    </div>
-</div>
 
     <!-- Hero Section -->
     <header class="page-header text-center">
         <div class="container">
             <h1 class="display-4 fw-bold">Customer Relationship Management</h1>
-            
         </div>
     </header>
 
     <!-- Main Dashboard -->
     <div class="container" id="mainDashboard">
-        <!-- Stats Cards Row - Adjusted widths -->
+        <!-- Stats Cards Row -->
         <div class="row g-4 mb-5">
             <div class="col-md-5">
                 <div class="stats-card border-start border-primary border-4">
@@ -83,98 +87,104 @@
             </div>
         </div>
 
-        <!-- Three Function Cards - Maximized width -->
+    
+
+        <!-- Three Function Cards -->
         <div class="row g-4 mb-5">
             <div class="col-md-4">
                 <div class="function-card" onclick="showPage('profiles')">
                     <i class="bi bi-person-gear"></i>
                     <h4>Manage Profiles</h4>
-                    
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="function-card" onclick="showPage('feedbacks')">
                     <i class="bi bi-chat-dots"></i>
                     <h4>View Feedbacks</h4>
-                    
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="function-card" onclick="showPage('reports')">
                     <i class="bi bi-file-pdf"></i>
                     <h4>Generate Report</h4>
-                    
                 </div>
             </div>
         </div>
     </div>
 
-    
     <!-- ==================== PAGE 1: MANAGE PROFILES ==================== -->
-<div id="profilesPage" class="page-container">
-    <div class="container">
-        <button class="back-btn" onclick="showPage('home')">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
-        </button>
-        
-        <div class="card-custom">
-            <div class="card-header-custom">
-                <i class="bi bi-person-gear me-2 text-primary"></i> Customer Profiles
-                <button class="btn btn-success btn-sm float-end" onclick="openAddCustomerModal()" style="border-radius: 20px; padding: 5px 15px;">
-                    <i class="bi bi-plus-circle"></i> Add New
-                </button>
-            </div>
-            <!-- Search and Filter Bar - Add this inside profilesPage -->
-<div class="search-filter-bar">
-    <div class="search-box">
-        <i class="bi bi-search"></i>
-        <input type="text" id="customerSearch" placeholder="Search by name, email, company, or phone..." onkeyup="applyFilters()">
-    </div>
-    <div class="filter-group">
-        <select id="filterType" class="filter-select" onchange="applyFilters()">
-            <option value="">All Types</option>
-            <option value="VIP">VIP</option>
-            <option value="Corporate">Corporate</option>
-            <option value="Regular">Regular</option>
-            <option value="New">New</option>
-        </select>
-        <select id="filterRating" class="filter-select" onchange="applyFilters()">
-            <option value="">All Ratings</option>
-            <option value="5">5 ★ - Excellent</option>
-            <option value="4">4 ★ - Good</option>
-            <option value="3">3 ★ - Average</option>
-            <option value="2">2 ★ - Poor</option>
-            <option value="1">1 ★ - Very Poor</option>
-        </select>
-        <button class="reset-filter-btn" onclick="resetFilters()">
-            <i class="bi bi-arrow-repeat"></i> Reset
-        </button>
-    </div>
-</div>
-            <div class="card-body-custom">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Customer</th>
-                                <th>Company</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Address</th>
-                                <th>Orders</th>
-                                <th>Feedback</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTableBody">
-                            <tr><td colspan="8" class="text-center py-4">Loading...</td></tr>
-                        </tbody>
-                    </table>
+    <div id="profilesPage" class="page-container">
+        <div class="container">
+            <button class="back-btn" onclick="showPage('home')">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </button>
+            
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <i class="bi bi-person-gear me-2 text-primary"></i> Customer Profiles
+                    <button class="btn btn-success btn-sm float-end" onclick="openAddCustomerModal()" style="border-radius: 20px; padding: 5px 15px;">
+                        <i class="bi bi-plus-circle"></i> Add New
+                    </button>
+                </div>
+                
+                <!-- Search and Filter Bar -->
+                <div class="search-filter-bar">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="customerSearch" placeholder="Search by name, email, company, or phone..." onkeyup="applyFilters()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="filterType" class="filter-select" onchange="applyFilters()">
+                            <option value="">All Types</option>
+                            <option value="VIP">VIP</option>
+                            <option value="Corporate">Corporate</option>
+                            <option value="Regular">Regular</option>
+                            <option value="New">New</option>
+                        </select>
+                        <select id="filterRating" class="filter-select" onchange="applyFilters()">
+                            <option value="">All Ratings</option>
+                            <option value="5">5 ★ - Excellent</option>
+                            <option value="4">4 ★ - Good</option>
+                            <option value="3">3 ★ - Average</option>
+                            <option value="2">2 ★ - Poor</option>
+                            <option value="1">1 ★ - Very Poor</option>
+                        </select>
+                        <select id="filterStatus" class="filter-select" onchange="applyFilters()">
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        <button class="reset-filter-btn" onclick="resetFilters()">
+                            <i class="bi bi-arrow-repeat"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body-custom">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="min-width: 180px;">Customer</th>
+                                    <th style="min-width: 150px;">Company</th>
+                                    <th style="min-width: 180px;">Email</th>
+                                    <th style="min-width: 130px;">Phone</th>
+                                    <th style="min-width: 180px;">Address</th>
+                                    <th style="width: 80px; text-align: center;">Orders</th>
+                                    <th style="width: 100px; text-align: center;">Feedback</th>
+                                    <th style="width: 100px; text-align: center;">Status</th>
+                                    <th style="width: 160px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerTableBody">
+                                <tr><td colspan="9" class="text-center py-4">Loading...<\/td><\/tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- ==================== PAGE 2: VIEW FEEDBACKS ==================== -->
     <div id="feedbacksPage" class="page-container">
@@ -196,32 +206,110 @@
         </div>
     </div>
 
-    <!-- ==================== PAGE 3: GENERATE REPORT ==================== -->
-    <div id="reportsPage" class="page-container">
-        <div class="container">
-            <button class="back-btn" onclick="showPage('home')">
-                <i class="bi bi-arrow-left"></i> Back to Dashboard
-            </button>
-            
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <i class="bi bi-file-pdf me-2 text-danger"></i> Generate Customer Report
+   <!-- ==================== PAGE 3: GENERATE REPORT (REDESIGNED) ==================== -->
+<div id="reportsPage" class="page-container">
+    <div class="container">
+        <button class="back-btn" onclick="showPage('home')">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
+ 
+        
+        <div class="report-generation-card">
+            <div class="report-header">
+                <div class="report-header-icon">
+                    <i class="bi bi-printer"></i>
                 </div>
-                <div class="card-body-custom text-center">
-                    <i class="bi bi-file-pdf fs-1 text-danger mb-3 d-block"></i>
-                    
-                    <button class="btn btn-danger btn-lg px-4" onclick="generateAndDownloadReport()" style="border-radius: 50px;">
-                        <i class="bi bi-download"></i> Generate & Download PDF
-                    </button>
-                    
-                    <div id="reportPreview" style="display: none; margin-top: 30px;">
-                        <h6 class="mt-4">Report Preview</h6>
-                        <div id="reportContent" class="text-start"></div>
-                    </div>
+                <div>
+                    <h3>Generate Reports</h3>
+                    <p>Select the criteria for your PDF export</p>
                 </div>
             </div>
+            
+            <div class="report-body">
+                <form id="reportForm">
+                    <!-- Report Type Selection -->
+                    <div class="report-section">
+                        <label class="report-label">Report Type</label>
+                        <div class="report-options-group">
+                            <div class="report-option" onclick="selectReportType('all')" id="reportTypeAll">
+                                <i class="bi bi-file-text"></i>
+                                <div>
+                                    <strong>All Customers Summary</strong>
+                                    <small>Complete customer database report</small>
+                                </div>
+                                <span class="check-icon">✓</span>
+                            </div>
+                            <div class="report-option" onclick="selectReportType('feedback')" id="reportTypeFeedback">
+                                <i class="bi bi-star"></i>
+                                <div>
+                                    <strong>Feedback Analysis Report</strong>
+                                    <small>Customer ratings and feedback summary</small>
+                                </div>
+                                <span class="check-icon">✓</span>
+                            </div>
+                            <div class="report-option" onclick="selectReportType('individual')" id="reportTypeIndividual">
+                                <i class="bi bi-person"></i>
+                                <div>
+                                    <strong>Individual Customer Report</strong>
+                                    <small>Specific customer details and history</small>
+                                </div>
+                                <span class="check-icon">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Individual Customer Selection (hidden by default) -->
+                    <div class="report-section" id="customerSelectSection" style="display: none;">
+                        <label class="report-label">Select Customer</label>
+                        <div class="customer-select-wrapper">
+                            <i class="bi bi-search"></i>
+                            <select id="individualCustomerSelect" class="customer-select">
+                                <option value="">-- Select a customer --</option>
+                                ${customers.map(c => `<option value="${c.id}">${c.name} (${c.company})</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Date Range Section -->
+                    <div class="report-section">
+                        <label class="report-label">Time Period</label>
+                        <div class="date-range-group">
+                            <div class="date-input-wrapper">
+                                <i class="bi bi-calendar"></i>
+                                <input type="date" id="fromDate" class="date-input" placeholder="From Date">
+                            </div>
+                            <span class="date-separator">—</span>
+                            <div class="date-input-wrapper">
+                                <i class="bi bi-calendar"></i>
+                                <input type="date" id="toDate" class="date-input" placeholder="To Date">
+                            </div>
+                        </div>
+                        <small class="date-hint">Leave empty to include all data</small>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="report-actions">
+                        <button type="button" class="btn-generate" onclick="generateSelectedReport()">
+                            <i class="bi bi-download"></i> GENERATE REPORT
+                        </button>
+                        <button type="button" class="btn-cancel" onclick="showPage('home')">
+                            Cancel & Return
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Report Preview Section -->
+        <div id="reportPreviewContainer" style="display: none; margin-top: 30px;">
+            <div class="preview-header">
+                <h5><i class="bi bi-eye"></i> Report Preview</h5>
+                <button class="btn-close-preview" onclick="closePreview()">×</button>
+            </div>
+            <div id="reportPreviewContent" class="preview-content"></div>
         </div>
     </div>
+</div>
 
     <!-- View Customer Modal -->
     <div class="modal fade" id="viewCustomerModal" tabindex="-1">
@@ -231,9 +319,7 @@
                     <h5 class="modal-title fw-bold">Customer Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="viewCustomerDetails">
-                    <!-- Customer details will be populated here -->
-                </div>
+                <div class="modal-body" id="viewCustomerDetails"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
@@ -277,7 +363,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Orders</label>
-                                <input type="number" class="form-control" id="customerOrders" value="0">
+                                <input type="number" class="form-control" id="customerOrders" value="0" min="0">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Feedback Rating</label>
@@ -348,7 +434,6 @@
 
     <script src="../../js/navbar-loader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
