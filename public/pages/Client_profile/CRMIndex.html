@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Module | Grafix Print Hub</title>
     
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <!-- Chart.js for Dashboard Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- html2pdf for Report Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <link rel="stylesheet" href="../../css/CRMIndex.css">
     <link rel="stylesheet" href="../../css/menu.css">
@@ -221,7 +221,7 @@
                 </div>
                 <div>
                     <h3>Generate Reports</h3>
-                    <p>Select the criteria for your PDF export</p>
+
                 </div>
             </div>
             
@@ -235,7 +235,6 @@
                                 <i class="bi bi-file-text"></i>
                                 <div>
                                     <strong>All Customers Summary</strong>
-                                    <small>Complete customer database report</small>
                                 </div>
                                 <span class="check-icon">✓</span>
                             </div>
@@ -243,7 +242,6 @@
                                 <i class="bi bi-star"></i>
                                 <div>
                                     <strong>Feedback Analysis Report</strong>
-                                    <small>Customer ratings and feedback summary</small>
                                 </div>
                                 <span class="check-icon">✓</span>
                             </div>
@@ -251,7 +249,6 @@
                                 <i class="bi bi-person"></i>
                                 <div>
                                     <strong>Individual Customer Report</strong>
-                                    <small>Specific customer details and history</small>
                                 </div>
                                 <span class="check-icon">✓</span>
                             </div>
@@ -259,16 +256,16 @@
                     </div>
                     
                     <!-- Individual Customer Selection (hidden by default) -->
-                    <div class="report-section" id="customerSelectSection" style="display: none;">
-                        <label class="report-label">Select Customer</label>
-                        <div class="customer-select-wrapper">
-                            <i class="bi bi-search"></i>
-                            <select id="individualCustomerSelect" class="customer-select">
-                                <option value="">-- Select a customer --</option>
-                                ${customers.map(c => `<option value="${c.id}">${c.name} (${c.company})</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
+<div class="report-section" id="customerSelectSection" style="display: none;">
+    <label class="report-label">Select Customer</label>
+    <div class="customer-select-wrapper">
+        <i class="bi bi-search"></i>
+        <select id="individualCustomerSelect" class="customer-select">
+            <option value="">-- Select a customer --</option>
+            <!-- Options will be populated by JavaScript -->
+        </select>
+    </div>
+</div>
                     
                     <!-- Date Range Section -->
                     <div class="report-section">
