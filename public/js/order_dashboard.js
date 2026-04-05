@@ -218,6 +218,8 @@ function logout() {
 // ....................... View Orders ..........................//
 
 let allOrders = [];
+let currentDisplayedOrders = [];
+let currentFilterLabel = 'All Time';
 
 function loadOrders() {
     const tbody = document.getElementById('ordersTableBody');
@@ -225,8 +227,11 @@ function loadOrders() {
         <div class="spinner-border spinner-border-sm me-2"></div> Loading orders...
     </td></tr>`;
 
-    const dateInput = document.getElementById('dateFilter');
-    if (dateInput) dateInput.max = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    const df = document.getElementById('dateFrom');
+    const dt = document.getElementById('dateTo');
+    if (df) df.max = today;
+    if (dt) dt.max = today;
 
     db.collection('orders').orderBy('createdAt', 'asc').get()
         .then(snapshot => {
@@ -241,18 +246,32 @@ function loadOrders() {
 }
 
 function filterByDate() {
-    const selectedDate = document.getElementById('dateFilter').value;
-    if (!selectedDate) { renderOrdersTable(allOrders); return; }
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+
+    if (!from && !to) {
+        currentFilterLabel = 'All Time';
+        renderOrdersTable([...allOrders].reverse());
+        return;
+    }
+
     const filtered = allOrders.filter(order => {
         if (!order.createdAt) return false;
-        const orderDate = new Date(order.createdAt.seconds * 1000);
-        const orderDateStr = orderDate.toISOString().split('T')[0];
-        return orderDateStr === selectedDate;
+        const d = new Date(order.createdAt.seconds * 1000)
+            .toISOString().split('T')[0];
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        return true;
     });
+
+    const fromLabel = from ? from : 'beginning';
+    const toLabel = to ? to : 'today';
+    currentFilterLabel = `${fromLabel}  to  ${toLabel}`;
     renderOrdersTable(filtered);
 }
 
 function renderOrdersTable(orders) {
+    currentDisplayedOrders = orders;
     const tbody = document.getElementById('ordersTableBody');
     if (!orders.length) {
         tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5">
@@ -314,6 +333,7 @@ function filterOrders() {
         (o.companyName || '').toLowerCase().includes(q) ||
         (o.address || '').toLowerCase().includes(q)
     );
+    currentFilterLabel = q ? `Filtered by search: "${q}"` : 'All Time';
     renderOrdersTable(filtered);
 }
 
@@ -321,6 +341,13 @@ function sortOrders(key) {
     const sorted = [...allOrders].sort((a, b) =>
         (a[key] || '').toString().toLowerCase().localeCompare((b[key] || '').toString().toLowerCase())
     );
+    const labelMap = {
+        customerName: 'Name',
+        companyName: 'Company',
+        orderProcess: 'Order Process',
+        paymentMethod: 'Payment'
+    };
+    currentFilterLabel = `Sorted by: ${labelMap[key] || key}`;
     renderOrdersTable(sorted);
 }
 
@@ -340,20 +367,9 @@ function printOrderTable() {
     const now = new Date();
 
     // ── Apply same date filter that's currently active ────────────────
-    const selectedDate = document.getElementById('dateFilter')?.value;
-    const timePeriod = selectedDate ? selectedDate : 'All Time';
 
-    let displayOrders;
-    if (selectedDate) {
-        displayOrders = allOrders.filter(order => {
-            if (!order.createdAt) return false;
-            const orderDate = new Date(order.createdAt.seconds * 1000);
-            const orderDateStr = orderDate.toISOString().split('T')[0];
-            return orderDateStr === selectedDate;
-        });
-    } else {
-        displayOrders = [...allOrders].reverse();
-    }
+    const displayOrders = [...currentDisplayedOrders];
+    const timePeriod = currentFilterLabel;
 
     if (displayOrders.length === 0) {
         alert('No orders to print for the selected period.');
@@ -373,7 +389,7 @@ function printOrderTable() {
 
     doc.setFontSize(8);
     doc.text('REPORT TYPE: ORDER TABLE', PW - 8, 13, { align: 'right' });
-    doc.text(`TIME PERIOD: ${timePeriod}`, PW - 8, 20, { align: 'right' });
+    doc.text(`${timePeriod}`, PW - 8, 20, { align: 'right', maxWidth: 120 });
     doc.text(`GENERATED: ${now.toLocaleString()}`, PW - 8, 27, { align: 'right' });
 
     // ── TABLE ─────────────────────────────────────────────────────────
@@ -392,10 +408,52 @@ function printOrderTable() {
         ];
     });
 
+    //..................... SUMMARY STATS ............................//
+
+
+    const totalOrders = displayOrders.length;
+    const totalIncome = displayOrders.reduce((sum, order) => {
+        const amt = parseFloat(order.amountPaid);
+        return sum + (isNaN(amt) ? 0 : amt);
+    }, 0);
+
+    const statsY = 48;
+    const boxW = 80;
+    const boxH = 18;
+    const box1X = (PW / 2) - boxW - 5;
+    const box2X = (PW / 2) + 5;
+
+    // Total Orders box
+    doc.setFillColor(243, 244, 246);
+    doc.roundedRect(box1X, statsY, boxW, boxH, 3, 3, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text('TOTAL ORDERS', box1X + boxW / 2, statsY + 5.5, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(totalOrders), box1X + boxW / 2, statsY + 13.5, { align: 'center' });
+
+    // Total Income box
+    doc.setFillColor(209, 231, 221);
+    doc.roundedRect(box2X, statsY, boxW, boxH, 3, 3, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(15, 81, 50);
+    doc.text('TOTAL INCOME', box2X + boxW / 2, statsY + 5.5, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setTextColor(15, 81, 50);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Rs. ${totalIncome.toLocaleString()}`, box2X + boxW / 2, statsY + 13.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+
+
+
+
     doc.autoTable({
         head: [['No', 'Name', 'Contact No', 'Address', 'Company', 'Payment', 'Amount Paid', 'Order Process']],
         body: tableRows,
-        startY: 55,
+        startY: 75,
         theme: 'striped',
         headStyles: { fillColor: [33, 37, 41], textColor: 255, fontSize: 8, fontStyle: 'bold' },
         bodyStyles: { fontSize: 8, textColor: [17, 24, 39] },
