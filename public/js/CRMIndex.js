@@ -3,896 +3,810 @@
 // Developed by: R.G.S. Nadeesha (Cyber Serpents WD-41)
 // ============================================================
 
-// ==================== GLOBAL VARIABLES ====================
-
 let customers = [];
 let currentDeleteId = null;
 let selectedReportType = 'all';
+let currentFilter = { search: '', type: '', rating: '', status: '' };
 
-let currentFilter = {
-    search: '',
-    type: '',
-    rating: '',
-    status: ''
-};
-
-// ==================== PAGE INITIALIZATION ====================
-
-document.addEventListener('DOMContentLoaded', function() {
-    initializePage();
+document.addEventListener('DOMContentLoaded', function () {
+    loadCustomersFromFirestore();
     setupEventListeners();
     showPage('home');
 });
 
-function initializePage() {
-    loadCustomersFromFirestore();
-}
-
-// ==================== FIRESTORE OPERATIONS ====================
-
 function loadCustomersFromFirestore() {
-    db.collection('customers').orderBy('dateAdded', 'desc').get().then((snapshot) => {
-        customers = [];
-        snapshot.forEach(doc => {
-            customers.push({ id: doc.id, ...doc.data() });
-        });
-        updateStats();
-        renderFilteredCustomersTable();
-        
-        const customerSelect = document.getElementById('individualCustomerSelect');
-        if (customerSelect) {
+    db.collection('customers').orderBy('dateAdded', 'desc').get()
+        .then((snapshot) => {
+            customers = [];
+            snapshot.forEach(doc => customers.push({ id: doc.id, ...doc.data() }));
+            updateStats();
+            renderFilteredCustomersTable();
             populateCustomerDropdown();
-        }
-        
-        if (document.getElementById('feedbacksPage') && 
-            document.getElementById('feedbacksPage').classList.contains('active-page')) {
-            loadFeedbacks();
-        }
-    }).catch((error) => {
-        console.error('Error loading customers:', error);
-        showToast('Error loading customers: ' + error.message, 'danger');
-    });
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            showToast('Error loading customers: ' + error.message, 'danger');
+        });
 }
 
 function updateStats() {
-    const totalCustomers = customers.length;
-    const newFeedbacks = customers.filter(c => c.feedback && c.feedback.includes('5')).length;
-    
-    const totalElem = document.getElementById('totalCustomers');
-    const feedbackElem = document.getElementById('newFeedbacks');
-    if (totalElem) totalElem.innerText = totalCustomers;
-    if (feedbackElem) feedbackElem.innerText = newFeedbacks;
+    var t = document.getElementById('totalCustomers');
+    var f = document.getElementById('newFeedbacks');
+    if (t) t.innerText = customers.length;
+    if (f) f.innerText = customers.filter(function(c){ return c.feedback && c.feedback.startsWith('5'); }).length;
 }
 
-// ==================== CRUD OPERATIONS ====================
-
 async function saveCustomer() {
-    const id = document.getElementById('customerId').value;
-    const name = document.getElementById('customerName').value.trim();
-    const company = document.getElementById('customerCompany').value.trim();
-    const email = document.getElementById('customerEmail').value.trim();
-    const phone = document.getElementById('customerPhone').value.trim();
-    const address = document.getElementById('customerAddress').value.trim();
-    const orders = parseInt(document.getElementById('customerOrders').value) || 0;
-    const feedback = document.getElementById('customerFeedback').value;
-    const type = document.getElementById('customerType').value;
+    var id       = document.getElementById('customerId').value;
+    var name     = document.getElementById('customerName').value.trim();
+    var company  = document.getElementById('customerCompany').value.trim();
+    var email    = document.getElementById('customerEmail').value.trim();
+    var phone    = document.getElementById('customerPhone').value.trim();
+    var address  = document.getElementById('customerAddress').value.trim();
+    var orders   = parseInt(document.getElementById('customerOrders').value) || 0;
+    var feedback = document.getElementById('customerFeedback').value;
+    var type     = document.getElementById('customerType').value;
 
-    if (!name || !company || !email || !phone) {
-        showToast('Please fill all required fields!', 'danger');
-        return;
-    }
-    
-    if (!isValidEmail(email)) {
-        showToast('Please enter a valid email address!', 'danger');
-        return;
-    }
-    
-    if (!validatePhone(phone)) {
-        showToast('Phone number must be exactly 10 digits!', 'danger');
-        return;
-    }
-    
-    if (!validateOrders(orders)) {
-        showToast('Orders cannot be negative!', 'danger');
-        return;
-    }
+    if (!name || !company || !email || !phone) { showToast('Please fill all required fields!', 'danger'); return; }
+    if (!isValidEmail(email))  { showToast('Please enter a valid email address!', 'danger'); return; }
+    if (!validatePhone(phone)) { showToast('Phone number must be exactly 10 digits!', 'danger'); return; }
+    if (orders < 0)            { showToast('Orders cannot be negative!', 'danger'); return; }
 
-    const customerData = {
-        name: name,
-        company: company,
-        email: email,
-        phone: phone,
-        address: address || 'Not specified',
-        orders: orders,
-        type: type,
-        feedback: feedback,
-        status: 'Active',
-        dateAdded: new Date().toISOString().split('T')[0]
-    };
+    var data = { name: name, company: company, email: email, phone: phone, address: address || 'Not specified', orders: orders, type: type, feedback: feedback, status: 'Active', dateAdded: new Date().toISOString().split('T')[0] };
 
     try {
         if (id) {
-            await db.collection('customers').doc(id).update(customerData);
-            showToast(`Customer "${name}" updated successfully!`, 'success');
+            await db.collection('customers').doc(id).update(data);
+            showToast('Customer "' + name + '" updated successfully!', 'success');
         } else {
-            await db.collection('customers').add(customerData);
-            showToast(`Customer "${name}" added successfully!`, 'success');
+            await db.collection('customers').add(data);
+            showToast('Customer "' + name + '" added successfully!', 'success');
         }
-        
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
-        if (modal) modal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('addCustomerModal')).hide();
         resetModalForm();
         loadCustomersFromFirestore();
     } catch (error) {
-        showToast('Error saving customer: ' + error.message, 'danger');
+        showToast('Error saving: ' + error.message, 'danger');
     }
 }
 
 function viewCustomer(id) {
-    const customer = customers.find(c => c.id === id);
-    if (!customer) return;
+    var c = customers.find(function(c){ return c.id === id; });
+    if (!c) return;
+    var statusColor = c.status === 'Inactive' ? '#dc3545' : '#198754';
     
-    const stars = getStarsFromFeedback(customer.feedback);
-    const statusColor = customer.status === 'Inactive' ? '#dc3545' : '#198754';
+    var starsModal = '';
+    var ratingModal = parseInt(c.feedback ? c.feedback.charAt(0) : 5);
+    for (var sm = 0; sm < ratingModal; sm++) { starsModal += '<i class="bi bi-star-fill text-warning"></i>'; }
+    for (var sm = ratingModal; sm < 5; sm++) { starsModal += '<i class="bi bi-star text-warning"></i>'; }
     
-    const detailsHtml = `
-        <div class="text-center mb-3">
-            <span class="customer-avatar" style="width: 60px; height: 60px; font-size: 24px; line-height: 60px;">${getAvatar(customer.name)}</span>
-            <h5 class="mt-2">${escapeHtml(customer.name)}</h5>
-            <span class="badge bg-${customer.type === 'VIP' ? 'warning' : customer.type === 'Corporate' ? 'info' : 'secondary'}">${customer.type || 'Regular'}</span>
-            <span class="badge" style="background: ${statusColor};">${customer.status || 'Active'}</span>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-6"><small>Company</small><p class="fw-bold">${escapeHtml(customer.company)}</p></div>
-            <div class="col-6"><small>Email</small><p class="fw-bold">${escapeHtml(customer.email)}</p></div>
-            <div class="col-6"><small>Phone</small><p class="fw-bold">${escapeHtml(customer.phone)}</p></div>
-            <div class="col-6"><small>Address</small><p class="fw-bold">${escapeHtml(customer.address) || 'Not specified'}</p></div>
-            <div class="col-6"><small>Total Orders</small><p class="fw-bold">${customer.orders || 0}</p></div>
-            <div class="col-6"><small>Feedback Rating</small><p class="fw-bold">${stars} ${customer.feedback || '5 ★'}</p></div>
-            <div class="col-12"><small>Customer Since</small><p class="fw-bold">${customer.dateAdded || 'N/A'}</p></div>
-        </div>
-    `;
-    
-    const modalBody = document.getElementById('viewCustomerDetails');
-    if (modalBody) modalBody.innerHTML = detailsHtml;
-    const modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
-    if (modal) modal.show();
+    document.getElementById('viewCustomerDetails').innerHTML =
+        '<div class="text-center mb-3">' +
+        '<span class="customer-avatar" style="width:60px;height:60px;font-size:24px;line-height:60px;">' + getAvatar(c.name) + '</span>' +
+        '<h5 class="mt-2">' + escapeHtml(c.name) + '</h5>' +
+        '<span class="badge bg-' + (c.type === 'VIP' ? 'warning' : c.type === 'Corporate' ? 'info' : 'secondary') + '">' + (c.type || 'Regular') + '</span>' +
+        '<span class="badge" style="background:' + statusColor + ';">' + (c.status || 'Active') + '</span>' +
+        '</div><hr>' +
+        '<div class="row">' +
+        '<div class="col-6"><small>Company</small><p class="fw-bold">' + escapeHtml(c.company) + '</p></div>' +
+        '<div class="col-6"><small>Email</small><p class="fw-bold">' + escapeHtml(c.email) + '</p></div>' +
+        '<div class="col-6"><small>Phone</small><p class="fw-bold">' + escapeHtml(c.phone) + '</p></div>' +
+        '<div class="col-6"><small>Address</small><p class="fw-bold">' + (escapeHtml(c.address) || 'Not specified') + '</p></div>' +
+        '<div class="col-6"><small>Total Orders</small><p class="fw-bold">' + (c.orders || 0) + '</p></div>' +
+        '<div class="col-6"><small>Feedback</small><p class="fw-bold">' + starsModal + '</p></div>' +
+        '<div class="col-12"><small>Customer Since</small><p class="fw-bold">' + (c.dateAdded || 'N/A') + '</p></div>' +
+        '</div>';
+    new bootstrap.Modal(document.getElementById('viewCustomerModal')).show();
 }
 
 function openEditModal(id) {
-    const customer = customers.find(c => c.id === id);
-    if (!customer) return;
-    
-    const modalLabel = document.getElementById('addCustomerModalLabel');
-    if (modalLabel) modalLabel.innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Update Customer';
-    
-    document.getElementById('customerId').value = customer.id;
-    document.getElementById('customerName').value = customer.name;
-    document.getElementById('customerCompany').value = customer.company;
-    document.getElementById('customerEmail').value = customer.email;
-    document.getElementById('customerPhone').value = customer.phone;
-    document.getElementById('customerAddress').value = customer.address || '';
-    document.getElementById('customerOrders').value = customer.orders || 0;
-    document.getElementById('customerFeedback').value = customer.feedback || '5 ★';
-    document.getElementById('customerType').value = customer.type || 'Regular';
-    
-    const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-    if (modal) modal.show();
+    var c = customers.find(function(c){ return c.id === id; });
+    if (!c) return;
+    document.getElementById('addCustomerModalLabel').innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Update Customer';
+    document.getElementById('customerId').value       = c.id;
+    document.getElementById('customerName').value     = c.name;
+    document.getElementById('customerCompany').value  = c.company;
+    document.getElementById('customerEmail').value    = c.email;
+    document.getElementById('customerPhone').value    = c.phone;
+    document.getElementById('customerAddress').value  = c.address || '';
+    document.getElementById('customerOrders').value   = c.orders || 0;
+    document.getElementById('customerFeedback').value = c.feedback || '5 ★';
+    document.getElementById('customerType').value     = c.type || 'Regular';
+    new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
 }
 
 function openDeleteModal(id, name) {
     currentDeleteId = id;
-    const nameSpan = document.getElementById('deleteCustomerName');
-    if (nameSpan) nameSpan.innerText = name;
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    if (modal) modal.show();
+    document.getElementById('deleteCustomerName').innerText = name;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
 async function deleteCustomer() {
     if (!currentDeleteId) return;
-    
     try {
         await db.collection('customers').doc(currentDeleteId).delete();
         showToast('Customer deleted successfully!', 'success');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-        if (modal) modal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
         loadCustomersFromFirestore();
     } catch (error) {
-        showToast('Error deleting customer: ' + error.message, 'danger');
+        showToast('Error deleting: ' + error.message, 'danger');
     }
 }
 
 function resetModalForm() {
-    const modalLabel = document.getElementById('addCustomerModalLabel');
-    if (modalLabel) modalLabel.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Add New Customer';
-    
-    document.getElementById('customerId').value = '';
-    document.getElementById('customerName').value = '';
-    document.getElementById('customerCompany').value = '';
-    document.getElementById('customerEmail').value = '';
-    document.getElementById('customerPhone').value = '';
-    document.getElementById('customerAddress').value = '';
-    document.getElementById('customerOrders').value = '0';
+    document.getElementById('addCustomerModalLabel').innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Add New Customer';
+    ['customerId','customerName','customerCompany','customerEmail','customerPhone','customerAddress'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('customerOrders').value   = '0';
     document.getElementById('customerFeedback').value = '5 ★';
-    document.getElementById('customerType').value = 'Regular';
-    
-    document.querySelectorAll('.is-invalid-custom').forEach(el => el.classList.remove('is-invalid-custom'));
-    document.querySelectorAll('.invalid-feedback-custom').forEach(el => el.remove());
+    document.getElementById('customerType').value     = 'Regular';
+    document.querySelectorAll('.is-invalid-custom').forEach(function(el){ el.classList.remove('is-invalid-custom'); });
+    document.querySelectorAll('.invalid-feedback-custom').forEach(function(el){ el.remove(); });
 }
 
-// ==================== CUSTOMER STATUS ====================
-
 async function toggleCustomerStatus(id, currentStatus) {
-    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-    
+    var newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
     try {
         await db.collection('customers').doc(id).update({ status: newStatus });
-        showToast(`Customer status changed to ${newStatus}`, 'success');
+        showToast('Status changed to ' + newStatus, 'success');
         loadCustomersFromFirestore();
     } catch (error) {
-        showToast('Error updating status: ' + error.message, 'danger');
+        showToast('Error: ' + error.message, 'danger');
     }
 }
 
-// ==================== SEARCH & FILTER ====================
-
 function filterCustomers() {
-    const searchTerm = currentFilter.search.toLowerCase();
-    const typeFilter = currentFilter.type;
-    const ratingFilter = currentFilter.rating;
-    const statusFilter = currentFilter.status;
-    
-    return customers.filter(c => {
-        const matchesSearch = searchTerm === '' || 
-            (c.name && c.name.toLowerCase().includes(searchTerm)) ||
-            (c.email && c.email.toLowerCase().includes(searchTerm)) ||
-            (c.company && c.company.toLowerCase().includes(searchTerm)) ||
-            (c.phone && c.phone.includes(searchTerm));
-        
-        const matchesType = typeFilter === '' || (c.type === typeFilter);
-        const matchesStatus = statusFilter === '' || (c.status === statusFilter);
-        
-        let matchesRating = true;
-        if (ratingFilter !== '') {
-            const ratingValue = c.feedback ? parseInt(c.feedback.charAt(0)) : 5;
-            matchesRating = ratingValue === parseInt(ratingFilter);
-        }
-        
-        return matchesSearch && matchesType && matchesRating && matchesStatus;
+    var s = currentFilter.search.toLowerCase();
+    return customers.filter(function(c) {
+        var matchSearch = !s || (c.name && c.name.toLowerCase().includes(s)) || (c.email && c.email.toLowerCase().includes(s)) || (c.company && c.company.toLowerCase().includes(s)) || (c.phone && c.phone.includes(s));
+        var matchType   = !currentFilter.type   || c.type === currentFilter.type;
+        var matchStatus = !currentFilter.status || c.status === currentFilter.status;
+        var matchRating = !currentFilter.rating || (c.feedback ? parseInt(c.feedback.charAt(0)) : 5) === parseInt(currentFilter.rating);
+        return matchSearch && matchType && matchStatus && matchRating;
     });
 }
 
 function applyFilters() {
-    const searchInput = document.getElementById('customerSearch');
-    const typeSelect = document.getElementById('filterType');
-    const ratingSelect = document.getElementById('filterRating');
-    const statusSelect = document.getElementById('filterStatus');
-    
-    currentFilter.search = searchInput ? searchInput.value : '';
-    currentFilter.type = typeSelect ? typeSelect.value : '';
-    currentFilter.rating = ratingSelect ? ratingSelect.value : '';
-    currentFilter.status = statusSelect ? statusSelect.value : '';
-    
+    currentFilter.search = document.getElementById('customerSearch') ? document.getElementById('customerSearch').value : '';
+    currentFilter.type   = document.getElementById('filterType')     ? document.getElementById('filterType').value     : '';
+    currentFilter.rating = document.getElementById('filterRating')   ? document.getElementById('filterRating').value   : '';
+    currentFilter.status = document.getElementById('filterStatus')   ? document.getElementById('filterStatus').value   : '';
     renderFilteredCustomersTable();
 }
 
 function resetFilters() {
     currentFilter = { search: '', type: '', rating: '', status: '' };
-    
-    const searchInput = document.getElementById('customerSearch');
-    const typeSelect = document.getElementById('filterType');
-    const ratingSelect = document.getElementById('filterRating');
-    const statusSelect = document.getElementById('filterStatus');
-    
-    if (searchInput) searchInput.value = '';
-    if (typeSelect) typeSelect.value = '';
-    if (ratingSelect) ratingSelect.value = '';
-    if (statusSelect) statusSelect.value = '';
-    
+    ['customerSearch','filterType','filterRating','filterStatus'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
     renderFilteredCustomersTable();
 }
 
 function renderFilteredCustomersTable() {
-    const tableBody = document.getElementById('customerTableBody');
+    var tableBody = document.getElementById('customerTableBody');
     if (!tableBody) return;
-    
-    const filteredCustomers = filterCustomers();
-    tableBody.innerHTML = '';
-    
-    if (filteredCustomers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No customers found. Try different search or filters.</td></tr>';
+    var list = filterCustomers();
+    if (list.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No customers found. </td><\/tr>';
         return;
     }
-    
-    filteredCustomers.forEach(c => {
-        const statusClass = c.status === 'Inactive' ? 'bg-secondary' : 'bg-success';
-        const statusText = c.status || 'Active';
+    tableBody.innerHTML = '';
+    list.forEach(function(c) {
+        var starsHtmlTable = '';
+        var ratingVal = parseInt(c.feedback ? c.feedback.charAt(0) : 5);
+        for (var s = 0; s < ratingVal; s++) { starsHtmlTable += '<i class="bi bi-star-fill text-warning"></i>'; }
+        for (var s = ratingVal; s < 5; s++) { starsHtmlTable += '<i class="bi bi-star text-warning"></i>'; }
         
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><div class="d-flex align-items-center"><span class="customer-avatar me-2">${getAvatar(c.name)}</span><div><div class="fw-bold">${escapeHtml(c.name) || '—'}</div><small class="text-muted">${escapeHtml(c.type) || 'Regular'}</small></div></div></td>
-            <td>${escapeHtml(c.company) || '—'}</td>
-            <td>${escapeHtml(c.email) || '—'}</td>
-            <td>${escapeHtml(c.phone) || '—'}</td>
-            <td style="max-width: 180px; white-space: normal;">${escapeHtml(c.address) || 'Not specified'}</td>
-            <td class="text-center"><span class="badge bg-primary bg-opacity-10 text-primary">${c.orders || 0} orders</span></td>
-            <td class="text-center"><span class="feedback-badge"><i class="bi bi-star-fill text-warning"></i> ${c.feedback || '5 ★'}</span></td>
-            <td class="text-center"><span class="badge ${statusClass} status-badge" style="cursor: pointer;" onclick="toggleCustomerStatus('${c.id}', '${c.status || 'Active'}')">${statusText}</span></td>
-            <td class="text-center"><div class="action-icons d-flex justify-content-center gap-2"><i class="bi bi-eye action-icon icon-view" onclick="viewCustomer('${c.id}')" title="View"></i><i class="bi bi-pencil action-icon icon-edit" onclick="openEditModal('${c.id}')" title="Edit"></i><i class="bi bi-trash action-icon icon-delete" onclick="openDeleteModal('${c.id}', '${escapeHtml(c.name)}')" title="Delete"></i></div></td>
-        `;
+        var row = document.createElement('tr');
+        row.innerHTML =
+            '<td><div class="d-flex align-items-center"><span class="customer-avatar me-2">' + getAvatar(c.name) + '</span><div><div class="fw-bold">' + (escapeHtml(c.name)||'—') + '</div><small class="text-muted">' + (escapeHtml(c.type)||'Regular') + '</small></div></div></td>' +
+            '<td>' + (escapeHtml(c.company)||'—') + '</td>' +
+            '<td>' + (escapeHtml(c.email)||'—') + '</td>' +
+            '<td>' + (escapeHtml(c.phone)||'—') + '</td>' +
+            '<td style="max-width:180px;white-space:normal;">' + (escapeHtml(c.address)||'Not specified') + '</td>' +
+            '<td class="text-center"><span class="badge bg-primary bg-opacity-10 text-primary">' + (c.orders||0) + ' orders</span></td>' +
+            '<td class="text-center"><span class="feedback-badge">' + starsHtmlTable + '</span></td>' +
+            '<td class="text-center"><span class="badge ' + (c.status==='Inactive'?'bg-secondary':'bg-success') + ' status-badge" onclick="toggleCustomerStatus(\'' + c.id + '\',\'' + (c.status||'Active') + '\')">' + (c.status||'Active') + '</span></td>' +
+            '<td class="text-center"><div class="action-icons d-flex justify-content-center gap-2">' +
+            '<i class="bi bi-eye action-icon icon-view" onclick="viewCustomer(\'' + c.id + '\')" title="View"></i>' +
+            '<i class="bi bi-pencil action-icon icon-edit" onclick="openEditModal(\'' + c.id + '\')" title="Edit"></i>' +
+            '<i class="bi bi-trash action-icon icon-delete" onclick="openDeleteModal(\'' + c.id + '\',\'' + escapeHtml(c.name) + '\')" title="Delete"></i>' +
+            '</div></td>';
         tableBody.appendChild(row);
     });
 }
 
-// ==================== FEEDBACK PAGE ====================
-
 function loadFeedbacks() {
-    const container = document.getElementById('feedbacksContainer');
+    var container = document.getElementById('feedbacksContainer');
     if (!container) return;
-    
-    container.innerHTML = '';
-    const customersWithFeedback = customers.filter(c => c.feedback);
-    
-    if (customersWithFeedback.length === 0) {
+    var list = customers.filter(function(c){ return c.feedback; });
+    if (list.length === 0) {
         container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-chat-square-text fs-1"></i><p class="mt-2">No feedback available yet.</p></div>';
         return;
     }
-    
-    customersWithFeedback.forEach(c => {
-        const stars = getStarsFromFeedback(c.feedback);
-        let cardClass = 'feedback-card';
-        if (c.type === 'VIP') cardClass += ' vip-card';
-        else if (c.type === 'Corporate') cardClass += ' corporate-card';
-        else if (c.type === 'New') cardClass += ' new-card';
-        else cardClass += ' regular-card';
+    container.innerHTML = '';
+    list.forEach(function(c) {
+        var ratingValue = parseInt(c.feedback.charAt(0));
+        var starsHtml = '';
+        for (var i = 0; i < ratingValue; i++) { starsHtml += '<i class="bi bi-star-fill text-warning"></i>'; }
+        for (var i = ratingValue; i < 5; i++) { starsHtml += '<i class="bi bi-star text-warning"></i>'; }
         
-        const card = document.createElement('div');
-        card.className = cardClass;
-        card.innerHTML = `
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="d-flex align-items-center"><span class="customer-avatar me-3">${getAvatar(c.name)}</span><div><h6 class="fw-bold mb-0">${c.name}</h6><small class="text-muted"><i class="bi bi-building"></i> ${c.company}</small></div></div>
-                <div class="feedback-stars">${stars}</div>
-            </div>
-            <div class="row">
-                <div class="col-md-6"><div class="info-item"><i class="bi bi-envelope"></i><span><strong>Email:</strong> ${c.email}</span></div><div class="info-item"><i class="bi bi-telephone"></i><span><strong>Phone:</strong> ${c.phone}</span></div></div>
-                <div class="col-md-6"><div class="info-item"><i class="bi bi-geo-alt"></i><span><strong>Address:</strong> ${c.address || 'Not specified'}</span></div><div class="info-item"><i class="bi bi-bag-check"></i><span><strong>Orders:</strong> ${c.orders || 0}</span></div></div>
-            </div>
-            <div class="info-row"><div class="d-flex justify-content-between"><small class="text-muted"><i class="bi bi-calendar"></i> Since: ${c.dateAdded || 'N/A'}</small><span class="badge">${c.type || 'Regular'}</span></div></div>
-        `;
+        var cls = 'feedback-card';
+        if (c.type === 'VIP') cls += ' vip-card';
+        else if (c.type === 'Corporate') cls += ' corporate-card';
+        else if (c.type === 'New') cls += ' new-card';
+        else cls += ' regular-card';
+        
+        var card = document.createElement('div');
+        card.className = cls;
+        card.innerHTML =
+            '<div class="d-flex justify-content-between align-items-start mb-3">' +
+            '<div class="d-flex align-items-center"><span class="customer-avatar me-3">' + getAvatar(c.name) + '</span><div><h6 class="fw-bold mb-0">' + c.name + '</h6><small class="text-muted"><i class="bi bi-building"></i> ' + c.company + '</small></div></div>' +
+            '<div class="feedback-stars">' + starsHtml + '</div></div>' +
+            '<div class="row">' +
+            '<div class="col-md-6"><div class="info-item"><i class="bi bi-envelope"></i><span><strong>Email:</strong> ' + c.email + '</span></div><div class="info-item"><i class="bi bi-telephone"></i><span><strong>Phone:</strong> ' + c.phone + '</span></div></div>' +
+            '<div class="col-md-6"><div class="info-item"><i class="bi bi-geo-alt"></i><span><strong>Address:</strong> ' + (c.address||'Not specified') + '</span></div><div class="info-item"><i class="bi bi-bag-check"></i><span><strong>Orders:</strong> ' + (c.orders||0) + '</span></div></div>' +
+            '</div>' +
+            '<div class="info-row"><div class="d-flex justify-content-between"><small class="text-muted"><i class="bi bi-calendar"></i> Since: ' + (c.dateAdded||'N/A') + '</small><span class="badge bg-secondary">' + (c.type||'Regular') + '</span></div></div>';
         container.appendChild(card);
     });
 }
 
-// ==================== PAGE NAVIGATION ====================
-
 function showPage(pageName) {
-    document.querySelectorAll('.page-container').forEach(page => {
-        page.classList.remove('active-page');
-    });
-    
-    const mainDashboard = document.getElementById('mainDashboard');
-    
+    document.querySelectorAll('.page-container').forEach(function(p){ p.classList.remove('active-page'); });
+    var dashboard = document.getElementById('mainDashboard');
     if (pageName === 'home') {
-        if (mainDashboard) mainDashboard.style.display = 'block';
+        if (dashboard) dashboard.style.display = 'block';
     } else {
-        if (mainDashboard) mainDashboard.style.display = 'none';
-        const selectedPage = document.getElementById(`${pageName}Page`);
-        if (selectedPage) selectedPage.classList.add('active-page');
-        
+        if (dashboard) dashboard.style.display = 'none';
+        var page = document.getElementById(pageName + 'Page');
+        if (page) page.classList.add('active-page');
         if (pageName === 'feedbacks') loadFeedbacks();
-        else if (pageName === 'profiles') renderFilteredCustomersTable();
-        else if (pageName === 'reports') {
-            const preview = document.getElementById('reportPreviewContainer');
-            if (preview) preview.style.display = 'none';
-        }
+        if (pageName === 'profiles')  renderFilteredCustomersTable();
     }
 }
 
 function openAddCustomerModal() {
     resetModalForm();
-    const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-    if (modal) modal.show();
+    new bootstrap.Modal(document.getElementById('addCustomerModal')).show();
+}
+
+function selectReportType(type) {
+    selectedReportType = type;
+    ['reportTypeAll','reportTypeFeedback','reportTypeIndividual'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('selected');
+    });
+    var map = { all: 'reportTypeAll', feedback: 'reportTypeFeedback', individual: 'reportTypeIndividual' };
+    var el = document.getElementById(map[type]);
+    if (el) el.classList.add('selected');
+    var section = document.getElementById('customerSelectSection');
+    if (section) section.style.display = type === 'individual' ? 'block' : 'none';
+    if (type === 'individual') populateCustomerDropdown();
+}
+
+function populateCustomerDropdown() {
+    var select = document.getElementById('individualCustomerSelect');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Select a customer --</option>';
+    customers.forEach(function(c) {
+        select.innerHTML += '<option value="' + c.id + '">' + escapeHtml(c.name) + ' (' + escapeHtml(c.company) + ')</option>';
+    });
+}
+
+function closePreview() {
+    var preview = document.getElementById('reportPreviewContainer');
+    if (preview) preview.style.display = 'none';
 }
 
 // ==================== REPORT GENERATION ====================
 
-function selectReportType(type) {
-    selectedReportType = type;
-    
-    const allOpt = document.getElementById('reportTypeAll');
-    const feedbackOpt = document.getElementById('reportTypeFeedback');
-    const individualOpt = document.getElementById('reportTypeIndividual');
-    const customerSection = document.getElementById('customerSelectSection');
-    
-    if (allOpt) allOpt.classList.remove('selected');
-    if (feedbackOpt) feedbackOpt.classList.remove('selected');
-    if (individualOpt) individualOpt.classList.remove('selected');
-    
-    if (type === 'all') {
-        if (allOpt) allOpt.classList.add('selected');
-        if (customerSection) customerSection.style.display = 'none';
-    } else if (type === 'feedback') {
-        if (feedbackOpt) feedbackOpt.classList.add('selected');
-        if (customerSection) customerSection.style.display = 'none';
-    } else if (type === 'individual') {
-        if (individualOpt) individualOpt.classList.add('selected');
-        if (customerSection) customerSection.style.display = 'block';
-        populateCustomerDropdown();
+function generateSelectedReport() {
+    var fromDate = document.getElementById('fromDate') ? document.getElementById('fromDate').value : '';
+    var toDate   = document.getElementById('toDate')   ? document.getElementById('toDate').value   : '';
+
+    if (selectedReportType === 'all') {
+        generateAllCustomersReport(fromDate, toDate);
+    } else if (selectedReportType === 'feedback') {
+        generateFeedbackReport(fromDate, toDate);
+    } else if (selectedReportType === 'individual') {
+        var select = document.getElementById('individualCustomerSelect');
+        if (!select || !select.value) { showToast('Please select a customer!', 'danger'); return; }
+        var customer = customers.find(function(c){ return c.id === select.value; });
+        if (!customer) { showToast('Customer not found!', 'danger'); return; }
+        generateIndividualReport(customer, fromDate, toDate);
     }
 }
 
-function populateCustomerDropdown() {
-    const select = document.getElementById('individualCustomerSelect');
-    if (!select) return;
-    
-    select.innerHTML = '<option value="">-- Select a customer --</option>';
-    customers.forEach(c => {
-        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.company)})</option>`;
+function fmtDate(d) {
+    if (!d) return 'All Time';
+    return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function filterByDates(list, fromDate, toDate) {
+    return list.filter(function(c) {
+        if (fromDate && c.dateAdded < fromDate) return false;
+        if (toDate   && c.dateAdded > toDate)   return false;
+        return true;
     });
 }
 
-function getDateRange() {
-    const fromDate = document.getElementById('fromDate');
-    const toDate = document.getElementById('toDate');
-    return { 
-        fromDate: fromDate ? fromDate.value : '', 
-        toDate: toDate ? toDate.value : '' 
-    };
+function drawReportHeader(doc, subtitle, fromDate, toDate) {
+    var pageWidth = doc.internal.pageSize.width;
+    // Dark header background
+    doc.setFillColor(26, 26, 46);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    // Company name
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('GRAFIX PRINT HUB', 14, 20);
+    // Subtitle - WHITE color (changed from black)
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text(subtitle, 14, 30);
+    // Right side metadata - DARK GREY for better visibility
+    doc.setFontSize(8);
+    doc.setTextColor(192, 192, 192);  // Dark grey/silver
+    doc.text('TIME PERIOD: ' + fmtDate(fromDate) + ' TO ' + fmtDate(toDate), pageWidth - 14, 20, { align: 'right' });
+    doc.text('GENERATED: ' + new Date().toLocaleString(), pageWidth - 14, 28, { align: 'right' });
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
 }
 
-function formatDateForReport(dateString) {
-    if (!dateString) return 'All Time';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+// Helper for PDF reports - returns TEXT format (not stars)
+function getRatingText(rating) {
+    return rating + ' Stars';
 }
 
- function generateSelectedReport() {
-    const { fromDate, toDate } = getDateRange();
+// ---- All Customers Report with PIE CHART ----
+function generateAllCustomersReport(fromDate, toDate) {
+    var list = filterByDates(customers.slice(), fromDate, toDate);
+    if (list.length === 0) { showToast('No customers found for this period!', 'danger'); return; }
+
+    var totalOrders = list.reduce(function(s,c){ return s+(c.orders||0); }, 0);
+    var avgOrders   = (totalOrders / list.length).toFixed(1);
+    var avgRating   = (list.reduce(function(s,c){ return s+(c.feedback?parseInt(c.feedback.charAt(0)):5); }, 0) / list.length).toFixed(1);
+    var vip  = list.filter(function(c){ return c.type==='VIP'; }).length;
+    var corp = list.filter(function(c){ return c.type==='Corporate'; }).length;
+    var reg  = list.filter(function(c){ return c.type==='Regular'||!c.type; }).length;
+    var newC = list.filter(function(c){ return c.type==='New'; }).length;
+    var s5   = list.filter(function(c){ return c.feedback&&c.feedback.startsWith('5'); }).length;
+    var s4   = list.filter(function(c){ return c.feedback&&c.feedback.startsWith('4'); }).length;
+    var s3   = list.filter(function(c){ return c.feedback&&c.feedback.startsWith('3'); }).length;
+    var pct  = function(n){ return ((n/list.length)*100).toFixed(1); };
+
+    var doc = new window.jspdf.jsPDF();
+    var pageWidth = doc.internal.pageSize.width;
+
+    // Draw Pie Chart
+    var canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 400;
+    var ctx = canvas.getContext('2d');
     
-    if (selectedReportType === 'all') {
-         generateFullReportWithDateRange(fromDate, toDate);
-    } else if (selectedReportType === 'feedback') {
-         generateFeedbackReportWithDateRange(fromDate, toDate);
-    } else if (selectedReportType === 'individual') {
-        const select = document.getElementById('individualCustomerSelect');
-        const customerId = select ? select.value : '';
-        if (!customerId) {
-            showToast('Please select a customer', 'danger');
-            return;
+    var pieData = [vip, corp, reg, newC];
+    var pieLabels = ['VIP', 'Corporate', 'Regular', 'New'];
+    var pieColors = ['#ffc107', '#0dcaf0', '#6c757d', '#198754'];
+    var total = vip + corp + reg + newC;
+    
+    if (total > 0) {
+        var startAngle = -Math.PI / 2;
+        for (var i = 0; i < pieData.length; i++) {
+            var angle = (pieData[i] / total) * Math.PI * 2;
+            var endAngle = startAngle + angle;
+            ctx.beginPath();
+            ctx.fillStyle = pieColors[i];
+            ctx.moveTo(200, 200);
+            ctx.arc(200, 200, 150, startAngle, endAngle);
+            ctx.fill();
+            startAngle = endAngle;
         }
-         generateIndividualReportWithDateRange(customerId, fromDate, toDate);
-    }
-}
-
- function generateFullReportWithDateRange(fromDate, toDate) {
-    if (customers.length === 0) {
-        showToast('No customer data to generate report!', 'danger');
-        return;
-    }
-    
-    showToast('Generating full customer report...', 'info');
-    
-    let filteredCustomers = [...customers];
-    if (fromDate) filteredCustomers = filteredCustomers.filter(c => c.dateAdded >= fromDate);
-    if (toDate) filteredCustomers = filteredCustomers.filter(c => c.dateAdded <= toDate);
-    
-    const reportHTML = generateFullReportHTML(filteredCustomers, fromDate, toDate);
-     downloadReportAsPDF(reportHTML, `Full_Customer_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-}
-
- function generateFeedbackReportWithDateRange(fromDate, toDate) {
-    if (customers.length === 0) {
-        showToast('No feedback data to generate report!', 'danger');
-        return;
-    }
-    
-    showToast('Generating feedback analysis report...', 'info');
-    
-    let filteredCustomers = [...customers];
-    if (fromDate) filteredCustomers = filteredCustomers.filter(c => c.dateAdded >= fromDate);
-    if (toDate) filteredCustomers = filteredCustomers.filter(c => c.dateAdded <= toDate);
-    
-    const reportHTML = generateFeedbackReportHTML(filteredCustomers, fromDate, toDate);
-     downloadReportAsPDF(reportHTML, `Feedback_Analysis_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-}
-
- function generateIndividualReportWithDateRange(customerId, fromDate, toDate) {
-    const customer = customers.find(c => c.id === customerId);
-    if (!customer) {
-        showToast('Customer not found!', 'danger');
-        return;
-    }
-    
-    showToast(`Generating report for ${customer.name}...`, 'info');
-    
-    const reportHTML = generateIndividualReportHTML(customer, fromDate, toDate);
-     downloadReportAsPDF(reportHTML, `${customer.name.replace(/\s/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`);
-}
-
-function buildFullReportHTML(filteredCustomers, fromDate, toDate) {
-    const totalCustomers = filteredCustomers.length;
-    const totalOrders = filteredCustomers.reduce((sum, c) => sum + (c.orders || 0), 0);
-    const avgOrders = totalCustomers > 0 ? (totalOrders / totalCustomers).toFixed(1) : 0;
-    const vipCount = filteredCustomers.filter(c => c.type === 'VIP').length;
-    const corporateCount = filteredCustomers.filter(c => c.type === 'Corporate').length;
-    const newCount = filteredCustomers.filter(c => c.type === 'New').length;
-    const regularCount = filteredCustomers.filter(c => c.type === 'Regular' || !c.type).length;
-    const fiveStarCount = filteredCustomers.filter(c => c.feedback && c.feedback.includes('5')).length;
-    const fourStarCount = filteredCustomers.filter(c => c.feedback && c.feedback.includes('4')).length;
-    const threeStarCount = filteredCustomers.filter(c => c.feedback && c.feedback.includes('3')).length;
-    const avgRating = totalCustomers > 0 ?
-        (filteredCustomers.reduce((sum, c) => sum + (c.feedback ? parseInt(c.feedback.charAt(0)) : 5), 0) / totalCustomers).toFixed(1) : 0;
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-    const formattedTime = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const fromDateStr = formatDateForReport(fromDate);
-    const toDateStr = formatDateForReport(toDate);
-
-    let customerRows = '';
-    for (let i = 0; i < filteredCustomers.length; i++) {
-        const c = filteredCustomers[i];
-        const bg = i % 2 === 0 ? '#ffffff' : '#f9f9f9';
-        customerRows += '<tr style="background:' + bg + ';">' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + escapeHtml(c.name) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + escapeHtml(c.company) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + escapeHtml(c.email) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + escapeHtml(c.phone) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;text-align:center;">' + (c.orders || 0) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;text-align:center;">' + (c.feedback || '5 ★') + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;text-align:center;">' + (c.type || 'Regular') + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;text-align:center;">' + (c.status || 'Active') + '</td>' +
-            '</tr>';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        for (var i = 0; i < pieData.length; i++) {
+            if (pieData[i] > 0) {
+                var midAngle = -Math.PI / 2 + (pieData.slice(0, i).reduce(function(a,b){ return a+b; }, 0) + pieData[i]/2) / total * Math.PI * 2;
+                var labelX = 200 + Math.cos(midAngle) * 100;
+                var labelY = 200 + Math.sin(midAngle) * 100;
+                ctx.fillStyle = '#fff';
+                ctx.fillText(pieLabels[i] + ' (' + ((pieData[i]/total)*100).toFixed(1) + '%)', labelX, labelY);
+            }
+        }
     }
 
-    const pct = (n) => totalCustomers > 0 ? ((n / totalCustomers) * 100).toFixed(1) : '0.0';
+    drawReportHeader(doc, 'SYSTEM GENERATED CUSTOMER ANALYSIS', fromDate, toDate);
 
-    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Grafix Print Hub - Customer Report</title>' +
-    '<style>' +
-    'body{font-family:"Segoe UI",Arial,sans-serif;margin:0;padding:20px;background:white;color:#2c3e50;}' +
-    '.header{background:#1a1a2e;padding:25px;border-radius:10px;margin-bottom:25px;}' +
-    '.header h1{color:white;margin:0;font-size:24px;}' +
-    '.header h3{color:#ffc107;margin:5px 0 0;font-size:14px;font-weight:normal;}' +
-    '.header p{color:white;margin:10px 0 0;font-size:12px;}' +
-    '.section-title{font-size:16px;font-weight:bold;color:#2c3e50;border-left:4px solid #0d6efd;padding-left:12px;margin:25px 0 15px;}' +
-    'table{width:100%;border-collapse:collapse;margin-bottom:20px;}' +
-    'th{background:#f8f9fa;border:1px solid #ddd;padding:10px;text-align:left;font-weight:bold;font-size:12px;}' +
-    'td{border:1px solid #ddd;padding:8px;font-size:12px;}' +
-    '.footer{text-align:center;margin-top:30px;padding-top:15px;border-top:1px solid #ddd;font-size:11px;color:#666;}' +
-    '</style></head><body>' +
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Business Performance Summary', 14, 58);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
 
-    '<div class="header"><h1>GRAFIX PRINT HUB</h1><h3>SYSTEM GENERATED CUSTOMER ANALYSIS</h3>' +
-    '<p><strong>REPORT TYPE:</strong> ALL CUSTOMERS &nbsp;|&nbsp; <strong>TIME PERIOD:</strong> ' + fromDateStr + ' TO ' + toDateStr + ' &nbsp;|&nbsp; <strong>GENERATED:</strong> ' + formattedDate + ', ' + formattedTime + '</p></div>' +
+    var boxes = [
+        { label: 'Total Customers', value: String(list.length),  x: 14,  color: [94,96,206] },
+        { label: 'Total Orders',    value: String(totalOrders),  x: 62,  color: [231,111,81] },
+        { label: 'Avg Orders/Cust', value: String(avgOrders),    x: 110, color: [69,123,157] },
+        { label: 'Avg Rating',      value: avgRating + ' Stars', x: 158, color: [42,157,143] }
+    ];
+    boxes.forEach(function(b) {
+        doc.setFillColor(b.color[0], b.color[1], b.color[2]);
+        doc.roundedRect(b.x, 63, 44, 22, 3, 3, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text(b.value, b.x + 22, 72, { align: 'center' });
+        doc.setFontSize(7);
+        doc.setFont(undefined, 'normal');
+        doc.text(b.label, b.x + 22, 80, { align: 'center' });
+    });
+    doc.setTextColor(0,0,0);
 
-    '<div class="section-title">Business Performance Summary</div>' +
-    '<table><tr>' +
-    '<td style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;text-align:center;padding:20px;border-radius:8px;border:none;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + totalCustomers + '</div><div style="font-size:12px;margin-top:5px;">Total Customers</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;text-align:center;padding:20px;border-radius:8px;border:none;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + totalOrders + '</div><div style="font-size:12px;margin-top:5px;">Total Orders</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;text-align:center;padding:20px;border-radius:8px;border:none;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + avgOrders + '</div><div style="font-size:12px;margin-top:5px;">Avg Orders/Customer</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a1a2e;text-align:center;padding:20px;border-radius:8px;border:none;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + avgRating + ' ★</div><div style="font-size:12px;margin-top:5px;">Average Rating</div></td>' +
-    '</tr></table>' +
-
-    '<div class="section-title">Customer Distribution</div>' +
-    '<table><tr>' +
-    '<td style="background:#fff3cd;text-align:center;padding:20px;border-radius:8px;border:1px solid #ffe69c;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + vipCount + '</div><div>VIP (' + pct(vipCount) + '%)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#d1ecf1;text-align:center;padding:20px;border-radius:8px;border:1px solid #bee5eb;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + corporateCount + '</div><div>Corporate (' + pct(corporateCount) + '%)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#e2e3e5;text-align:center;padding:20px;border-radius:8px;border:1px solid #d6d8db;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + regularCount + '</div><div>Regular (' + pct(regularCount) + '%)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#d4edda;text-align:center;padding:20px;border-radius:8px;border:1px solid #c3e6cb;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + newCount + '</div><div>New (' + pct(newCount) + '%)</div></td>' +
-    '</tr></table>' +
-
-    '<div class="section-title">Feedback Rating Distribution</div>' +
-    '<table><tr>' +
-    '<td style="background:#fff3cd;text-align:center;padding:20px;border-radius:8px;border:1px solid #ffe69c;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + fiveStarCount + '</div><div>&#9733;&#9733;&#9733;&#9733;&#9733; (5 Star)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#d1ecf1;text-align:center;padding:20px;border-radius:8px;border:1px solid #bee5eb;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + fourStarCount + '</div><div>&#9733;&#9733;&#9733;&#9733;&#9734; (4 Star)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#e2e3e5;text-align:center;padding:20px;border-radius:8px;border:1px solid #d6d8db;">' +
-        '<div style="font-size:28px;font-weight:bold;">' + threeStarCount + '</div><div>&#9733;&#9733;&#9733;&#9734;&#9734; (3 Star)</div></td>' +
-    '</tr></table>' +
-
-    '<div class="section-title">Customer List</div>' +
-    '<table><thead><tr>' +
-    '<th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Orders</th><th>Rating</th><th>Type</th><th>Status</th>' +
-    '</tr></thead><tbody>' + customerRows + '</tbody></table>' +
-
-    '<div class="footer">&copy; Grafix Print Hub - Confidential Customer Report | Generated by CRM System</div>' +
-    '</body></html>';
-}
-
-function buildFeedbackReportHTML(filteredCustomers, fromDate, toDate) {
-    const customersWithFeedback = filteredCustomers.filter(c => c.feedback);
-    const totalFeedbacks = customersWithFeedback.length;
-    const avgRating = totalFeedbacks > 0 ?
-        (customersWithFeedback.reduce((sum, c) => sum + parseInt(c.feedback.charAt(0)), 0) / totalFeedbacks).toFixed(1) : 0;
-    const fiveStar = customersWithFeedback.filter(c => c.feedback.includes('5')).length;
-    const fourStar = customersWithFeedback.filter(c => c.feedback.includes('4')).length;
-    const threeStar = customersWithFeedback.filter(c => c.feedback.includes('3')).length;
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-    const formattedTime = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const fromDateStr = formatDateForReport(fromDate);
-    const toDateStr = formatDateForReport(toDate);
-
-    let feedbackRows = '';
-    for (let i = 0; i < customersWithFeedback.length; i++) {
-        const c = customersWithFeedback[i];
-        const bg = i % 2 === 0 ? '#ffffff' : '#f9f9f9';
-        feedbackRows += '<tr style="background:' + bg + ';">' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + escapeHtml(c.name) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + escapeHtml(c.company) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;text-align:center;">' + c.feedback + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;text-align:center;">' + (c.orders || 0) + '</td>' +
-            '<td style="border:1px solid #ddd;padding:8px;">' + (c.type || 'Regular') + '</td>' +
-            '</tr>';
-    }
-
-    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Grafix Print Hub - Feedback Report</title>' +
-    '<style>' +
-    'body{font-family:"Segoe UI",Arial,sans-serif;margin:0;padding:20px;background:white;color:#2c3e50;}' +
-    '.header{background:#1a1a2e;padding:25px;border-radius:10px;margin-bottom:25px;}' +
-    '.header h1{color:white;margin:0;font-size:24px;}' +
-    '.header h3{color:#ffc107;margin:5px 0 0;font-size:14px;font-weight:normal;}' +
-    '.header p{color:white;margin:10px 0 0;font-size:12px;}' +
-    '.section-title{font-size:16px;font-weight:bold;color:#2c3e50;border-left:4px solid #ffc107;padding-left:12px;margin:25px 0 15px;}' +
-    'table{width:100%;border-collapse:collapse;margin-bottom:20px;}' +
-    'th{background:#f8f9fa;border:1px solid #ddd;padding:10px;text-align:left;font-weight:bold;font-size:12px;}' +
-    'td{border:1px solid #ddd;padding:8px;font-size:12px;}' +
-    '.footer{text-align:center;margin-top:30px;padding-top:15px;border-top:1px solid #ddd;font-size:11px;color:#666;}' +
-    '</style></head><body>' +
-
-    '<div class="header"><h1>GRAFIX PRINT HUB</h1><h3>FEEDBACK ANALYSIS REPORT</h3>' +
-    '<p><strong>TIME PERIOD:</strong> ' + fromDateStr + ' TO ' + toDateStr + ' &nbsp;|&nbsp; <strong>GENERATED:</strong> ' + formattedDate + ', ' + formattedTime + '</p></div>' +
-
-    '<div class="section-title">Overview</div>' +
-    '<table><tr>' +
-    '<td style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;text-align:center;padding:25px;border-radius:8px;border:none;">' +
-        '<div style="font-size:48px;font-weight:bold;">' + totalFeedbacks + '</div><div style="font-size:14px;margin-top:8px;">Total Feedbacks</div></td>' +
-    '<td style="width:20px;border:none;background:white;"></td>' +
-    '<td style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;text-align:center;padding:25px;border-radius:8px;border:none;">' +
-        '<div style="font-size:48px;font-weight:bold;">' + avgRating + ' ★</div><div style="font-size:14px;margin-top:8px;">Average Rating</div></td>' +
-    '</tr></table>' +
-
-    '<div class="section-title">Rating Distribution</div>' +
-    '<table><tr>' +
-    '<td style="background:#fff3cd;text-align:center;padding:20px;border-radius:8px;border:1px solid #ffe69c;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + fiveStar + '</div><div>&#9733;&#9733;&#9733;&#9733;&#9733; (5 Star)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#d1ecf1;text-align:center;padding:20px;border-radius:8px;border:1px solid #bee5eb;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + fourStar + '</div><div>&#9733;&#9733;&#9733;&#9733;&#9734; (4 Star)</div></td>' +
-    '<td style="width:15px;border:none;background:white;"></td>' +
-    '<td style="background:#e2e3e5;text-align:center;padding:20px;border-radius:8px;border:1px solid #d6d8db;">' +
-        '<div style="font-size:32px;font-weight:bold;">' + threeStar + '</div><div>&#9733;&#9733;&#9733;&#9734;&#9734; (3 Star)</div></td>' +
-    '</tr></table>' +
-
-    '<div class="section-title">Customer Feedback Details</div>' +
-    '<table><thead><tr><th>Customer</th><th>Company</th><th>Rating</th><th>Orders</th><th>Type</th></tr></thead>' +
-    '<tbody>' + feedbackRows + '</tbody></table>' +
-
-    '<div class="footer">&copy; Grafix Print Hub - Feedback Report</div>' +
-    '</body></html>';
-}
-
-function buildIndividualReportHTML(customer, fromDate, toDate) {
-    const stars = customer.feedback ? parseInt(customer.feedback.charAt(0)) : 5;
-    const starsDisplay = '★'.repeat(stars) + '☆'.repeat(5 - stars);
-    const statusColor = customer.status === 'Inactive' ? '#dc3545' : '#198754';
-    const typeColor = customer.type === 'VIP' ? '#ffc107' : '#6c757d';
-    const typeTextColor = customer.type === 'VIP' ? '#000' : '#fff';
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-    const formattedTime = currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const fromDateStr = formatDateForReport(fromDate);
-    const toDateStr = formatDateForReport(toDate);
-    const avatarText = getAvatar(customer.name);
-
-    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Grafix Print Hub - Customer Profile</title>' +
-    '<style>' +
-    'body{font-family:"Segoe UI",Arial,sans-serif;margin:0;padding:20px;background:white;color:#2c3e50;}' +
-    '.header{background:#1a1a2e;padding:25px;border-radius:10px;margin-bottom:25px;}' +
-    '.header h1{color:white;margin:0;font-size:24px;}' +
-    '.header h3{color:#ffc107;margin:5px 0 0;font-size:14px;font-weight:normal;}' +
-    '.header p{color:white;margin:10px 0 0;font-size:12px;}' +
-    '.section-title{font-size:16px;font-weight:bold;color:#2c3e50;border-left:4px solid #0d6efd;padding-left:12px;margin:25px 0 15px;}' +
-    'table{width:100%;border-collapse:collapse;margin-bottom:20px;}' +
-    'td{padding:10px;font-size:13px;}' +
-    '.footer{text-align:center;margin-top:30px;padding-top:15px;border-top:1px solid #ddd;font-size:11px;color:#666;}' +
-    '.label{color:#6c757d;font-size:11px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:4px;}' +
-    '.value{font-size:14px;font-weight:600;}' +
-    '</style></head><body>' +
-
-    '<div class="header"><h1>GRAFIX PRINT HUB</h1><h3>CUSTOMER PROFILE REPORT</h3>' +
-    '<p><strong>PERIOD:</strong> ' + fromDateStr + ' TO ' + toDateStr + ' &nbsp;|&nbsp; <strong>GENERATED:</strong> ' + formattedDate + ', ' + formattedTime + '</p></div>' +
-
-    '<table><tr>' +
-    '<td style="width:90px;vertical-align:middle;border:none;">' +
-        '<div style="width:80px;height:80px;background:linear-gradient(135deg,#195d7a,#3083a8);border-radius:50%;text-align:center;line-height:80px;color:white;font-size:28px;font-weight:bold;">' + avatarText + '</div>' +
-    '</td>' +
-    '<td style="vertical-align:middle;border:none;">' +
-        '<div style="font-size:24px;font-weight:bold;color:#2c3e50;">' + escapeHtml(customer.name) + '</div>' +
-        '<div style="color:#6c757d;margin:4px 0;">' + escapeHtml(customer.company) + '</div>' +
-        '<span style="background:' + statusColor + ';color:white;padding:4px 12px;border-radius:20px;font-size:11px;">' + (customer.status || 'Active') + '</span>' +
-        '&nbsp;<span style="background:' + typeColor + ';color:' + typeTextColor + ';padding:4px 12px;border-radius:20px;font-size:11px;">' + (customer.type || 'Regular') + '</span>' +
-    '</td></tr></table>' +
-
-    '<div class="section-title">Contact Information</div>' +
-    '<table style="border:1px solid #e9ecef;border-radius:8px;">' +
-    '<tr style="background:#f8f9fa;">' +
-    '<td style="border-bottom:1px solid #e9ecef;border-right:1px solid #e9ecef;"><span class="label">Email</span><span class="value">' + escapeHtml(customer.email) + '</span></td>' +
-    '<td style="border-bottom:1px solid #e9ecef;"><span class="label">Phone</span><span class="value">' + escapeHtml(customer.phone) + '</span></td>' +
-    '</tr>' +
-    '<tr>' +
-    '<td style="border-right:1px solid #e9ecef;"><span class="label">Address</span><span class="value">' + (escapeHtml(customer.address) || 'Not specified') + '</span></td>' +
-    '<td><span class="label">Customer Since</span><span class="value">' + (customer.dateAdded || 'N/A') + '</span></td>' +
-    '</tr></table>' +
-
-    '<div class="section-title">Performance Summary</div>' +
-    '<table><tr>' +
-    '<td style="background:linear-gradient(135deg,#e8f4ff,#d0e8ff);text-align:center;padding:25px;border-radius:8px;border:1px solid #bee3f8;">' +
-        '<div style="font-size:40px;font-weight:bold;color:#0d6efd;">' + (customer.orders || 0) + '</div>' +
-        '<div style="margin-top:8px;color:#2c3e50;">Total Orders</div>' +
-    '</td>' +
-    '<td style="width:20px;border:none;background:white;"></td>' +
-    '<td style="background:linear-gradient(135deg,#fff9e6,#fff3cd);text-align:center;padding:25px;border-radius:8px;border:1px solid #ffe69c;">' +
-        '<div style="font-size:40px;font-weight:bold;color:#ffc107;">' + starsDisplay + '</div>' +
-        '<div style="margin-top:8px;color:#2c3e50;">Feedback Rating (' + (customer.feedback || '5 ★') + ')</div>' +
-    '</td>' +
-    '</tr></table>' +
-
-    '<div class="footer">&copy; Grafix Print Hub - Confidential Customer Report</div>' +
-    '</body></html>';
-}
-
-function downloadReportAsPDF(htmlContent, filename) {
-    const printWindow = window.open('', '_blank');
+    var pieImage = canvas.toDataURL('image/png');
+    doc.addImage(pieImage, 'PNG', 14, 95, 80, 80);
     
-    if (!printWindow) {
-        showToast('Pop-up blocked! Please allow pop-ups for this site.', 'danger');
-        return;
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Customer Distribution', 100, 105);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    
+    var distY = 112;
+    var distData = [
+        ['VIP', vip, pct(vip) + '%'],
+        ['Corporate', corp, pct(corp) + '%'],
+        ['Regular', reg, pct(reg) + '%'],
+        ['New', newC, pct(newC) + '%']
+    ];
+    for (var i = 0; i < distData.length; i++) {
+        doc.text(distData[i][0] + ': ' + distData[i][1] + ' (' + distData[i][2] + ')', 100, distY + (i * 6));
     }
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    var feedY = 190;
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Feedback Rating Distribution', 14, feedY);
+    doc.setFont(undefined, 'normal');
 
-    printWindow.onload = function() {
-        setTimeout(function() {
-            printWindow.focus();
-            printWindow.print();
-            showToast('Report ready! Use "Save as PDF" in the print dialog.', 'success');
-        }, 500);
-    };
+    var ratingBoxes = [
+        { label: '5 Stars', value: s5, x: 14,  bg: [255,243,205], fg: [133,100,4]  },
+        { label: '4 Stars', value: s4, x: 76,  bg: [209,236,241], fg: [12,84,96]   },
+        { label: '3 Stars', value: s3, x: 138, bg: [226,227,229], fg: [56,61,65]   }
+    ];
+    ratingBoxes.forEach(function(b) {
+        doc.setFillColor(b.bg[0], b.bg[1], b.bg[2]);
+        doc.roundedRect(b.x, feedY + 5, 56, 22, 3, 3, 'F');
+        doc.setTextColor(b.fg[0], b.fg[1], b.fg[2]);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text(String(b.value), b.x + 28, feedY + 15, { align: 'center' });
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(b.label, b.x + 28, feedY + 22, { align: 'center' });
+    });
+    doc.setTextColor(0,0,0);
+
+    var tableY = feedY + 40;
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Customer List', 14, tableY);
+    doc.setFont(undefined, 'normal');
+
+    doc.autoTable({
+        head: [['Name', 'Company', 'Email', 'Phone', 'Orders', 'Rating', 'Type', 'Status']],
+        body: list.map(function(c) {
+            var ratingText = c.feedback ? getRatingText(parseInt(c.feedback.charAt(0))) : '5 Stars';
+            return [c.name, c.company, c.email, c.phone, c.orders||0, ratingText, c.type||'Regular', c.status||'Active'];
+        }),
+        startY: tableY + 5,
+        theme: 'striped',
+        headStyles: { fillColor: [26, 26, 46] },
+        styles: { fontSize: 8, cellPadding: 3 }
+    });
+
+    var pageCount = doc.internal.getNumberOfPages();
+    for (var i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text('Grafix Print Hub | CRM Report | Page ' + i + ' of ' + pageCount, pageWidth / 2, 287, { align: 'center' });
+    }
+
+    doc.save('CRM_All_Customers_' + new Date().getTime() + '.pdf');
+    showToast('Report downloaded successfully!', 'success');
 }
-// ==================== HELPER FUNCTIONS ====================
+
+// ---- Feedback Report with BAR CHART ----
+function generateFeedbackReport(fromDate, toDate) {
+    var list = filterByDates(customers.slice(), fromDate, toDate).filter(function(c){ return c.feedback; });
+    if (list.length === 0) { showToast('No feedback found for this period!', 'danger'); return; }
+
+    var avg = (list.reduce(function(s,c){ return s+parseInt(c.feedback.charAt(0)); }, 0) / list.length).toFixed(1);
+    var s5  = list.filter(function(c){ return c.feedback.startsWith('5'); }).length;
+    var s4  = list.filter(function(c){ return c.feedback.startsWith('4'); }).length;
+    var s3  = list.filter(function(c){ return c.feedback.startsWith('3'); }).length;
+    var s2  = list.filter(function(c){ return c.feedback.startsWith('2'); }).length;
+    var s1  = list.filter(function(c){ return c.feedback.startsWith('1'); }).length;
+
+    var doc = new window.jspdf.jsPDF();
+    var pageWidth = doc.internal.pageSize.width;
+
+    // Draw Bar Chart
+    var canvas = document.createElement('canvas');
+    canvas.width = 500;
+    canvas.height = 300;
+    var ctx = canvas.getContext('2d');
+    
+    var barLabels = ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'];
+    var barData = [s5, s4, s3, s2, s1];
+    var barColors = ['#ffc107', '#0dcaf0', '#6c757d', '#fd7e14', '#dc3545'];
+    var maxValue = Math.max.apply(null, barData);
+    
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    var barWidth = 60;
+    var startX = 80;
+    var baseY = 250;
+    
+    for (var i = 0; i < barData.length; i++) {
+        var barHeight = (barData[i] / (maxValue || 1)) * 180;
+        ctx.fillStyle = barColors[i];
+        ctx.fillRect(startX + (i * (barWidth + 15)), baseY - barHeight, barWidth, barHeight);
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(barLabels[i], startX + (i * (barWidth + 15)) + barWidth/2, baseY + 15);
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(barData[i], startX + (i * (barWidth + 15)) + barWidth/2, baseY - barHeight - 5);
+    }
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Rating Distribution', canvas.width/2, 30);
+
+    drawReportHeader(doc, 'FEEDBACK ANALYSIS REPORT', fromDate, toDate);
+
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Overview', 14, 58);
+    doc.setFont(undefined, 'normal');
+
+    doc.setFillColor(94, 96, 206);
+    doc.roundedRect(14, 63, 85, 25, 3, 3, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text(String(list.length), 56, 74, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text('Total Feedbacks', 56, 82, { align: 'center' });
+
+    doc.setFillColor(231, 111, 81);
+    doc.roundedRect(105, 63, 85, 25, 3, 3, 'F');
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text(avg + ' Stars', 147, 74, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text('Average Rating', 147, 82, { align: 'center' });
+    doc.setTextColor(0,0,0);
+
+    var barImage = canvas.toDataURL('image/png');
+    doc.addImage(barImage, 'PNG', 14, 95, 180, 80);
+
+    var ratingY = 190;
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Rating Summary', 14, ratingY);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    
+    var ratingY2 = ratingY + 8;
+    doc.text('5 Stars: ' + s5 + ' (' + ((s5/list.length)*100).toFixed(1) + '%)', 14, ratingY2);
+    doc.text('4 Stars: ' + s4 + ' (' + ((s4/list.length)*100).toFixed(1) + '%)', 14, ratingY2 + 6);
+    doc.text('3 Stars: ' + s3 + ' (' + ((s3/list.length)*100).toFixed(1) + '%)', 14, ratingY2 + 12);
+    doc.text('2 Stars: ' + s2 + ' (' + ((s2/list.length)*100).toFixed(1) + '%)', 14, ratingY2 + 18);
+    doc.text('1 Star: ' + s1 + ' (' + ((s1/list.length)*100).toFixed(1) + '%)', 14, ratingY2 + 24);
+
+    var tableY = 230;
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Customer Feedback Details', 14, tableY);
+    doc.setFont(undefined, 'normal');
+
+    doc.autoTable({
+        head: [['Customer', 'Company', 'Rating', 'Orders', 'Type', 'Since']],
+        body: list.map(function(c) {
+            var ratingText = c.feedback ? getRatingText(parseInt(c.feedback.charAt(0))) : '5 Stars';
+            return [c.name, c.company, ratingText, c.orders||0, c.type||'Regular', c.dateAdded||'N/A'];
+        }),
+        startY: tableY + 5,
+        theme: 'striped',
+        headStyles: { fillColor: [26, 26, 46] },
+        styles: { fontSize: 8, cellPadding: 3 }
+    });
+
+    var pageCount = doc.internal.getNumberOfPages();
+    for (var i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text('Grafix Print Hub | Feedback Report | Page ' + i + ' of ' + pageCount, pageWidth / 2, 287, { align: 'center' });
+    }
+
+    doc.save('CRM_Feedback_Report_' + new Date().getTime() + '.pdf');
+    showToast('Report downloaded successfully!', 'success');
+}
+
+// ---- Individual Report (Avatar letter size increased to 22) ----
+function generateIndividualReport(customer, fromDate, toDate) {
+    var ratingValue = customer.feedback ? parseInt(customer.feedback.charAt(0)) : 5;
+    var starsStr = ratingValue + ' out of 5 Stars';
+    var ratingText = customer.feedback ? getRatingText(parseInt(customer.feedback.charAt(0))) : '5 Stars';
+
+    var doc = new window.jspdf.jsPDF();
+    var pageWidth = doc.internal.pageSize.width;
+
+    drawReportHeader(doc, 'CUSTOMER PROFILE REPORT', fromDate, toDate);
+
+    // Avatar circle - Larger letter (size 22)
+    doc.setFillColor(25, 93, 122);
+    doc.circle(30, 65, 14, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    var avatarLetter = getAvatar(customer.name);
+    doc.text(avatarLetter, 30, 70, { align: 'center' });
+    doc.setTextColor(0,0,0);
+
+    // Name & company
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text(customer.name, 52, 62);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100,100,100);
+    doc.text(customer.company, 52, 70);
+
+    // Status & type badges
+    var statusColor = customer.status === 'Inactive' ? [220,53,69] : [25,135,84];
+    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.roundedRect(52, 75, 32, 8, 4, 4, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'bold');
+    doc.text(customer.status||'Active', 68, 81, { align: 'center' });
+
+    var typeColor = customer.type === 'VIP' ? [255,193,7] : customer.type === 'Corporate' ? [13,202,240] : [108,117,125];
+    var typeTextColor = customer.type === 'VIP' ? 0 : 255;
+    doc.setFillColor(typeColor[0], typeColor[1], typeColor[2]);
+    doc.roundedRect(90, 75, 32, 8, 4, 4, 'F');
+    doc.setTextColor(typeTextColor, typeTextColor, typeTextColor);
+    doc.text(customer.type||'Regular', 106, 81, { align: 'center' });
+    doc.setTextColor(0,0,0);
+
+    // Contact Info
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Contact Information', 14, 95);
+    doc.setFont(undefined, 'normal');
+
+    doc.autoTable({
+        body: [
+            ['Email', customer.email,              'Phone',   customer.phone],
+            ['Address', customer.address||'N/A',   'Since',   customer.dateAdded||'N/A']
+        ],
+        startY: 100,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 4 },
+        columnStyles: {
+            0: { fontStyle: 'bold', fillColor: [240,240,240], cellWidth: 30 },
+            1: { cellWidth: 70 },
+            2: { fontStyle: 'bold', fillColor: [240,240,240], cellWidth: 30 },
+            3: { cellWidth: 60 }
+        }
+    });
+
+    // Performance
+    var afterY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text('Performance Summary', 14, afterY);
+    doc.setFont(undefined, 'normal');
+
+    doc.setFillColor(232, 244, 255);
+    doc.roundedRect(14, afterY + 4, 85, 28, 3, 3, 'F');
+    doc.setTextColor(13, 110, 253);
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text(String(customer.orders||0), 56, afterY + 17, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text('Total Orders', 56, afterY + 26, { align: 'center' });
+
+    doc.setFillColor(255, 249, 230);
+    doc.roundedRect(105, afterY + 4, 85, 28, 3, 3, 'F');
+    doc.setTextColor(255, 193, 7);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text(starsStr, 147, afterY + 17, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(100,100,100);
+    doc.setFont(undefined, 'normal');
+    doc.text('Feedback Rating - ' + ratingText, 147, afterY + 26, { align: 'center' });
+    doc.setTextColor(0,0,0);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('Grafix Print Hub | CRM Customer Profile | Confidential', pageWidth / 2, 287, { align: 'center' });
+
+    doc.save('CRM_' + customer.name.replace(/\s/g,'_') + '_' + new Date().getTime() + '.pdf');
+    showToast('Report downloaded successfully!', 'success');
+}
+
+// ==================== HELPERS ====================
 
 function getStarsFromFeedback(feedback) {
-    const rating = parseInt(feedback);
-    let stars = '';
-    for (let i = 1; i <= 5; i++) {
-        stars += i <= rating ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>';
-    }
-    return stars;
+    var r = parseInt(feedback) || 5;
+    return r + ' Stars';
 }
 
 function getAvatar(name) {
     if (!name) return '??';
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    var initials = name.split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
+    return initials;
 }
 
 function escapeHtml(str) {
     if (!str) return str;
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
+    return String(str).replace(/[&<>"']/g, function(m) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
     });
 }
 
-function validatePhone(phone) {
-    return /^\d{10}$/.test(phone);
-}
+function validatePhone(phone) { return /^\d{10}$/.test(phone); }
+function isValidEmail(email)  { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
-function validateOrders(orders) {
-    return orders >= 0;
-}
-
-function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function validatePhoneField() {
-    const phoneInput = document.getElementById('customerPhone');
-    const phone = phoneInput ? phoneInput.value.trim() : '';
-    const errorDiv = phoneInput ? phoneInput.nextElementSibling : null;
-    
-    if (phone && !validatePhone(phone)) {
-        if (phoneInput) phoneInput.classList.add('is-invalid-custom');
-        if (errorDiv && errorDiv.classList && !errorDiv.classList.contains('invalid-feedback-custom')) {
-            const newDiv = document.createElement('div');
-            newDiv.className = 'invalid-feedback-custom';
-            newDiv.innerText = 'Phone number must be exactly 10 digits';
-            if (phoneInput && phoneInput.parentNode) phoneInput.parentNode.insertBefore(newDiv, phoneInput.nextSibling);
-        }
-        return false;
-    } else {
-        if (phoneInput) phoneInput.classList.remove('is-invalid-custom');
-        if (errorDiv && errorDiv.classList && errorDiv.classList.contains('invalid-feedback-custom')) errorDiv.remove();
-        return true;
-    }
-}
-
-function validateOrdersField() {
-    const ordersInput = document.getElementById('customerOrders');
-    const orders = ordersInput ? parseInt(ordersInput.value) || 0 : 0;
-    const errorDiv = ordersInput ? ordersInput.nextElementSibling : null;
-    
-    if (!validateOrders(orders)) {
-        if (ordersInput) ordersInput.classList.add('is-invalid-custom');
-        if (errorDiv && errorDiv.classList && !errorDiv.classList.contains('invalid-feedback-custom')) {
-            const newDiv = document.createElement('div');
-            newDiv.className = 'invalid-feedback-custom';
-            newDiv.innerText = 'Orders cannot be negative';
-            if (ordersInput && ordersInput.parentNode) ordersInput.parentNode.insertBefore(newDiv, ordersInput.nextSibling);
-        }
-        return false;
-    } else {
-        if (ordersInput) ordersInput.classList.remove('is-invalid-custom');
-        if (errorDiv && errorDiv.classList && errorDiv.classList.contains('invalid-feedback-custom')) errorDiv.remove();
-        return true;
-    }
-}
-
-function showToast(message, type = 'success') {
-    const toast = document.getElementById('successToast');
-    const toastMessage = document.getElementById('toastMessage');
-    
-    if (!toast || !toastMessage) return;
-    
-    toastMessage.innerText = message;
-    toast.className = `toast bg-${type} text-white`;
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
+function showToast(message, type) {
+    if (!type) type = 'success';
+    var toast = document.getElementById('successToast');
+    var msg   = document.getElementById('toastMessage');
+    if (!toast || !msg) return;
+    msg.innerText = message;
+    toast.className = 'toast bg-' + type + ' text-white';
+    new bootstrap.Toast(toast).show();
 }
 
 function setupEventListeners() {
-    const saveBtn = document.getElementById('saveCustomerBtn');
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    const addModal = document.getElementById('addCustomerModal');
-    const phoneInput = document.getElementById('customerPhone');
-    const ordersInput = document.getElementById('customerOrders');
-    
-    if (saveBtn) saveBtn.addEventListener('click', saveCustomer);
-    if (confirmBtn) confirmBtn.addEventListener('click', deleteCustomer);
-    if (addModal) addModal.addEventListener('hidden.bs.modal', resetModalForm);
-    if (phoneInput) phoneInput.addEventListener('input', validatePhoneField);
-    if (ordersInput) ordersInput.addEventListener('input', validateOrdersField);
+    var saveBtn     = document.getElementById('saveCustomerBtn');
+    var confirmBtn  = document.getElementById('confirmDeleteBtn');
+    var addModal    = document.getElementById('addCustomerModal');
+    var phoneInput  = document.getElementById('customerPhone');
+    var ordersInput = document.getElementById('customerOrders');
+    if (saveBtn)     saveBtn.addEventListener('click', saveCustomer);
+    if (confirmBtn)  confirmBtn.addEventListener('click', deleteCustomer);
+    if (addModal)    addModal.addEventListener('hidden.bs.modal', resetModalForm);
+    if (phoneInput)  phoneInput.addEventListener('input', function() {
+        phoneInput.classList.toggle('is-invalid-custom', phoneInput.value.trim() !== '' && !validatePhone(phoneInput.value.trim()));
+    });
+    if (ordersInput) ordersInput.addEventListener('input', function() {
+        ordersInput.classList.toggle('is-invalid-custom', parseInt(ordersInput.value) < 0);
+    });
 }
 
-// ==================== GLOBAL EXPORTS ====================
-
-window.openAddCustomerModal = openAddCustomerModal;
-window.showPage = showPage;
-window.applyFilters = applyFilters;
-window.resetFilters = resetFilters;
-window.viewCustomer = viewCustomer;
-window.openEditModal = openEditModal;
-window.openDeleteModal = openDeleteModal;
-window.toggleCustomerStatus = toggleCustomerStatus;
-window.selectReportType = selectReportType;
+window.openAddCustomerModal   = openAddCustomerModal;
+window.showPage               = showPage;
+window.applyFilters           = applyFilters;
+window.resetFilters           = resetFilters;
+window.viewCustomer           = viewCustomer;
+window.openEditModal          = openEditModal;
+window.openDeleteModal        = openDeleteModal;
+window.toggleCustomerStatus   = toggleCustomerStatus;
+window.selectReportType       = selectReportType;
 window.generateSelectedReport = generateSelectedReport;
-window.closePreview = closePreview;
+window.closePreview           = closePreview;
