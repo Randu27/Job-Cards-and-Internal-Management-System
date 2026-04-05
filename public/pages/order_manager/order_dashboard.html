@@ -281,8 +281,13 @@
                 </button>
                 <input type="text" id="orderSearchInput" class="form-control rounded-pill px-4" placeholder="Search..."
                     oninput="filterOrders()">
-                <input type="date" id="dateFilter" class="form-control rounded-pill px-4" style="max-width:200px;"
-                    oninput="filterByDate()">
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" id="dateFrom" class="form-control rounded-pill px-3" style="max-width:170px;"
+                        oninput="filterByDate()">
+                    <span class="text-muted small">to</span>
+                    <input type="date" id="dateTo" class="form-control rounded-pill px-3" style="max-width:170px;"
+                        oninput="filterByDate()">
+                </div>
                 <div class="dropdown">
                     <button class="btn btn-outline-secondary dropdown-toggle rounded-pill px-4" type="button"
                         data-bs-toggle="dropdown">Sort of</button>
