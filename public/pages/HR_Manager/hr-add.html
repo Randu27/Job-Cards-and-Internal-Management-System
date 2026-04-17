@@ -218,6 +218,26 @@
       }
     }
 
+    // Toggle password visibility for the Login Password field
+    if (togglePasswordBtn && passwordInput) {
+      togglePasswordBtn.addEventListener("click", function(e) {
+        e.preventDefault();   // Prevent any accidental form behaviors
+        const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+        passwordInput.setAttribute("type", type);
+        
+        // Toggle the eye icon (Bootstrap Icons)
+        if (toggleIcon) {
+          if (type === "text") {
+            toggleIcon.classList.remove("bi-eye-slash");
+            toggleIcon.classList.add("bi-eye");
+          } else {
+            toggleIcon.classList.remove("bi-eye");
+            toggleIcon.classList.add("bi-eye-slash");
+          }
+        }
+      });
+    }
+
   });
 </script>
 
