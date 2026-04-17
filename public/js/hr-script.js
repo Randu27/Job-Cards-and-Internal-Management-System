@@ -365,7 +365,136 @@ if (document.getElementById("addEmployeeForm")) {
     });
   }
 }
+document.getElementById("addEmployeeForm").addEventListener("submit", function (e) {
+  e.preventDefault();
 
+  const hasAccess = document.getElementById("hasAccess").checked;
+
+  if (!hasAccess) {
+    saveEmployee(null);
+    return;
+  }
+
+  const role = document.getElementById("jobRole").value;
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  if (!role || !email || !password) {
+    alert("Fill all access fields");
+    return;
+  }
+
+  // send to backend (IMPORTANT)
+  fetch("http://localhost:3000/create-user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, role })
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (!data.success) {
+      alert(data.message);
+      return;
+    }
+
+    saveEmployee({
+      uid: data.uid,
+      role: role,
+      email: email
+    });
+
+  })
+  .catch(err => alert(err.message));
+});
+
+
+function saveEmployee(accessData) {
+
+  db.collection("employees").add({
+    name: empName.value,
+    empId: empId.value,
+    status: empStatus.value,
+    department: empDepartment.value,
+    joinDate: empJoinDate.value,
+    nic: empNic.value,
+    address: empAddress.value,
+    email: empEmail.value,
+    contact: empContact.value,
+    remarks: empRemarks.value,
+
+    websiteAccess: accessData ? true : false,
+    accessDetails: accessData || null
+  });
+
+  
+// Show/hide access section
+document.getElementById("hasAccess").addEventListener("change", function () {
+  document.getElementById("accessSection").style.display =
+    this.checked ? "block" : "none";
+});
+
+
+// CREATE EMPLOYEE
+document.getElementById("addEmployeeForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const hasAccess = document.getElementById("hasAccess").checked;
+
+  const employeeData = {
+    name: empName.value,
+    empId: empId.value,
+    status: empStatus.value,
+    department: empDepartment.value,
+    joinDate: empJoinDate.value,
+    nic: empNic.value,
+    address: empAddress.value,
+    email: empEmail.value,
+    contact: empContact.value,
+    remarks: empRemarks.value,
+    websiteAccess: hasAccess
+  };
+
+  // 🔐 IF WEBSITE ACCESS ENABLED
+  if (hasAccess) {
+
+    const role = document.getElementById("jobRole").value;
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    if (!role || !email || !password) {
+      alert("Fill login details");
+      return;
+    }
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+
+        const uid = userCredential.user.uid;
+
+        employeeData.accessDetails = {
+          uid: uid,
+          role: role,
+          email: email
+        };
+
+        db.collection("employees").add(employeeData);
+
+        alert("Employee + Login Created");
+
+      })
+      .catch(err => alert(err.message));
+
+  } else {
+
+    db.collection("employees").add(employeeData);
+    alert("Employee Added (No Access)");
+
+  }
+
+});
+
+}
 // ===============================
 // HR - Update Employee Page
 // ===============================
@@ -1119,6 +1248,31 @@ if (document.getElementById("dirList")) {
   if (filterStatus) filterStatus.addEventListener("change", applyFilters);
 
   document.addEventListener("DOMContentLoaded", loadDirectory);
+
+  //password part
+  if (emp.websiteAccess && emp.accessDetails) {
+
+  html += `
+    <div class="detail-item full">
+      <label>Website Access</label>
+      <div class="val">
+        <span class="badge bg-success">Enabled</span><br>
+        Role: ${emp.accessDetails.role}<br>
+        Email: ${emp.accessDetails.email}
+      </div>
+    </div>
+  `;
+
+} else {
+  html += `
+    <div class="detail-item full">
+      <label>Website Access</label>
+      <div class="val">
+        <span class="badge bg-secondary">Not Enabled</span>
+      </div>
+    </div>
+  `;
+}
 }
 
 // ===============================
