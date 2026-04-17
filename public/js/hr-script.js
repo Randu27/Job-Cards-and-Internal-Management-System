@@ -365,77 +365,18 @@ if (document.getElementById("addEmployeeForm")) {
     });
   }
 }
-document.getElementById("addEmployeeForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
-  const hasAccess = document.getElementById("hasAccess").checked;
-
-  if (!hasAccess) {
-    saveEmployee(null);
-    return;
-  }
-
-  const role = document.getElementById("jobRole").value;
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
-
-  if (!role || !email || !password) {
-    alert("Fill all access fields");
-    return;
-  }
-
-  // send to backend (IMPORTANT)
-  fetch("http://localhost:3000/create-user", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, role })
-  })
-  .then(res => res.json())
-  .then(data => {
-
-    if (!data.success) {
-      alert(data.message);
-      return;
-    }
-
-    saveEmployee({
-      uid: data.uid,
-      role: role,
-      email: email
-    });
-
-  })
-  .catch(err => alert(err.message));
-});
-
-
-function saveEmployee(accessData) {
-
-  db.collection("employees").add({
-    name: empName.value,
-    empId: empId.value,
-    status: empStatus.value,
-    department: empDepartment.value,
-    joinDate: empJoinDate.value,
-    nic: empNic.value,
-    address: empAddress.value,
-    email: empEmail.value,
-    contact: empContact.value,
-    remarks: empRemarks.value,
-
-    websiteAccess: accessData ? true : false,
-    accessDetails: accessData || null
-  });
-
-  
-// Show/hide access section
+// ===============================
+// SHOW / HIDE ACCESS SECTION
+// ===============================
 document.getElementById("hasAccess").addEventListener("change", function () {
   document.getElementById("accessSection").style.display =
     this.checked ? "block" : "none";
 });
 
 
-// CREATE EMPLOYEE
+// ===============================
+// CREATE EMPLOYEE (ONLY ONE SUBMIT)
+// ===============================
 document.getElementById("addEmployeeForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
@@ -467,6 +408,7 @@ document.getElementById("addEmployeeForm").addEventListener("submit", function (
       return;
     }
 
+    // ✅ Create user using Firebase (NO NODE JS)
     firebase.auth().createUserWithEmailAndPassword(email, password)
       .then((userCredential) => {
 
@@ -478,23 +420,30 @@ document.getElementById("addEmployeeForm").addEventListener("submit", function (
           email: email
         };
 
-        db.collection("employees").add(employeeData);
-
+        return db.collection("employees").add(employeeData);
+      })
+      .then(() => {
         alert("Employee + Login Created");
-
+        document.getElementById("addEmployeeForm").reset();
       })
       .catch(err => alert(err.message));
 
   } else {
 
-    db.collection("employees").add(employeeData);
-    alert("Employee Added (No Access)");
-
+    // ✅ Save without login
+    db.collection("employees").add(employeeData)
+      .then(() => {
+        alert("Employee Added (No Access)");
+        document.getElementById("addEmployeeForm").reset();
+      })
+      .catch(err => alert(err.message));
   }
 
 });
 
-}
+
+
+
 // ===============================
 // HR - Update Employee Page
 // ===============================
