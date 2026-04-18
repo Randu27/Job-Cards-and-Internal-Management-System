@@ -2,83 +2,370 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Grafix Printing Hub</title>
-    <link rel="stylesheet" href="css/index.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Grafix Print Hub</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(145deg, #34495e 0%, #ffe785 30%,#34495e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .bg-animation .circle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0) rotate(0deg);
+      }
+      100% {
+        transform: translateY(-100vh) rotate(360deg);
+      }
+    }
+
+    /* Login Container */
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .login-card {
+      background: rgba(220, 220, 220, 0.98);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      animation: slideUp 0.6s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-header {
+      background: #ffe785;
+      padding: 20px 15px;
+      text-align: center;
+      color: #34495e;
+    }
+
+   
+
+    .login-header h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .login-header p {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .login-body {
+      padding: 30px;
+    }
+
+    /* Role Selection */
+    .role-selection {
+      margin-bottom: 30px;
+    }
+
+    .role-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #34495e;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .role-card {
+      background: #f9fafb;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      width: 100%;
+      padding: 12px;
+      text-align: center;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .role-card:hover {
+      border-color: #ffe785;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 231, 133, 0.2);
+    }
+
+    .role-card.selected {
+      background: linear-gradient(135deg, #8a8c8e 0%, #535557 100%);
+      border-color: #ffe785;
+      color: #ffe785;
+    }
+
+    .role-card.selected .role-icon {
+      color: #ffe785;
+    }
+
+    .role-card.selected .role-name {
+      color: #ffe785;
+    }
+
+    .role-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .input-group-custom {
+      position: relative;
+    }
+
+    .input-group-custom i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 1.1rem;
+    }
+
+    .input-group-custom input {
+      width: 100%;
+      padding: 12px 15px 12px 45px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .input-group-custom input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg,  #ffe785 0%, #909192 100%);
+      color:  #535557 ; 
+      border: 2px solid ;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .login-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .demo-credentials {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .demo-credentials p {
+      margin-bottom: 8px;
+    }
+
+    .demo-credentials small {
+      display: block;
+      color: #9ca3af;
+    }
+
+    /* Alert Messages */
+    .alert-custom {
+      padding: 12px 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      color: #dc2626;
+      border-left: 4px solid #dc2626;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      color: #059669;
+      border-left: 4px solid #059669;
+    }
+
+    /* Loading Spinner */
+    .spinner-small {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
 <body>
 
-    <!-- dark theme toggle button -->
+<div class="bg-animation" id="bgAnimation"></div>
 
-    <button class="theme-toggle" id="themeToggle">
-        <i class="fa-solid fa-moon" id="moonIcon"></i>
-        <i class="fa-solid fa-sun" id="sunIcon" style="display: none;"></i>
-    </button>
-    <div class="login-container">
-        <div class="login-container">
-            <div class="login-box">
-                <div class="login-header">
-                    <h1>Grafix Printing Hub</h1>
-                    <p>Management System</p>
-                </div>
-
-                <form id="loginForm">
-                    <div class="input-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="Enter your email" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="password">Password</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="password" placeholder="Enter your password" required>
-                            <button type="button" class="toggle-password" id="togglePassword">
-                                <i class="fa-regular fa-eye show-icon"></i>
-                                <i class="fa-regular fa-eye-slash hide-icon" style="display: none;"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="role-select">
-                        <label for="role">Select Role</label>
-                        <select id="role" required>
-                            <option value="">Choose your role</option>
-                            <option value="order_manager">Order Manager</option>
-                            <option value="financial_manager">Financial Manager</option>
-                            <option value="resource_manager">Resource Manager</option>
-                            <option value="customer_manager">Customer Manager</option>
-                            <option value="hr_manager">HR Manager</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn-login">Login</button>
-
-                    <div id="error-message" class="error-message"></div>
-                </form>
-
-                <div class="contact-admin">
-                    <p>Don't have access? Contact HR Manager</p>
-                </div>
-            </div>
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="../../assets/logo.png" alt="Logo" height="100" class="me-2">
+      <h2>Grafix Print Hub</h2>
+      <p>Job Card Management System</p>
+    </div>
+    
+    <div class="login-body">
+      <div class="role-selection">
+        <span class="role-title">Select Your Role</span>
+        <div class="role-grid" id="roleGrid">
+          <div class="role-card" data-role="order_manager">
+            <p class="role-name">Owner</p>
+          </div>
+          <div class="role-card" data-role="financial_manager">
+            <p class="role-name">Receptionist</p>
+          </div>
+          <div class="role-card" data-role="resource_manager">
+            <p class="role-name">Front Office Manager</p>
+          </div>
+          <div class="role-card" data-role="customer_manager">
+            <p class="role-name">Shop Keeper</p>
+          </div>
+          
         </div>
-        <div id="deploy-version" style="font-size:12px; color:gray; text-align:center; margin-top:10px;"></div>
+      </div>
 
-        <script src="version.js"></script>
-        <script>
-            document.getElementById("deploy-version").innerText = "Version: " + VERSION;
-        </script>
+      <div id="alertMessage"></div>
 
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-group-custom">
+            <i class="bi bi-envelope"></i>
+            <input type="email" id="email" placeholder="Enter your email" required>
+          </div>
+        </div>
 
-        <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-group-custom">
+            <i class="bi bi-lock"></i>
+            <input type="password" id="password" placeholder="Enter your password" required>
+          </div>
+        </div>
+
+        <button type="submit" class="login-btn" id="loginBtn">
+          <i class="bi bi-box-arrow-in-right"></i> Login
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-        <script src="js/firebase-config.js"></script> -->
+        <script src="../js/firebase-config.js"></script>
         <script src="js/signin.js"></script>
-    </div>
+    
 </body>
 
 </html>
