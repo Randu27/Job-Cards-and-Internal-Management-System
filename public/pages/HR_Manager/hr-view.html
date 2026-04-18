@@ -10,340 +10,134 @@
   <link rel="stylesheet" href="../../css/menu.css">
   <style>
     :root {
-      --dir-accent: #4f46e5;
-      --dir-accent-soft: #eef2ff;
-      --dir-danger: #dc2626;
-      --dir-success: #16a34a;
-      --dir-warn: #d97706;
-      --card-radius: 14px;
-      --transition: .22s cubic-bezier(.4,0,.2,1);
+      --dir-accent: #4f46e5; --dir-accent-soft: #eef2ff;
+      --dir-danger: #dc2626; --dir-success: #16a34a; --dir-warn: #d97706;
+      --card-radius: 14px; --transition: .22s cubic-bezier(.4,0,.2,1);
     }
 
     .search-wrap { position: relative; }
-    .search-wrap .bi-search {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      color: #9ca3af; font-size: 1.1rem; pointer-events: none;
-    }
-    #dirSearch {
-      padding-left: 40px;
-      border-radius: 10px;
-      border: 1.5px solid #d1d5db;
-      font-size: .97rem;
-      transition: border-color var(--transition), box-shadow var(--transition);
-    }
-    #dirSearch:focus {
-      border-color: var(--dir-accent);
-      box-shadow: 0 0 0 3px rgba(79,70,229,.15);
-      outline: none;
-    }
+    .search-wrap .bi-search { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:1.1rem;pointer-events:none; }
+    #dirSearch { padding-left:40px;border-radius:10px;border:1.5px solid #d1d5db;font-size:.97rem;transition:border-color var(--transition),box-shadow var(--transition); }
+    #dirSearch:focus { border-color:var(--dir-accent);box-shadow:0 0 0 3px rgba(79,70,229,.15);outline:none; }
 
-    .filter-select {
-      border-radius: 10px;
-      border: 1.5px solid #d1d5db;
-      font-size: .92rem;
-      transition: border-color var(--transition);
-      cursor: pointer;
-    }
-    .filter-select:focus {
-      border-color: var(--dir-accent);
-      box-shadow: 0 0 0 3px rgba(79,70,229,.13);
-      outline: none;
-    }
+    .filter-select { border-radius:10px;border:1.5px solid #d1d5db;font-size:.92rem;transition:border-color var(--transition);cursor:pointer; }
+    .filter-select:focus { border-color:var(--dir-accent);box-shadow:0 0 0 3px rgba(79,70,229,.13);outline:none; }
 
-    #resultCount {
-      font-size: 1rem; color: #6b7280;
-      display: flex; align-items: center; gap: 6px;
-    }
-    #resultCount span { font-weight: 700; color: var(--dir-accent); }
+    #resultCount { font-size:1rem;color:#6b7280;display:flex;align-items:center;gap:6px; }
+    #resultCount span { font-weight:700;color:var(--dir-accent); }
 
-    .emp-card {
-      background: #fff;
-      border: 1.5px solid #e5e7eb;
-      border-radius: var(--card-radius);
-      padding: 18px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      cursor: pointer;
-      transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
-      position: relative;
-      overflow: hidden;
-    }
-    .emp-card::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 4px;
-      background: var(--dir-accent);
-      opacity: 0;
-      transition: opacity var(--transition);
-      border-radius: 4px 0 0 4px;
-    }
-    .emp-card:hover {
-      box-shadow: 0 6px 24px rgba(79,70,229,.12);
-      border-color: var(--dir-accent);
-      transform: translateY(-2px);
-    }
-    .emp-card:hover::before { opacity: 1; }
+    .emp-card { background:#fff;border:1.5px solid #e5e7eb;border-radius:var(--card-radius);padding:18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:box-shadow var(--transition),border-color var(--transition),transform var(--transition);position:relative;overflow:hidden; }
+    .emp-card::before { content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--dir-accent);opacity:0;transition:opacity var(--transition);border-radius:4px 0 0 4px; }
+    .emp-card:hover { box-shadow:0 6px 24px rgba(79,70,229,.12);border-color:var(--dir-accent);transform:translateY(-2px); }
+    .emp-card:hover::before { opacity:1; }
 
-    .emp-avatar {
-      width: 54px; height: 54px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2.5px solid #e5e7eb;
-      flex-shrink: 0;
-      background: #f3f4f6;
-    }
-    .emp-avatar-placeholder {
-      width: 54px; height: 54px;
-      border-radius: 50%;
-      background: var(--dir-accent-soft);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem; font-weight: 700; color: var(--dir-accent);
-      border: 2.5px solid #c7d2fe;
-      flex-shrink: 0;
-    }
-    .emp-card-info { flex: 1; min-width: 0; }
-    .emp-card-name {
-      font-weight: 700; font-size: 1rem; color: #111827;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .emp-card-meta { font-size: .82rem; color: #6b7280; margin-top: 2px; }
-    .emp-card-meta span { margin-right: 10px; }
+    .emp-avatar { width:54px;height:54px;border-radius:50%;object-fit:cover;border:2.5px solid #e5e7eb;flex-shrink:0;background:#f3f4f6; }
+    .emp-avatar-placeholder { width:54px;height:54px;border-radius:50%;background:var(--dir-accent-soft);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--dir-accent);border:2.5px solid #c7d2fe;flex-shrink:0; }
+    .emp-card-info { flex:1;min-width:0; }
+    .emp-card-name { font-weight:700;font-size:1rem;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .emp-card-meta { font-size:.82rem;color:#6b7280;margin-top:2px; }
+    .emp-card-meta span { margin-right:10px; }
 
-    .badge-status {
-      font-size: .74rem; font-weight: 600; padding: 3px 10px; border-radius: 20px;
-    }
-    .badge-fulltime  { background: #dcfce7; color: #15803d; }
-    .badge-parttime  { background: #fef9c3; color: #a16207; }
+    .badge-status { font-size:.74rem;font-weight:600;padding:3px 10px;border-radius:20px; }
+    .badge-fulltime { background:#dcfce7;color:#15803d; }
+    .badge-parttime { background:#fef9c3;color:#a16207; }
 
-    .empty-state {
-      text-align: center; padding: 60px 20px; color: #9ca3af;
-    }
-    .empty-state i { font-size: 3rem; margin-bottom: 12px; display: block; }
-    .empty-state p { margin: 0; font-size: 1rem; }
+    .empty-state { text-align:center;padding:60px 20px;color:#9ca3af; }
+    .empty-state i { font-size:3rem;margin-bottom:12px;display:block; }
+    .empty-state p { margin:0;font-size:1rem; }
 
-    .skeleton-card {
-      background: #fff; border: 1.5px solid #e5e7eb;
-      border-radius: var(--card-radius); padding: 18px;
-      display: flex; align-items: center; gap: 16px;
-      animation: pulse 1.5s infinite;
-    }
-    .sk-circle  { width: 54px; height: 54px; border-radius: 50%; background: #e5e7eb; flex-shrink: 0; }
-    .sk-lines   { flex: 1; }
-    .sk-line    { height: 12px; background: #e5e7eb; border-radius: 6px; margin-bottom: 8px; }
-    .sk-line.short { width: 60%; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .skeleton-card { background:#fff;border:1.5px solid #e5e7eb;border-radius:var(--card-radius);padding:18px;display:flex;align-items:center;gap:16px;animation:pulse 1.5s infinite; }
+    .sk-circle { width:54px;height:54px;border-radius:50%;background:#e5e7eb;flex-shrink:0; }
+    .sk-lines { flex:1; }
+    .sk-line { height:12px;background:#e5e7eb;border-radius:6px;margin-bottom:8px; }
+    .sk-line.short { width:60%; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
 
-    /* ══ MODAL ══════════════════════════════════════════════════ */
+    /* Modal */
+    .modal-backdrop-custom { position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:1050;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease; }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
 
-    .modal-backdrop-custom {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.45);
-      backdrop-filter: blur(3px);
-      z-index: 1050;
-      display: flex; align-items: center; justify-content: center;
-      padding: 20px;
-      animation: fadeIn .2s ease;
-    }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .dir-modal { background:#fff;border-radius:20px;width:100%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.25);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1);overflow:hidden; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)} }
 
-    .dir-modal {
-      background: #fff;
-      border-radius: 20px;
-      width: 100%; max-width: 680px;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 25px 60px rgba(0,0,0,.25);
-      animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
-      overflow: hidden;
-    }
-    @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    .dir-modal-header { background:#ffe785;border-radius:20px 20px 0 0;padding:28px 28px 24px;color:rgb(87,86,86);display:flex;gap:20px;align-items:flex-start;position:relative;flex-shrink:0; }
+    .dir-modal-avatar { width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.5);flex-shrink:0; }
+    .dir-modal-avatar-ph { width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:#fff;border:3px solid rgba(255,255,255,.4);flex-shrink:0; }
+    .dir-modal-title { font-size:1.4rem;font-weight:800;margin:0; }
+    .dir-modal-sub { font-size:.9rem;opacity:.85;margin-top:4px; }
 
-    .dir-modal-header {
-      background: #ffe785;
-      border-radius: 20px 20px 0 0;
-      padding: 28px 28px 24px;
-      color: rgb(87, 86, 86);
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-      position: relative;
-      flex-shrink: 0;
-    }
-    .dir-modal-avatar {
-      width: 84px; height: 84px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid rgba(255,255,255,.5);
-      flex-shrink: 0;
-    }
-    .dir-modal-avatar-ph {
-      width: 84px; height: 84px; border-radius: 50%;
-      background: rgba(255,255,255,.2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; font-weight: 800; color: #fff;
-      border: 3px solid rgba(255,255,255,.4);
-      flex-shrink: 0;
-    }
-    .dir-modal-title { font-size: 1.4rem; font-weight: 800; margin: 0; }
-    .dir-modal-sub   { font-size: .9rem; opacity: .85; margin-top: 4px; }
+    .btn-modal-close { position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);border:none;border-radius:8px;color:#fff;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--transition); }
+    .btn-modal-close:hover { background:rgba(255,255,255,.35); }
 
-    .btn-modal-close {
-      position: absolute; top: 16px; right: 16px;
-      background: rgba(255,255,255,.2); border: none; border-radius: 8px;
-      color: #fff; width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: background var(--transition);
-    }
-    .btn-modal-close:hover { background: rgba(255,255,255,.35); }
+    .dir-modal-body { padding:24px 24px 0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;scroll-behavior:smooth; }
+    .dir-modal-body::-webkit-scrollbar { width:5px; }
+    .dir-modal-body::-webkit-scrollbar-track { background:transparent; }
+    .dir-modal-body::-webkit-scrollbar-thumb { background:rgba(79,70,229,.25);border-radius:99px; }
+    .dir-modal-body::-webkit-scrollbar-thumb:hover { background:rgba(79,70,229,.5); }
 
-    .dir-modal-body {
-      padding: 24px 24px 0;
-      overflow-y: auto;
-      flex: 1;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
-    }
-    .dir-modal-body::-webkit-scrollbar { width: 5px; }
-    .dir-modal-body::-webkit-scrollbar-track { background: transparent; }
-    .dir-modal-body::-webkit-scrollbar-thumb {
-      background: rgba(79,70,229,.25);
-      border-radius: 99px;
-    }
-    .dir-modal-body::-webkit-scrollbar-thumb:hover {
-      background: rgba(79,70,229,.5);
-    }
+    .form-section-label { font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin:20px 0 10px;padding-bottom:6px;border-bottom:.5px solid #e5e7eb; }
+    .form-section-label:first-child { margin-top:0; }
 
-    .form-section-label {
-      font-size: .68rem;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: #9ca3af;
-      margin: 20px 0 10px;
-      padding-bottom: 6px;
-      border-bottom: 0.5px solid #e5e7eb;
-    }
-    .form-section-label:first-child { margin-top: 0; }
+    .view-section { display:block; }
+    .view-section.hidden { display:none; }
+    .edit-section { display:none; }
+    .edit-section.active { display:block; }
 
-    .view-section { display: block; }
-    .view-section.hidden { display: none; }
+    .detail-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    .detail-item label { font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;display:block;margin-bottom:3px; }
+    .detail-item .val { font-size:.95rem;color:#111827;font-weight:500; }
+    .detail-item.full { grid-column:1/-1; }
 
-    .edit-section { display: none; }
-    .edit-section.active { display: block; }
+    .photo-update-row { display:flex;align-items:center;gap:14px;background:#f9fafb;border:.5px solid #e5e7eb;border-radius:12px;padding:12px 16px;margin-bottom:16px; }
+    .photo-update-preview { width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;flex-shrink:0; }
 
-    .detail-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .detail-item label {
-      font-size: .75rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .06em; color: #9ca3af; display: block; margin-bottom: 3px;
-    }
-    .detail-item .val {
-      font-size: .95rem; color: #111827; font-weight: 500;
-    }
-    .detail-item.full { grid-column: 1 / -1; }
-
-    .photo-update-row {
-      display: flex; align-items: center; gap: 14px;
-      background: #f9fafb;
-      border: 0.5px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-    }
-    .photo-update-preview {
-      width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
-      border: 2px solid #e5e7eb;
-      flex-shrink: 0;
-    }
-
-    .edit-form-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 4px;
-    }
-    .edit-form-grid .full-col { grid-column: 1 / -1; }
-
-    .edit-form-grid label {
-      font-size: .73rem; font-weight: 600;
-      color: #6b7280;
-      margin-bottom: 4px; display: block;
-      letter-spacing: .03em;
-    }
+    .edit-form-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px; }
+    .edit-form-grid .full-col { grid-column:1/-1; }
+    .edit-form-grid label { font-size:.73rem;font-weight:600;color:#6b7280;margin-bottom:4px;display:block;letter-spacing:.03em; }
     .edit-form-grid input,
     .edit-form-grid select,
-    .edit-form-grid textarea {
-      width: 100%;
-      border: 0.5px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: .9rem;
-      transition: border-color var(--transition), box-shadow var(--transition);
-      outline: none;
-      background: #fff;
-      color: #111827;
-    }
+    .edit-form-grid textarea { width:100%;border:.5px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:.9rem;transition:border-color var(--transition),box-shadow var(--transition);outline:none;background:#fff;color:#111827; }
     .edit-form-grid input:focus,
     .edit-form-grid select:focus,
-    .edit-form-grid textarea:focus {
-      border-color: var(--dir-accent);
-      box-shadow: 0 0 0 3px rgba(79,70,229,.12);
-    }
-    .edit-form-grid input:disabled {
-      background: #f9fafb;
-      color: #9ca3af;
-      cursor: not-allowed;
-    }
-    .edit-form-grid textarea {
-      resize: vertical;
-      min-height: 72px;
-    }
+    .edit-form-grid textarea:focus { border-color:var(--dir-accent);box-shadow:0 0 0 3px rgba(79,70,229,.12); }
+    .edit-form-grid input:disabled { background:#f9fafb;color:#9ca3af;cursor:not-allowed; }
+    .edit-form-grid textarea { resize:vertical;min-height:72px; }
 
-    .dir-modal-actions {
-      background: #fff;
-      border-top: 0.5px solid #e5e7eb;
-      display: flex; gap: 10px; flex-wrap: wrap;
-      padding: 14px 28px;
-      flex-shrink: 0;
-      align-items: center;
-    }
+    /* Web access edit block */
+    .access-edit-block { background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:14px 16px;margin-top:4px; }
+    .access-edit-block label { font-size:.73rem;font-weight:600;color:#4f46e5;margin-bottom:4px;display:block; }
+    .access-edit-block input,
+    .access-edit-block select { width:100%;border:1px solid #c7d2fe;border-radius:8px;padding:8px 12px;font-size:.9rem;outline:none;background:#fff;color:#111827;margin-bottom:10px; }
+    .access-edit-block input:focus,
+    .access-edit-block select:focus { border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.12); }
+    .access-edit-block .input-group input { margin-bottom:0; }
+    .access-badge-on  { display:inline-block;padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:#dcfce7;color:#15803d;margin-left:8px; }
+    .access-badge-off { display:inline-block;padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:#f1f5f9;color:#64748b;margin-left:8px; }
 
-    .btn-edit   { background: var(--dir-accent); color: #fff; }
-    .btn-edit:hover { background: #4338ca; color: #fff; }
-    .btn-save   { background: var(--dir-success); color: #fff; }
-    .btn-save:hover { background: #15803d; color: #fff; }
-    .btn-cancel-edit { background: #f3f4f6; color: #374151; }
-    .btn-cancel-edit:hover { background: #e5e7eb; }
-    .btn-delete { background: #d23838; color: #fff; margin-left: auto; }
-    .btn-delete:hover { background: var(--dir-danger); color: #fff; }
+    .dir-modal-actions { background:#fff;border-top:.5px solid #e5e7eb;display:flex;gap:10px;flex-wrap:wrap;padding:14px 28px;flex-shrink:0;align-items:center; }
+    .btn-edit   { background:var(--dir-accent);color:#fff; }
+    .btn-edit:hover { background:#4338ca;color:#fff; }
+    .btn-save   { background:var(--dir-success);color:#fff; }
+    .btn-save:hover { background:#15803d;color:#fff; }
+    .btn-cancel-edit { background:#f3f4f6;color:#374151; }
+    .btn-cancel-edit:hover { background:#e5e7eb; }
+    .btn-delete { background:#d23838;color:#fff;margin-left:auto; }
+    .btn-delete:hover { background:var(--dir-danger);color:#fff; }
 
-    .delete-confirm-box {
-      background: #fff5f5;
-      border: 1.5px solid #fecaca;
-      border-radius: 12px; padding: 18px;
-      text-align: center; display: none;
-      margin: 0 0 16px;
-    }
-    .delete-confirm-box.active { display: block; }
-    .delete-confirm-box p {
-      font-size: .95rem; color: #991b1b;
-      margin-bottom: 12px; font-weight: 600;
-    }
+    .delete-confirm-box { background:#fff5f5;border:1.5px solid #fecaca;border-radius:12px;padding:18px;text-align:center;display:none;margin:0 0 16px; }
+    .delete-confirm-box.active { display:block; }
+    .delete-confirm-box p { font-size:.95rem;color:#991b1b;margin-bottom:12px;font-weight:600; }
 
-    @media (max-width: 575px) {
-      .detail-grid, .edit-form-grid { grid-template-columns: 1fr; }
-      .detail-item.full, .edit-form-grid .full-col { grid-column: auto; }
-      .dir-modal-actions { flex-direction: column; }
-      .btn-delete { margin-left: 0; }
+    @media (max-width:575px) {
+      .detail-grid,.edit-form-grid { grid-template-columns:1fr; }
+      .detail-item.full,.edit-form-grid .full-col { grid-column:auto; }
+      .dir-modal-actions { flex-direction:column; }
+      .btn-delete { margin-left:0; }
     }
   </style>
 </head>
 <body>
 
-<!-- Navbar -->
 <nav class="navbar navbar-dark shadow-sm sticky-top">
   <div class="container">
     <div class="d-flex align-items-center">
@@ -369,14 +163,10 @@
   </div>
 </div>
 
-<!-- Hero -->
 <div class="hero-section">
-  <div class="container text-center">
-    <h1 class="display-4">Employee Directory</h1>
-  </div>
+  <div class="container text-center"><h1 class="display-4">Employee Directory</h1></div>
 </div>
 
-<!-- Back button -->
 <div class="container mt-3">
   <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
     <i class="bi bi-arrow-left"></i> Back to Dashboard
@@ -421,30 +211,32 @@
   <small>&copy; Grafix Print Hub</small>
 </footer>
 
-<!-- ── Detail / Edit Modal ───────────────────────────────────── -->
+<!-- ═══════════════════════════════════════════════════════
+     DETAIL / EDIT MODAL
+════════════════════════════════════════════════════════ -->
 <div id="empModal" class="modal-backdrop-custom" style="display:none;" onclick="handleModalBgClick(event)">
   <div class="dir-modal" onclick="event.stopPropagation()">
 
     <!-- Header -->
-    <div class="dir-modal-header" id="modalHeader">
+    <div class="dir-modal-header">
       <div id="modalAvatarWrap"></div>
       <div style="flex:1;min-width:0;">
         <div class="dir-modal-title" id="modalName">—</div>
-        <div class="dir-modal-sub" id="modalSub">—</div>
+        <div class="dir-modal-sub"   id="modalSub">—</div>
       </div>
       <button class="btn-modal-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
     </div>
 
-    <!-- View Section -->
+    <!-- ── VIEW SECTION ───────────────────────────────── -->
     <div class="dir-modal-body view-section" id="viewSection">
       <div class="detail-grid" id="detailGrid"></div>
       <div style="height:8px;"></div>
     </div>
 
-    <!-- Edit Section -->
+    <!-- ── EDIT SECTION ───────────────────────────────── -->
     <div class="dir-modal-body edit-section" id="editSection">
 
-      <!-- Photo upload tray -->
+      <!-- Photo -->
       <div class="photo-update-row">
         <img id="editPhotoPreview" class="photo-update-preview" src="">
         <div>
@@ -453,17 +245,11 @@
         </div>
       </div>
 
-      <!-- Personal details -->
+      <!-- Personal -->
       <div class="form-section-label">Personal Details</div>
       <div class="edit-form-grid">
-        <div>
-          <label>Employee Name</label>
-          <input type="text" id="editName">
-        </div>
-        <div>
-          <label>Employee ID</label>
-          <input type="text" id="editEmpId" disabled>
-        </div>
+        <div><label>Employee Name</label><input type="text" id="editName"></div>
+        <div><label>Employee ID</label><input type="text" id="editEmpId" disabled></div>
         <div>
           <label>Status</label>
           <select id="editStatus">
@@ -478,47 +264,64 @@
             <option value="Workshop">Workshop</option>
           </select>
         </div>
-        <div>
-          <label>Date Joined</label>
-          <input type="date" id="editJoinDate">
-        </div>
-        <div>
-          <label>NIC</label>
-          <input type="text" id="editNic">
-        </div>
-        <div class="full-col">
-          <label>Address</label>
-          <input type="text" id="editAddress">
-        </div>
+        <div><label>Date Joined</label><input type="date" id="editJoinDate"></div>
+        <div><label>NIC</label><input type="text" id="editNic"></div>
+        <div class="full-col"><label>Address</label><input type="text" id="editAddress"></div>
       </div>
 
       <!-- Contact -->
       <div class="form-section-label">Contact</div>
       <div class="edit-form-grid">
-        <div>
-          <label>Email</label>
-          <input type="email" id="editEmail">
-        </div>
-        <div>
-          <label>Contact Number</label>
-          <input type="text" id="editContact">
-        </div>
+        <div><label>Email</label><input type="email" id="editEmail"></div>
+        <div><label>Contact Number</label><input type="text" id="editContact"></div>
       </div>
 
       <!-- Remarks -->
       <div class="form-section-label">Remarks</div>
       <div class="edit-form-grid">
-        <div class="full-col">
-          <label>Remarks</label>
-          <textarea id="editRemarks" rows="3"></textarea>
-        </div>
+        <div class="full-col"><label>Remarks</label><textarea id="editRemarks" rows="3"></textarea></div>
       </div>
 
-      <div style="height:8px;"></div>
+      <!-- ══ WEBSITE ACCESS EDIT ══════════════════════ -->
+      <div class="form-section-label">Website Access</div>
+      <div class="edit-form-grid">
+        <div class="full-col">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <input class="form-check-input" type="checkbox" id="editHasAccess" style="width:18px;height:18px;cursor:pointer;">
+            <label for="editHasAccess" style="font-size:.88rem;font-weight:600;color:#374151;cursor:pointer;margin:0;">
+              Give / Keep Website Access
+            </label>
+          </div>
 
+          <div id="editAccessSection" class="access-edit-block" style="display:none;">
+            <label>Job Role</label>
+            <select id="editJobRole">
+              <option value="" disabled>Select Role</option>
+              <option value="Owner">Owner</option>
+              <option value="Front Office Manager">Front Office Manager</option>
+              <option value="Receptionist">Receptionist</option>
+              <option value="Shop Keeper">Shop Keeper</option>
+            </select>
+
+            <label>Login Email</label>
+            <input type="email" id="editLoginEmail" placeholder="login@example.com">
+
+            <label>Login Password <span style="font-weight:400;font-size:.7rem;color:#9ca3af;">(leave blank to keep existing)</span></label>
+            <div class="input-group">
+              <input type="password" id="editLoginPassword" class="form-control" placeholder="New password (min. 6 chars)">
+              <button class="btn btn-outline-secondary" type="button" id="editTogglePasswordBtn" tabindex="-1">
+                <i class="bi bi-eye-slash" id="editToggleIcon"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ════════════════════════════════════════════ -->
+
+      <div style="height:8px;"></div>
     </div><!-- end edit-section -->
 
-    <!-- Delete Confirm Box -->
+    <!-- Delete confirm -->
     <div class="delete-confirm-box" id="deleteConfirmBox">
       <p><i class="bi bi-exclamation-triangle-fill me-2"></i>Are you sure you want to delete <strong id="deleteNameLabel"></strong>? This cannot be undone.</p>
       <div class="d-flex gap-2 justify-content-center">
@@ -527,30 +330,29 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="dir-modal-actions" id="modalActions">
-      <button class="btn btn-edit" id="btnEdit" onclick="enterEditMode()"><i class="bi bi-pencil me-1"></i>Edit</button>
-      <button class="btn btn-save" id="btnSave" onclick="saveEmployee()" style="display:none;"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+    <!-- Action buttons -->
+    <div class="dir-modal-actions">
+      <button class="btn btn-edit" id="btnEdit"       onclick="enterEditMode()"><i class="bi bi-pencil me-1"></i>Edit</button>
+      <button class="btn btn-save" id="btnSave"       onclick="saveEmployee()" style="display:none;"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
       <button class="btn btn-cancel-edit" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none;"><i class="bi bi-x me-1"></i>Cancel</button>
-      <button class="btn btn-delete" id="btnDelete" onclick="promptDelete()"><i class="bi bi-trash me-1"></i>Delete</button>
+      <button class="btn btn-delete" id="btnDelete"   onclick="promptDelete()"><i class="bi bi-trash me-1"></i>Delete</button>
     </div>
 
-  </div><!-- end dir-modal -->
-</div><!-- end modal-backdrop-custom -->
+  </div>
+</div>
 
-<!-- Bootstrap JS -->
+<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 <script src="../../js/firebase-config.js"></script>
-
+<!-- hr-directory.js removed — all logic is in hr-script.js -->
 <script src="../../js/hr-script.js"></script>
-<script src="../../js/hr-directory.js"></script>
 <script src="../../js/navbar-loader.js"></script>
 <script src="../../js/signin.js"></script>
+
 </body>
 </html>
