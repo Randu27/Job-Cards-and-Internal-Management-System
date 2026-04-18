@@ -1,5 +1,3 @@
-
-
 // --- 1. INITIALIZATION & VIEW NAVIGATION ---
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -729,6 +727,5 @@ async function generatePDF() {
     // Save PDF with unique timestamp
     doc.save(`Grafix_Audit_${type}_${new Date().getTime()}.pdf`);
 }
-
 
 
