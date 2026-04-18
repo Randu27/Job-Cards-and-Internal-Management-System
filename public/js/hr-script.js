@@ -377,6 +377,12 @@ function getFirebaseErrorMessage(code) {
       { label:"Website Access", val:accessVal,           full:true },
     ];
 
+    // Show reset password button only for employees with access
+    const resetBtn = document.getElementById("btnResetPassword");
+    if (resetBtn) {
+    resetBtn.style.display = (emp.websiteAccess && emp.accessDetails?.email) ? "inline-flex" : "none";
+    }
+
     const grid = document.getElementById("detailGrid");
     if (grid) grid.innerHTML = fields.map(f=>`
       <div class="detail-item ${f.full?"full":""}">
@@ -445,6 +451,43 @@ function getFirebaseErrorMessage(code) {
     if (emp) populateViewMode(emp);
     showViewMode(); cancelDelete();
   };
+
+  // ── Reset Password ─────────────────────────────────────────────
+window.resetEmployeePassword = async function () {
+  const emp = allEmployees.find(e => e.id === currentEmpId);
+  if (!emp || !emp.websiteAccess || !emp.accessDetails?.email) {
+    showPopup("error", "Cannot Reset Password", "This employee does not have website access.");
+    return;
+  }
+
+  if (!confirm(`Send password reset email to ${emp.accessDetails.email}?`)) {
+    return;
+  }
+
+  const resetBtn = document.getElementById("btnResetPassword");
+  const origText = resetBtn ? resetBtn.innerHTML : "";
+
+  if (resetBtn) {
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Sending...`;
+  }
+
+  try {
+    await firebase.auth().sendPasswordResetEmail(emp.accessDetails.email);
+    
+    showPopup("success", "Reset Email Sent", 
+      `Password reset link has been sent to <strong>${escapeHtml(emp.accessDetails.email)}</strong>.<br>The employee can reset their password via the link.`);
+
+  } catch (err) {
+    console.error(err);
+    showPopup("error", "Reset Failed", getFirebaseErrorMessage(err.code));
+  } finally {
+    if (resetBtn) {
+      resetBtn.disabled = false;
+      resetBtn.innerHTML = origText;
+    }
+  }
+};
 
   // ── Save ─────────────────────────────────────────────────
   window.saveEmployee = async function () {

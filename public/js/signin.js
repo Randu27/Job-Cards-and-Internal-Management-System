@@ -83,7 +83,40 @@
       const user = userCredential.user;
       
       // Get user role from Firestore
-      const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+      let userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+
+// If document NOT found → first login case
+if (!userDoc.exists) {
+
+  // Find user by email
+  const query = await firebase.firestore()
+    .collection('users')
+    .where('email', '==', user.email)
+    .limit(1)
+    .get();
+
+  if (!query.empty) {
+    const doc = query.docs[0];
+
+    // Copy data to correct UID
+    await firebase.firestore()
+      .collection('users')
+      .doc(user.uid)
+      .set(doc.data());
+
+    // Delete old temp document
+    await firebase.firestore()
+      .collection('users')
+      .doc(doc.id)
+      .delete();
+
+    // Get updated document
+    userDoc = await firebase.firestore()
+      .collection('users')
+      .doc(user.uid)
+      .get();
+  }
+}
       
       let userRole = null;
       let userData = {};
@@ -93,6 +126,16 @@
         userRole = userData.role;
       }
       
+      // 🚨 FIRST LOGIN CHECK
+    if (userData.isFirstLogin) {
+    showAlert('First login detected. Please change your password.', 'success');
+
+    setTimeout(() => {
+    window.location.href = "../pages/change-password.html";
+    }, 1500);
+
+    return; // STOP further execution
+    }
       // Check if role matches
       if (userRole && userRole !== selectedRole) {
         showAlert(`You are registered as ${formatRoleName(userRole)}. Please select the correct role or contact admin.`, 'error');
@@ -103,7 +146,7 @@
       }
       
       // If user doesn't have role in Firestore, create it (for demo)
-      if (!userRole) {
+      if (!userDoc.exists) {
         await firebase.firestore().collection('users').doc(user.uid).set({
           email: user.email,
           role: selectedRole,
