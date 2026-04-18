@@ -134,6 +134,16 @@
       .dir-modal-actions { flex-direction:column; }
       .btn-delete { margin-left:0; }
     }
+
+    .btn-warning {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    }
+    .btn-warning:hover {
+    background: #d97706;
+    color: white;
+    }
   </style>
 </head>
 <body>
@@ -332,11 +342,17 @@
 
     <!-- Action buttons -->
     <div class="dir-modal-actions">
-      <button class="btn btn-edit" id="btnEdit"       onclick="enterEditMode()"><i class="bi bi-pencil me-1"></i>Edit</button>
-      <button class="btn btn-save" id="btnSave"       onclick="saveEmployee()" style="display:none;"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
-      <button class="btn btn-cancel-edit" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none;"><i class="bi bi-x me-1"></i>Cancel</button>
-      <button class="btn btn-delete" id="btnDelete"   onclick="promptDelete()"><i class="bi bi-trash me-1"></i>Delete</button>
-    </div>
+  <button class="btn btn-edit" id="btnEdit" onclick="enterEditMode()"><i class="bi bi-pencil me-1"></i>Edit</button>
+  
+  <!-- New Reset Password Button -->
+  <button class="btn btn-warning" id="btnResetPassword" onclick="resetEmployeePassword()" style="display:none;">
+    <i class="bi bi-key me-1"></i>Reset Password
+  </button>
+
+  <button class="btn btn-save" id="btnSave" onclick="saveEmployee()" style="display:none;"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+  <button class="btn btn-cancel-edit" id="btnCancelEdit" onclick="cancelEditMode()" style="display:none;"><i class="bi bi-x me-1"></i>Cancel</button>
+  <button class="btn btn-delete" id="btnDelete" onclick="promptDelete()"><i class="bi bi-trash me-1"></i>Delete</button>
+</div>
 
   </div>
 </div>
