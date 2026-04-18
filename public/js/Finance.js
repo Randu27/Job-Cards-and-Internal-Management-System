@@ -1,3 +1,6 @@
+//Initialize jsemail service
+emailjs.init("Wfjkc7_4ZTEVdz8y0");
+
 // --- 1. INITIALIZATION & VIEW NAVIGATION ---
 
 document.addEventListener('DOMContentLoaded', function() {
