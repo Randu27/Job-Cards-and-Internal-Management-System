@@ -1,5 +1,4 @@
-//Initialize jsemail service
-emailjs.init("Wfjkc7_4ZTEVdz8y0");
+
 
 // --- 1. INITIALIZATION & VIEW NAVIGATION ---
 
@@ -733,75 +732,3 @@ async function generatePDF() {
 
 
 
-
-
-
-//auto email generation of finance summary
-
-async function handleAutomatedReporting() {
-    const now = new Date();
-    // 1. Identify the PREVIOUS month (the one we are reporting on)
-    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const reportMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
-    const reportMonthName = lastMonthDate.toLocaleString('default', { month: 'long' });
-
-    // 2. Check marker in localStorage to avoid duplicate emails
-    const lastReportSent = localStorage.getItem('grafix_last_monthly_report');
-
-    if (lastReportSent !== reportMonthKey) {
-        console.log(`Finance Module: New month detected. Compiling report for ${reportMonthName}...`);
-
-        try {
-            // --- MATH & INSIGHT LOGIC ---
-            // Calculate Current (Reporting) Month stats
-            const currentData = masterRecords.filter(r => r.date.startsWith(reportMonthKey));
-            let currInc = 0, currExp = 0, currOrders = 0;
-            currentData.forEach(r => {
-                if (r.type === 'Order') { currInc += r.amount; currOrders++; }
-                else currExp += r.amount;
-            });
-            const currProfit = currInc - currExp;
-
-            // Calculate Previous Month stats (for comparison)
-            const prevMonthDate = new Date(lastMonthDate.getFullYear(), lastMonthDate.getMonth() - 1, 1);
-            const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
-            const prevData = masterRecords.filter(r => r.date.startsWith(prevMonthKey));
-            
-            let prevInc = 0, prevExp = 0;
-            prevData.forEach(r => {
-                if (r.type === 'Order') prevInc += r.amount;
-                else prevExp += r.amount;
-            });
-            const prevProfit = prevInc - prevExp;
-
-            // Trend Calculation
-            let trendText = "";
-            if (prevProfit === 0) {
-                trendText = "NEW (No data for comparison)";
-            } else {
-                const percentageChange = ((currProfit - prevProfit) / Math.abs(prevProfit)) * 100;
-                const direction = currProfit >= prevProfit ? "UP" : "DOWN";
-                trendText = `${direction} by ${Math.abs(percentageChange).toFixed(1)}%`;
-            }
-
-            // --- EMAILJS PUSH ---
-            const templateParams = {
-                month_name: reportMonthName,
-                income: currInc.toLocaleString(),
-                outgoings: currExp.toLocaleString(),
-                profit: currProfit.toLocaleString(),
-                profit_trend: trendText,
-                order_count: currOrders
-            };
-
-            await emailjs.send("service_1fljhbq", "template_mnwlhwn", templateParams);
-            
-            // 3. Mark as sent only after success
-            localStorage.setItem('grafix_last_monthly_report', reportMonthKey);
-            console.log(`Finance Summary for ${reportMonthName} sent to owner.`);
-
-        } catch (error) {
-            console.error("Critical: Failed to push monthly report:", error);
-        }
-    }
-}
