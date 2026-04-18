@@ -1,227 +1,202 @@
-// Dark Mode Toggle
-const themeToggle = document.getElementById('themeToggle');
-const moonIcon = document.getElementById('moonIcon');
-const sunIcon = document.getElementById('sunIcon');
-let isLoggingIn = false;
-
-// Check for saved theme preference or default to light mode
-const currentTheme = localStorage.getItem('theme') || 'light';
-if (currentTheme === 'dark') {
-    document.body.classList.add('dark-mode');
-    moonIcon.style.display = 'none';
-    sunIcon.style.display = 'inline';
-}
-
-// Toggle theme
-themeToggle.addEventListener('click', function () {
-    document.body.classList.toggle('dark-mode');
-
-    if (document.body.classList.contains('dark-mode')) {
-        moonIcon.style.display = 'none';
-        sunIcon.style.display = 'inline';
-        localStorage.setItem('theme', 'dark');
-    } else {
-        moonIcon.style.display = 'inline';
-        sunIcon.style.display = 'none';
-        localStorage.setItem('theme', 'light');
+// Create animated background circles
+  function createBackgroundCircles() {
+    const container = document.getElementById('bgAnimation');
+    const circleCount = 8;
+    
+    for (let i = 0; i < circleCount; i++) {
+      const circle = document.createElement('div');
+      circle.className = 'circle';
+      const size = Math.random() * 100 + 50;
+      circle.style.width = size + 'px';
+      circle.style.height = size + 'px';
+      circle.style.left = Math.random() * 100 + '%';
+      circle.style.animationDelay = Math.random() * 20 + 's';
+      circle.style.animationDuration = Math.random() * 10 + 15 + 's';
+      container.appendChild(circle);
     }
-});
-
-document.getElementById('togglePassword')?.addEventListener('click', function () {
-    const passwordInput = document.getElementById('password');
-    const showIcon = this.querySelector('.show-icon');
-    const hideIcon = this.querySelector('.hide-icon');
-
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        showIcon.style.display = 'none';
-        hideIcon.style.display = 'inline';
-    } else {
-        passwordInput.type = 'password';
-        showIcon.style.display = 'inline';
-        hideIcon.style.display = 'none';
-    }
-
-
-});
-
-
-
-
-// ROLE → DASHBOARD MAPPING
-
-// const ROLE_DASHBOARDS = {
-//     admin: 'pages/admin/admin_dashboard.html',
-//     order_manager: 'pages/order_manager/order_dashboard.html',
-//     financial_manager: 'pages/financial_manager/financial_dashboard.html',
-//     resource_manager: 'pages/resource_manager/resource_dashboard.html',
-//     customer_manager: 'pages/customer_manager/customer_dashboard.html',
-//     hr_manager: 'pages/hr_manager/hr_dashboard.html'
-// };
-
-
-// // AUTH STATE CHANGE
-// auth.onAuthStateChanged((user) => {
-//     const isLoginPage = window.location.pathname.includes('index.html') ||
-//         window.location.pathname === '/';
-
-//     // Skip if we're in the middle of a login attempt
-//     if (isLoggingIn) return;
-
-//     if (user && isLoginPage) {
-//         db.collection('users').doc(user.uid).get().then((doc) => {
-//             if (doc.exists) {
-//                 const role = doc.data().role;
-//                 const dashboardURL = ROLE_DASHBOARDS[role] || 'pages/dashboard.html';
-//                 window.location.href = dashboardURL;
-//             }
-//         });
-//     }
-// });
-
-// // LOGIN FORM SUBMIT
-// document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-//     e.preventDefault();
-
-//     const email = document.getElementById('email').value.trim();
-//     const password = document.getElementById('password').value;
-//     const selectedRole = document.getElementById('role').value;
-//     const errorDiv = document.getElementById('error-message');
-//     const btnLogin = document.querySelector('.btn-login');
-
-//     if (!selectedRole) {
-//         showError(errorDiv, 'Please select a role');
-//         return;
-//     }
-
-//     btnLogin.disabled = true;
-//     btnLogin.textContent = 'Signing in...';
-//     isLoggingIn = true;   //  block onAuthStateChanged from firing 
-
-//     try {
-//         const userCredential = await auth.signInWithEmailAndPassword(email, password);
-//         const user = userCredential.user;
-
-//         const userDoc = await db.collection('users').doc(user.uid).get();
-
-//         if (!userDoc.exists) {
-//             showError(errorDiv, 'User data not found. Please contact HR Manager.');
-//             await auth.signOut();
-//             btnLogin.disabled = false;
-//             btnLogin.textContent = 'Login';
-//             isLoggingIn = false;
-//             return;
-//         }
-
-//         const userData = userDoc.data();
-
-//         if (userData.isActive === false) {
-//             showError(errorDiv, 'Your account has been disabled. Contact HR Manager.');
-//             await auth.signOut();
-//             btnLogin.disabled = false;
-//             btnLogin.textContent = 'Login';
-//             isLoggingIn = false;
-//             return;
-//         }
-
-//         // STRICT ROLE CHECK
-//         if (userData.role !== selectedRole) {
-//             showError(errorDiv, `Access Denied! You are not authorized as "${formatRole(selectedRole)}".`);
-//             await auth.signOut();
-//             btnLogin.disabled = false;
-//             btnLogin.textContent = 'Login';
-//             isLoggingIn = false;   // unblock only after signOut completes
-//             return;
-//         }
-
-//         // All checks passed — store session
-//         sessionStorage.setItem('userId', user.uid);
-//         sessionStorage.setItem('userRole', userData.role);
-//         sessionStorage.setItem('userName', userData.name);
-//         sessionStorage.setItem('userEmail', user.email);
-
-//         showSuccess(`Welcome, ${userData.name}! Redirecting...`);
-
-//         const dashboardURL = ROLE_DASHBOARDS[userData.role] || 'pages/dashboard.html';
-//         setTimeout(() => {
-//             isLoggingIn = false;
-//             window.location.href = dashboardURL;
-//         }, 1000);
-
-//     } catch (error) {
-//         console.error('Login error:', error);
-//         showError(errorDiv, getErrorMessage(error.code));
-//         btnLogin.disabled = false;
-//         btnLogin.textContent = 'Login';
-//         isLoggingIn = false;
-//     }
-// });
-
-
-// // LOGOUT — Call this from any dashboard page
-
-// function logout() {
-//     auth.signOut().then(() => {
-//         sessionStorage.clear();
-//         window.location.href = '../../index.html'; // adjust path depth as needed
-//     }).catch((error) => {
-//         console.error('Logout error:', error);
-//     });
-// }
-
-
-// // ROUTE GUARD — Add this to every dashboard page's JS
-// // Usage: guardRoute('order_manager');
-
-// function guardRoute(requiredRole) {
-//     const storedRole = sessionStorage.getItem('userRole');
-//     if (!storedRole || storedRole !== requiredRole) {
-//         sessionStorage.clear();
-//         window.location.href = '../../index.html';
-//     }
-// }
-
-
-// // HELPERS
-
-// function showError(element, message) {
-//     element.textContent = message;
-//     element.style.background = '#ffe6e6';
-//     element.style.color = '#e74c3c';
-//     element.classList.add('show');
-//     setTimeout(() => element.classList.remove('show'), 5000);
-// }
-
-// function showSuccess(message) {
-//     const errorDiv = document.getElementById('error-message');
-//     errorDiv.textContent = message;
-//     errorDiv.style.background = '#d4edda';
-//     errorDiv.style.color = '#155724';
-//     errorDiv.classList.add('show');
-// }
-
-// function formatRole(role) {
-//     return role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-// }
-
-// function getErrorMessage(errorCode) {
-//     const messages = {
-//         'auth/invalid-email': 'Invalid email address',
-//         'auth/user-disabled': 'This account has been disabled',
-//         'auth/user-not-found': 'No account found with this email',
-//         'auth/wrong-password': 'Incorrect password',
-//         'auth/network-request-failed': 'Network error. Please check your connection',
-//         'auth/too-many-requests': 'Too many failed attempts. Please try again later',
-//         'auth/invalid-credential': 'Invalid email or password',
-//     };
-//     return messages[errorCode] || 'Login failed. Please check your credentials';
-// }
-
-
-
-document.getElementById('loginForm')?.addEventListener('submit', function (e) {
+  }
+  
+  createBackgroundCircles();
+  
+  // Role selection
+  let selectedRole = null;
+  const roleCards = document.querySelectorAll('.role-card');
+  const roleGrid = document.getElementById('roleGrid');
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const alertMessage = document.getElementById('alertMessage');
+  
+  roleCards.forEach(card => {
+    card.addEventListener('click', function() {
+      roleCards.forEach(c => c.classList.remove('selected'));
+      this.classList.add('selected');
+      selectedRole = this.dataset.role;
+      
+      // Clear any previous alerts
+      alertMessage.innerHTML = '';
+    });
+  });
+  
+  // Show alert message
+  function showAlert(message, type = 'error') {
+    alertMessage.innerHTML = `
+      <div class="alert-custom alert-${type}">
+        <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : 'check-circle'}"></i>
+        <span>${message}</span>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      if (alertMessage.children[0]) {
+        alertMessage.children[0].style.opacity = '0';
+        setTimeout(() => {
+          alertMessage.innerHTML = '';
+        }, 300);
+      }
+    }, 5000);
+  }
+  
+  // Login function
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    // Directly go to Order Dashboard
-    window.location.href = "pages/order_manager/order_dashboard.html";
-});
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    
+    if (!selectedRole) {
+      showAlert('Please select your role before logging in', 'error');
+      return;
+    }
+    
+    if (!email || !password) {
+      showAlert('Please enter both email and password', 'error');
+      return;
+    }
+    
+    // Disable login button
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="spinner-small"></span> Logging in...';
+    
+    try {
+      // Sign in with Firebase Auth
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Get user role from Firestore
+      const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+      
+      let userRole = null;
+      let userData = {};
+      
+      if (userDoc.exists) {
+        userData = userDoc.data();
+        userRole = userData.role;
+      }
+      
+      // Check if role matches
+      if (userRole && userRole !== selectedRole) {
+        showAlert(`You are registered as ${formatRoleName(userRole)}. Please select the correct role or contact admin.`, 'error');
+        await firebase.auth().signOut();
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
+        return;
+      }
+      
+      // If user doesn't have role in Firestore, create it (for demo)
+      if (!userRole) {
+        await firebase.firestore().collection('users').doc(user.uid).set({
+          email: user.email,
+          role: selectedRole,
+          name: user.displayName || email.split('@')[0],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      
+      // Store user info in session
+      sessionStorage.setItem('userRole', selectedRole);
+      sessionStorage.setItem('userEmail', user.email);
+      sessionStorage.setItem('userName', userData.name || email.split('@')[0]);
+      sessionStorage.setItem('userId', user.uid);
+      
+      showAlert('Login successful! Redirecting...', 'success');
+      
+      // Redirect based on role
+      setTimeout(() => {
+        switch(selectedRole) {
+          case 'order_manager':
+            window.location.href = '../pages/order_manager/order_dashboard.html';
+            break;
+          case 'financial_manager':
+            window.location.href = '../pages/financial_manager/financial_dashboard.html';
+            break;
+          case 'resource_manager':
+            window.location.href = '../pages/R.coordinater/resource.html';
+            break;
+          case 'customer_manager':
+            window.location.href = '../pages/Client_profile/CRMIndex.html';
+            break;
+          case 'hr_manager':
+            window.location.href = '../pages/HR_Manager/hr-index.html';
+            break;
+          default:
+            window.location.href = 'dashboard.html';
+        }
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      
+      let errorMessage = 'Invalid email or password';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email format';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later';
+      }
+      
+      showAlert(errorMessage, 'error');
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
+    }
+  });
+  
+  function formatRoleName(role) {
+    const roleNames = {
+      'order_manager': 'Order Manager',
+      'financial_manager': 'Financial Manager',
+      'resource_manager': 'Resource Manager',
+      'customer_manager': 'Customer Manager',
+      'hr_manager': 'HR Manager'
+    };
+    return roleNames[role] || role;
+  }
+  
+  // Check if already logged in
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      const savedRole = sessionStorage.getItem('userRole');
+      if (savedRole) {
+        // Already logged in, redirect to appropriate dashboard
+        switch(savedRole) {
+          case 'order_manager':
+            window.location.href = '../pages/order_manager/order_dashboard.html';
+            break;
+          case 'financial_manager':
+            window.location.href = '../pages/financial_manager/financial_dashboard.html';
+            break;
+          case 'resource_manager':
+            window.location.href = '../pages/R.coordinater/resource.html';
+            break;
+          case 'customer_manager':
+            window.location.href = '../pages/Client_profile/CRMIndex.html';
+            break;
+          case 'hr_manager':
+            window.location.href = '../pages/HR_Manager/hr-index.html';
+            break;
+        }
+      }
+    }
+  });
