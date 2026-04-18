@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    window.onload = () => {
+    // Other initialization code...
+    autoCheckMonthlyReport(); 
+};
+
+
 
     // E. RESTRICT DATES TO PAST & PRESENT ONLY
     const todayStr = new Date().toISOString().split('T')[0];
@@ -729,3 +735,124 @@ async function generatePDF() {
 }
 
 
+
+
+async function triggerMonthlyReport() {
+    try {
+        const now = new Date();
+        const reportDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const compareDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+
+        const reportMonthNum = reportDate.getMonth(); 
+        const compareMonthNum = compareDate.getMonth();
+        const reportYear = reportDate.getFullYear();
+        const compareYear = compareDate.getFullYear();
+
+        const reportMonthName = reportDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        const compareMonthName = compareDate.toLocaleString('default', { month: 'long' });
+
+        const billsSnap = await db.collection("Bills").get();
+        const ordersSnap = await db.collection("orders").get(); 
+
+        let reportInc = 0, reportExp = 0, compareInc = 0, compareExp = 0;
+        let reportOrderCount = 0; // New variable to track order count
+
+        // 1. Process Bills
+        billsSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.date) {
+                const parts = data.date.split('-'); 
+                const y = parseInt(parts[0]);
+                const m = parseInt(parts[1]) - 1;
+                if (y === reportYear && m === reportMonthNum) reportExp += Number(data.amount || 0);
+                if (y === compareYear && m === compareMonthNum) compareExp += Number(data.amount || 0);
+            }
+        });
+
+        // 2. Process Orders
+        ordersSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+                const dateObj = data.createdAt.toDate(); 
+                const y = dateObj.getFullYear();
+                const m = dateObj.getMonth();
+
+                if (y === reportYear && m === reportMonthNum) {
+                    reportInc += parseFloat(data.amountPaid) || 0;
+                    reportOrderCount++; // Increment count for each March order found
+                }
+                if (y === compareYear && m === compareMonthNum) {
+                    compareInc += parseFloat(data.amountPaid) || 0;
+                }
+            }
+        });
+
+        const reportProfit = reportInc - reportExp;
+        const compareProfit = compareInc - compareExp;
+
+        // 3. Dynamic Trend Calculation
+        let trendText = "";
+        if (compareInc === 0 && compareExp === 0) {
+            trendText = "a 100% baseline increase";
+        } else {
+            const diff = compareProfit === 0 ? 100 : (((reportProfit - compareProfit) / Math.abs(compareProfit)) * 100).toFixed(1);
+            const direction = reportProfit >= compareProfit ? "up" : "down";
+            trendText = `${Math.abs(diff)}% ${direction}`;
+        }
+
+        // 4. Send to EmailJS
+        const templateParams = {
+            month_name: reportMonthName,
+            income: reportInc.toLocaleString(),
+            outgoings: reportExp.toLocaleString(),
+            profit: reportProfit.toLocaleString(),
+            profit_trend: trendText,    // Matches {{profit_trend}}
+            order_count: reportOrderCount // Matches {{order_count}}
+        };
+
+        await emailjs.send("service_1fljhbq", "template_mnwlhwn", templateParams);
+        alert(`Report for ${reportMonthName} has been sent to email Successfully`);
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Error: " + error.message);
+    }
+}
+
+
+
+
+async function autoCheckMonthlyReport() {
+    try {
+        const now = new Date();
+        // If it's early in the month (e.g., April 1st - April 5th), check for March report
+        // However, for your review, we can just check if the PREVIOUS month's report exists.
+        
+        const reportDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const reportMonthID = reportDate.toLocaleString('default', { month: 'long', year: 'numeric' }); // e.g., "March 2026"
+
+        // 1. Check Firestore to see if "March 2026" was already sent
+        const docRef = db.collection("ReportHistory").doc(reportMonthID);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            console.log(`No report found for ${reportMonthID}. Generating now...`);
+            
+            // 2. Run your existing logic (the code we perfected earlier)
+            await triggerMonthlyReport();
+
+            // 3. Mark it as SENT in Firestore so it never runs for this month again
+            await docRef.set({
+                sentAt: new Date(),
+                status: "Success",
+                recipient: "Owner"
+            });
+            
+            console.log(`Automated report for ${reportMonthID} completed.`);
+        } else {
+            console.log(`Report for ${reportMonthID} was already sent on ${docSnap.data().sentAt.toDate()}.`);
+        }
+    } catch (error) {
+        console.error("Auto-report check failed:", error);
+    }
+}
