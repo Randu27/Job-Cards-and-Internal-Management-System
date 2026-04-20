@@ -188,6 +188,23 @@ function submitOrder() {
 
 function orderSuccess() {
     setSubmitLoading(false);
+
+    //................... Send order confirmation email.................//
+
+    emailjs.init('yLpLLBwVoNFsO3ql7');
+    emailjs.send('service_i5fu3w7', 'template_7v3veen', {
+        customer_name: document.getElementById('customerName').value.trim(),
+        customer_email: document.getElementById('emailAddress').value.trim(),
+        contact_number: document.getElementById('contactNumber').value.trim(),
+        company_name: document.getElementById('companyName').value.trim(),
+        payment_method: document.getElementById('paymentMethod').value,
+        amount_paid: document.getElementById('amountPaid').value.trim(),
+        product_height: document.getElementById('productHeight').value.trim() + ' ' + document.getElementById('productHeightUnit').value,
+        product_width: document.getElementById('productWidth').value.trim() + ' ' + document.getElementById('productWidthUnit').value,
+        design_description: document.getElementById('designDescription').value.trim(),
+    }).catch(err => console.error('Email failed:', err));
+
+
     ['customerName', 'contactNumber', 'emailAddress', 'address', 'companyName',
         'amountPaid', 'productHeight', 'productWidth', 'designDescription'].forEach(id => {
             document.getElementById(id).value = '';
@@ -645,7 +662,20 @@ function saveEditedOrder() {
     const doUpdate = (extraData = {}) => {
         db.collection('orders').doc(editingOrderId)
             .update({ ...updatedData, ...extraData })
-            .then(() => editSuccess())
+            .then(() => {
+                // Send completion email only if status changed to Finished
+                if (orderProcess === 'Finished') {
+                    emailjs.init('yLpLLBwVoNFsO3ql7');
+                    emailjs.send('service_i5fu3w7', 'template_6vtay5c', {
+                        customer_name: updatedData.customerName,
+                        customer_email: updatedData.emailAddress,
+                        company_name: updatedData.companyName,
+                        product_height: updatedData.productHeight,
+                        product_width: updatedData.productWidth,
+                    }).catch(err => console.error('Email failed:', err));
+                }
+                editSuccess();
+            })
             .catch(err => {
                 setSubmitLoading(false);
                 showValidationModal('Something went wrong. Please try again.');
