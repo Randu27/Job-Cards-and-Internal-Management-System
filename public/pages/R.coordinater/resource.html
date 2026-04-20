@@ -7,7 +7,6 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="../../css/menu.css">
 
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -391,7 +390,7 @@ function checkLowStock(docs) {
     docs.filter(d => d.data().qty > 50).forEach(d => emailAlertSentFor.delete(d.id));
 }
 
-/* ── Email alert ── */
+/* ── Email alert — FIXED: added email field to fix {{email}} template variable ── */
 async function sendLowStockEmail(manual = false, specificItems = null) {
     const lowItems = specificItems || allDocs.filter(d => d.data().qty <= 50);
     if (lowItems.length === 0) {
@@ -402,13 +401,15 @@ async function sendLowStockEmail(manual = false, specificItems = null) {
     try {
         await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             low_stock_items: itemsList,
-            date: new Date().toLocaleString()
+            date: new Date().toLocaleString(),
+            email: "noreply@grafixprinthub.com"   // ← FIX: satisfies {{email}} in Reply To field
         });
         showToast(`Low stock alert sent for ${lowItems.length} item(s)!`, 'warning');
         addLog(`Email alert sent: ${lowItems.length} low stock item(s)`, 'text-warning');
     } catch (err) {
         console.error("EmailJS error:", err);
-        if (manual) showToast('Failed to send email. Check console.', 'danger');
+        showToast('Failed to send email. Check console for details.', 'danger');
+        addLog('Email send failed – check console', 'text-danger');
     }
 }
 
@@ -583,7 +584,6 @@ function exportPDF() {
     const pageW = doc.internal.pageSize.width;
     const pageH = doc.internal.pageSize.height;
 
-    // ── Colour palette ──
     const C = {
         darkBg:      [44,  62,  80],
         darkBg2:     [52,  73,  94],
@@ -603,38 +603,28 @@ function exportPDF() {
         blueLight:   [207, 226, 255],
     };
 
-    // ─────────────────────────────────────────────
     // PAGE 1 — COVER + SUMMARY
-    // ─────────────────────────────────────────────
-
-    // Header band
     doc.setFillColor(...C.darkBg);
     doc.rect(0, 0, pageW, 45, 'F');
-
-    // Accent stripe
     doc.setFillColor(...C.yellow);
     doc.rect(0, 45, pageW, 3, 'F');
 
-    // Brand name
     doc.setTextColor(...C.yellow);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('Grafix Print Hub', 14, 18);
 
-    // Report title
     doc.setTextColor(...C.white);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text('Print Resource Coordination Record', 14, 28);
 
-    // Generated date (right-aligned)
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
     const genDate = `Generated: ${new Date().toLocaleString()}`;
     doc.text(genDate, pageW - 14, 28, { align: 'right' });
     doc.text(`Ref: GPH-${Date.now().toString().slice(-6)}`, pageW - 14, 35, { align: 'right' });
 
-    // ── Summary stats ──
     const total      = allDocs.length;
     const healthy    = allDocs.filter(d => d.data().qty > 50).length;
     const low        = total - healthy;
@@ -655,7 +645,6 @@ function exportPDF() {
     doc.line(14, y, pageW - 14, y);
     y += 6;
 
-    // 4 stat cards in a row
     const cardW = (pageW - 28 - 9) / 4;
     const cards = [
         { label: 'Total Resources', value: total,        color: C.blueLight,  text: C.blue },
@@ -680,7 +669,6 @@ function exportPDF() {
 
     y += 30;
 
-    // ── Executive summary paragraph ──
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...C.textDark);
@@ -710,7 +698,6 @@ function exportPDF() {
 
     y += 38;
 
-    // ── Stock health breakdown ──
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...C.textDark);
@@ -721,7 +708,6 @@ function exportPDF() {
     doc.line(14, y, pageW - 14, y);
     y += 6;
 
-    // Progress bar — health %
     doc.setFillColor(...C.midGray);
     doc.roundedRect(14, y, pageW - 28, 6, 2, 2, 'F');
     if (healthPct > 0) {
@@ -737,7 +723,6 @@ function exportPDF() {
 
     y += 12;
 
-    // Category rows
     const categories = [
         {
             label: 'Critical (≤ 10 units)',
@@ -758,16 +743,13 @@ function exportPDF() {
 
     categories.forEach(cat => {
         if (cat.items.length === 0) return;
-
         doc.setFillColor(...cat.bg);
         const rowH = 8 + cat.items.length * 6;
         doc.roundedRect(14, y, pageW - 28, rowH, 2, 2, 'F');
-
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         doc.setTextColor(...cat.text);
         doc.text(`[${cat.badge}]  ${cat.label} — ${cat.items.length} item(s)`, 18, y + 6);
-
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         cat.items.forEach((d, i) => {
@@ -776,11 +758,9 @@ function exportPDF() {
             doc.text(`• ${name}`, 22, y + 12 + i * 6);
             doc.text(`${qty} units`, pageW - 18, y + 12 + i * 6, { align: 'right' });
         });
-
         y += rowH + 4;
     });
 
-    // ── Recommendations ──
     y += 2;
     if (y > pageH - 50) { doc.addPage(); y = 20; }
 
@@ -825,14 +805,9 @@ function exportPDF() {
         doc.text(lines, 20, y + 7 + i * 9);
     });
 
-    y += 10 + recs.length * 9;
-
-    // ─────────────────────────────────────────────
     // PAGE 2 — FULL ITEM TABLE
-    // ─────────────────────────────────────────────
     doc.addPage();
 
-    // Page 2 header band
     doc.setFillColor(...C.darkBg);
     doc.rect(0, 0, pageW, 20, 'F');
     doc.setFillColor(...C.yellow);
@@ -847,7 +822,6 @@ function exportPDF() {
     doc.setTextColor(...C.white);
     doc.text('Full Resource Inventory — Detailed Record', pageW - 14, 13, { align: 'right' });
 
-    // Table
     const tableData = allDocs.map((d, i) => {
         const { name, qty, updatedAt } = d.data();
         let statusLabel, urgency;
@@ -899,7 +873,6 @@ function exportPDF() {
         }
     });
 
-    // After-table note
     const tableEndY = doc.lastAutoTable.finalY + 8;
     doc.setFillColor(...C.lightGray);
     doc.roundedRect(14, tableEndY, pageW - 28, 14, 2, 2, 'F');
@@ -909,9 +882,7 @@ function exportPDF() {
     doc.text('Note: Stock levels marked "Critical" (≤10 units) or "Low Stock" (≤50 units) require restocking action.', 18, tableEndY + 5);
     doc.text('!!! = Critical  |  ! = Low  |  (blank) = Healthy. Threshold for healthy stock: > 50 units.', 18, tableEndY + 11);
 
-    // ─────────────────────────────────────────────
     // FOOTER — every page
-    // ─────────────────────────────────────────────
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
