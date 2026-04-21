@@ -1,14 +1,18 @@
-// ─── Page Access Config ──────────────────────────────────────────────────────
-// Maps page key → URL (relative to auth/login/)
+// ─── Page Routes ─────────────────────────────────────────────────────────────
+function _publicPath(path) {
+  const isLocal = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+  return isLocal ? '/public' + path : path;
+}
+
 const PAGE_ROUTES = {
-  order_manager: '../pages/order_manager/order_dashboard.html',
-  financial_manager: '../pages/financial_manager/financial_dashboard.html',
-  resource_manager: '../pages/R.coordinater/resource.html',
-  customer_manager: '../pages/Client_profile/CRMIndex.html',
-  hr_manager: '../pages/HR_Manager/hr-index.html',
+  order_manager: _publicPath('/pages/order_manager/order_dashboard.html'),
+  financial_manager: _publicPath('/pages/financial_manager/financial_dashboard.html'),
+  resource_manager: _publicPath('/pages/R.coordinater/resource.html'),
+  customer_manager: _publicPath('/pages/Client_profile/CRMIndex.html'),
+  hr_manager: _publicPath('/pages/HR_Manager/hr-index.html'),
 };
 
-// All available page module keys (used to grant full access to owner)
 const ALL_PAGE_KEYS = [
   'order_management',
   'crm',
@@ -17,32 +21,45 @@ const ALL_PAGE_KEYS = [
   'resource_coordinator',
 ];
 
-// ─── Page Guard (call on every protected page) ───────────────────────────────
-// Usage: guardPage('order_management')  — put at top of each dashboard script
-window.guardPage = function (pageKey) {
-  const role = sessionStorage.getItem('userRole');
-  if (!role) { window.location.href = _loginPath(); return; }
-  if (role === 'order_manager') return; // Owner has full access
-  const granted = _getGrantedPages();
-  if (!granted.includes(pageKey)) { window.location.href = _deniedPath(); }
-};
-
+// ─── Path Helpers ─────────────────────────────────────────────────────────────
 function _loginPath() {
   const isLocal = window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
   return isLocal ? '/public/index.html' : '/';
 }
+
 function _deniedPath() {
-  const segs = window.location.pathname.split('/').filter(Boolean);
-  const depth = segs.length - 1;
-  return '../'.repeat(Math.max(depth, 0)) + 'auth/login/access-denied.html';
+  const isLocal = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+  return isLocal ? '/public/404.html' : '/404.html';
 }
+
 function _getGrantedPages() {
   try { return JSON.parse(sessionStorage.getItem('grantedPages') || '[]'); }
   catch { return []; }
 }
 
-// ─── Background Animation ────────────────────────────────────────────────────
+function _getRouteFromKey(key) {
+  const map = {
+    'order_management': PAGE_ROUTES.order_manager,
+    'crm': PAGE_ROUTES.customer_manager,
+    'financial_management': PAGE_ROUTES.financial_manager,
+    'human_resources': PAGE_ROUTES.hr_manager,
+    'resource_coordinator': PAGE_ROUTES.resource_manager,
+  };
+  return map[key] || _deniedPath();
+}
+
+// ─── Page Guard ───────────────────────────────────────────────────────────────
+window.guardPage = function (pageKey) {
+  const role = sessionStorage.getItem('userRole');
+  if (!role) { window.location.href = _loginPath(); return; }
+  if (role === 'order_manager') return;
+  const granted = _getGrantedPages();
+  if (!granted.includes(pageKey)) { window.location.href = _deniedPath(); }
+};
+
+// ─── Background Animation ─────────────────────────────────────────────────────
 function createBackgroundCircles() {
   const container = document.getElementById('bgAnimation');
   if (!container) return;
@@ -61,18 +78,10 @@ function createBackgroundCircles() {
   }
 }
 
-// ─── DOM References ──────────────────────────────────────────────────────────
-const dropdownContainer = document.getElementById('roleDropdown');
-const dropdownSelectedEl = document.getElementById('dropdownSelected');
-const roleOptions = document.querySelectorAll('.dropdown-option');
-const hiddenRoleInput = document.getElementById('selectedRoleInput');
+// ─── DOM References ───────────────────────────────────────────────────────────
 const loginForm = document.getElementById('loginForm');
 const loginBtn = document.getElementById('loginBtn');
 const alertMessage = document.getElementById('alertMessage');
-
-// ─── Role State ───────────────────────────────────────────────────────────────
-let selectedRole = '';
-let selectedRoleName = '';
 
 // ─── Alert Helper ─────────────────────────────────────────────────────────────
 function showAlert(message, type = 'error') {
@@ -87,95 +96,6 @@ function showAlert(message, type = 'error') {
   if (type !== 'success') setTimeout(() => { alertMessage.innerHTML = ''; }, 5000);
 }
 
-// ─── Dropdown Logic ───────────────────────────────────────────────────────────
-function toggleDropdown() {
-  if (dropdownContainer) dropdownContainer.classList.toggle('active');
-}
-
-function closeDropdown() {
-  if (dropdownContainer) dropdownContainer.classList.remove('active');
-}
-
-function setSelectedRole(roleValue, roleName) {
-  selectedRole = roleValue;
-  selectedRoleName = roleName;
-  if (hiddenRoleInput) hiddenRoleInput.value = roleValue;
-  if (dropdownSelectedEl) {
-    dropdownSelectedEl.innerHTML = `
-      <span>${roleName}</span>
-      <i class="bi bi-chevron-down dropdown-arrow"></i>
-    `;
-  }
-  closeDropdown();
-  if (alertMessage) alertMessage.innerHTML = '';
-}
-
-if (dropdownSelectedEl) {
-  dropdownSelectedEl.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleDropdown();
-  });
-}
-
-roleOptions.forEach(option => {
-  option.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const roleVal = option.getAttribute('data-role');
-    const roleName = option.getAttribute('data-name');
-    if (roleVal) setSelectedRole(roleVal, roleName);
-  });
-});
-
-document.addEventListener('click', (e) => {
-  if (dropdownContainer && !dropdownContainer.contains(e.target)) closeDropdown();
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDropdown();
-});
-
-function restorePreviousRole() {
-  const prevRole = sessionStorage.getItem('userRole');
-  if (prevRole) {
-    const match = document.querySelector(`.dropdown-option[data-role="${prevRole}"]`);
-    if (match) setSelectedRole(prevRole, match.getAttribute('data-name'));
-  }
-}
-
-// ─── Format Role Name ─────────────────────────────────────────────────────────
-function formatRoleName(role) {
-  const roleNames = {
-    order_manager: 'Owner',
-    financial_manager: 'Receptionist',
-    resource_manager: 'Front Office Manager',
-    customer_manager: 'Shop Keeper',
-    hr_manager: 'HR Manager',
-  };
-  return roleNames[role] || role;
-}
-
-// ─── Redirect Helper ──────────────────────────────────────────────────────────
-function redirectAfterLogin(role, grantedPages) {
-  if (role === 'order_manager') {
-    window.location.href = PAGE_ROUTES.order_manager;
-    return;
-  }
-  // Non-owners: go to their first granted page, or the role default if none set
-  if (grantedPages && grantedPages.length > 0) {
-    const pageKeyToRoute = {
-      order_management: '../pages/order_manager/order_dashboard.html',
-      crm: '../pages/Client_profile/CRMIndex.html',
-      financial_management: '../pages/financial_manager/financial_dashboard.html',
-      human_resources: '../pages/HR_Manager/hr-index.html',
-      resource_coordinator: '../pages/R.coordinater/resource.html',
-    };
-    const first = grantedPages[0];
-    if (pageKeyToRoute[first]) { window.location.href = pageKeyToRoute[first]; return; }
-  }
-  // Fallback to role default
-  window.location.href = PAGE_ROUTES[role] || 'dashboard.html';
-}
-
 // ─── Login Form Submit ────────────────────────────────────────────────────────
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
@@ -183,11 +103,6 @@ if (loginForm) {
 
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-
-    if (!selectedRole) {
-      showAlert('Please select your role before logging in.', 'error');
-      return;
-    }
 
     if (!email || !password) {
       showAlert('Please enter both email and password.', 'error');
@@ -198,92 +113,52 @@ if (loginForm) {
     loginBtn.innerHTML = '<span class="spinner-small"></span> Authenticating...';
 
     try {
-      // Sign in with Firebase
       const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
-      // Fetch Firestore user doc
-      let userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-
-      // First-login: migrate temp document to UID-keyed document
-      if (!userDoc.exists) {
-        const query = await firebase.firestore()
-          .collection('users')
-          .where('email', '==', user.email)
-          .limit(1)
-          .get();
-
-        if (!query.empty) {
-          const doc = query.docs[0];
-          await firebase.firestore().collection('users').doc(user.uid).set(doc.data());
-          await firebase.firestore().collection('users').doc(doc.id).delete();
-          userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-        }
+      // ── Owner check ──
+      if (email === "randulamunasinghe727@gmail.com") {
+        sessionStorage.setItem('userRole', 'order_manager');
+        sessionStorage.setItem('userEmail', email);
+        sessionStorage.setItem('grantedPages', JSON.stringify(ALL_PAGE_KEYS));
+        showAlert('Login successful! Redirecting...', 'success');
+        setTimeout(() => { window.location.href = PAGE_ROUTES.order_manager; }, 1500);
+        return;
       }
 
-      let userRole = null;
-      let userData = {};
+      // ── Employee check ──
+      const empQuery = await firebase.firestore()
+        .collection('employees')
+        .where('accessDetails.uid', '==', user.uid)
+        .limit(1)
+        .get();
 
-      if (userDoc.exists) {
-        userData = userDoc.data();
-        userRole = userData.role;
-      }
+      if (!empQuery.empty) {
+        const empData = empQuery.docs[0].data().accessDetails;
+        const grantedPages = empData.grantedPages || [];
 
-      // ── Role mismatch check ──
-      if (userRole && userRole !== selectedRole) {
-        showAlert(
-          `You are registered as ${formatRoleName(userRole)}. Please select the correct role or contact admin.`,
-          'error'
-        );
+        sessionStorage.setItem('userRole', empData.role);
+        sessionStorage.setItem('userEmail', user.email);
+        sessionStorage.setItem('grantedPages', JSON.stringify(grantedPages));
+
+        showAlert('Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+          if (grantedPages.length > 0) {
+            window.location.href = _getRouteFromKey(grantedPages[0]);
+          } else {
+            window.location.href = _deniedPath();
+          }
+        }, 1500);
+
+      } else {
         await firebase.auth().signOut();
+        showAlert('No account found. Please contact admin.', 'error');
         loginBtn.disabled = false;
         loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
-        return;
       }
-
-      // ── New user — save role to Firestore ──
-      if (!userDoc.exists) {
-        await firebase.firestore().collection('users').doc(user.uid).set({
-          email: user.email,
-          role: selectedRole,
-          name: user.displayName || email.split('@')[0],
-          grantedPages: selectedRole === 'order_manager' ? ALL_PAGE_KEYS : [],
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-        userData = userDoc.data();
-      }
-
-      // ── Determine granted pages ──
-      const grantedPages = selectedRole === 'order_manager'
-        ? ALL_PAGE_KEYS
-        : (userData.grantedPages || []);
-
-      // ── Save session ──
-      sessionStorage.setItem('userRole', selectedRole);
-      sessionStorage.setItem('userEmail', user.email);
-      sessionStorage.setItem('userName', userData.name || email.split('@')[0]);
-      sessionStorage.setItem('userId', user.uid);
-      sessionStorage.setItem('grantedPages', JSON.stringify(grantedPages));
-
-      // ── First login → force password change (Owner only, or any flagged user) ──
-      if (userData.isFirstLogin) {
-        showAlert('First login detected. Please set your password.', 'success');
-        setTimeout(() => {
-          window.location.href = '../pages/change-password.html';
-        }, 1200);
-        return;
-      }
-
-      showAlert('Login successful! Redirecting...', 'success');
-
-      setTimeout(() => {
-        redirectAfterLogin(selectedRole, grantedPages);
-      }, 1500);
 
     } catch (error) {
       console.error('Login error:', error);
-
       const errorMessages = {
         'auth/user-not-found': 'No account found with this email.',
         'auth/wrong-password': 'Incorrect password.',
@@ -291,7 +166,6 @@ if (loginForm) {
         'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
         'auth/invalid-credential': 'Invalid email or password.',
       };
-
       showAlert(errorMessages[error.code] || 'Invalid email or password.', 'error');
       loginBtn.disabled = false;
       loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
@@ -305,16 +179,18 @@ if (typeof firebase !== 'undefined') {
     if (user && loginForm) {
       const savedRole = sessionStorage.getItem('userRole');
       const savedGranted = _getGrantedPages();
-      if (savedRole) {
-        redirectAfterLogin(savedRole, savedGranted);
+      if (savedRole && savedGranted.length > 0) {
+        window.location.href = _getRouteFromKey(savedGranted[0]);
+      } else if (savedRole === 'order_manager') {
+        window.location.href = PAGE_ROUTES.order_manager;
       }
     }
   });
 }
 
-// ─── Logout (available globally on all pages) ────────────────────────────────
+// ─── Logout ───────────────────────────────────────────────────────────────────
 window.logout = async function () {
-  try { await firebase.auth().signOut(); } catch (e) { /* ignore */ }
+  try { await firebase.auth().signOut(); } catch (e) { }
   sessionStorage.clear();
   window.location.href = _loginPath();
 };
@@ -323,4 +199,3 @@ window.closeLogoutModal = function () { const m = document.getElementById('logou
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 createBackgroundCircles();
-restorePreviousRole();
