@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
+ 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Login | Grafix Print Hub</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -13,10 +13,10 @@
       padding: 0;
       box-sizing: border-box;
     }
-
+ 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(145deg, #34495e 0%, #ffe785 30%,#34495e 100%);
+      background: linear-gradient(145deg, #34495e 0%, #ffe785 30%, #34495e 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -25,42 +25,34 @@
       position: relative;
       overflow-x: hidden;
     }
-
-    /* Animated background */
+ 
     .bg-animation {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       overflow: hidden;
       z-index: 0;
     }
-
+ 
     .bg-animation .circle {
       position: absolute;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 50%;
       animation: float 20s infinite linear;
     }
-
+ 
     @keyframes float {
-      0% {
-        transform: translateY(0) rotate(0deg);
-      }
-      100% {
-        transform: translateY(-100vh) rotate(360deg);
-      }
+      0%   { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-100vh) rotate(360deg); }
     }
-
-    /* Login Container */
+ 
     .login-container {
       position: relative;
       z-index: 1;
       width: 100%;
       max-width: 480px;
     }
-
+ 
     .login-card {
       background: rgba(220, 220, 220, 0.98);
       backdrop-filter: blur(10px);
@@ -69,107 +61,152 @@
       overflow: hidden;
       animation: slideUp 0.6s ease;
     }
-
+ 
     @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-
+ 
     .login-header {
       background: #ffe785;
       padding: 20px 15px;
       text-align: center;
       color: #34495e;
     }
-
-   
-
+ 
     .login-header h2 {
       font-size: 1.8rem;
       font-weight: 700;
       margin-bottom: 5px;
     }
-
+ 
     .login-header p {
       opacity: 0.9;
       font-size: 0.9rem;
     }
-
+ 
     .login-body {
       padding: 30px;
     }
-
-    /* Role Selection */
+ 
+    /* Role Dropdown */
     .role-selection {
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
-
+ 
     .role-title {
       font-size: 0.85rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #34495e;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       display: block;
     }
-
-    .role-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
+ 
+    .custom-dropdown {
+      position: relative;
+      width: 100%;
     }
-
-    .role-card {
+ 
+    .dropdown-selected {
       background: #f9fafb;
       border: 2px solid #e5e7eb;
       border-radius: 12px;
-      width: 100%;
-      padding: 12px;
-      text-align: center;
-      font-size: 1rem;
+      padding: 12px 15px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1f2937;
       cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
     }
-
-    .role-card:hover {
+ 
+    .dropdown-selected:hover {
       border-color: #ffe785;
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(255, 231, 133, 0.2);
+      background: #ffffff;
     }
-
-    .role-card.selected {
-      background: linear-gradient(135deg, #8a8c8e 0%, #535557 100%);
-      border-color: #ffe785;
+ 
+    .dropdown-selected span i {
+      margin-right: 10px;
       color: #ffe785;
     }
-
-    .role-card.selected .role-icon {
+ 
+    .dropdown-arrow {
+      transition: transform 0.2s;
+      color: #6b7280;
+    }
+ 
+    .custom-dropdown.active .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+ 
+    .dropdown-menu-custom {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      border: 1px solid #eef2f6;
+      z-index: 100;
+      max-height: 280px;
+      overflow-y: auto;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+    }
+ 
+    .custom-dropdown.active .dropdown-menu-custom {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+ 
+    .dropdown-option {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-bottom: 1px solid #f0f2f5;
+    }
+ 
+    .dropdown-option:last-child {
+      border-bottom: none;
+    }
+ 
+    .dropdown-option:hover {
+      background: #ffe785;
+    }
+ 
+    .dropdown-option i {
+      width: 24px;
       color: #ffe785;
+      font-size: 1.2rem;
     }
-
-    .role-card.selected .role-name {
-      color: #ffe785;
+ 
+    .option-text {
+      font-weight: 500;
+      color: #1f2937;
     }
-
-    .role-name {
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin: 0;
+ 
+    .option-desc {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 2px;
     }
-
+ 
     /* Form Styles */
     .form-group {
       margin-bottom: 20px;
     }
-
+ 
     .form-group label {
       font-size: 0.85rem;
       font-weight: 600;
@@ -177,11 +214,11 @@
       margin-bottom: 8px;
       display: block;
     }
-
+ 
     .input-group-custom {
       position: relative;
     }
-
+ 
     .input-group-custom i {
       position: absolute;
       left: 15px;
@@ -190,7 +227,7 @@
       color: #9ca3af;
       font-size: 1.1rem;
     }
-
+ 
     .input-group-custom input {
       width: 100%;
       padding: 12px 15px 12px 45px;
@@ -199,20 +236,21 @@
       font-size: 0.95rem;
       transition: all 0.3s ease;
       font-family: inherit;
+      background: white;
     }
-
+ 
     .input-group-custom input:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #ffe785;
+      box-shadow: 0 0 0 3px rgba(255, 231, 133, 0.2);
     }
-
+ 
     .login-btn {
       width: 100%;
       padding: 12px;
-      background: linear-gradient(135deg,  #ffe785 0%, #909192 100%);
-      color:  #535557 ; 
-      border: 2px solid ;
+      background: linear-gradient(135deg, #ffe785 0%, #909192 100%);
+      color: #535557;
+      border: none;
       border-radius: 12px;
       font-size: 1rem;
       font-weight: 600;
@@ -220,36 +258,18 @@
       transition: all 0.3s ease;
       margin-top: 10px;
     }
-
+ 
     .login-btn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(135deg, #ffe99c 0%, #a0a1a4 100%);
     }
-
+ 
     .login-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
-
-    .demo-credentials {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #e5e7eb;
-      font-size: 0.8rem;
-      text-align: center;
-      color: #6b7280;
-    }
-
-    .demo-credentials p {
-      margin-bottom: 8px;
-    }
-
-    .demo-credentials small {
-      display: block;
-      color: #9ca3af;
-    }
-
-    /* Alert Messages */
+ 
     .alert-custom {
       padding: 12px 15px;
       border-radius: 12px;
@@ -260,112 +280,131 @@
       gap: 10px;
       animation: slideIn 0.3s ease;
     }
-
+ 
     @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
-
+ 
     .alert-error {
       background: #fee2e2;
       color: #dc2626;
       border-left: 4px solid #dc2626;
     }
-
+ 
     .alert-success {
       background: #d1fae5;
       color: #059669;
       border-left: 4px solid #059669;
     }
-
-    /* Loading Spinner */
+ 
     .spinner-small {
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(83, 85, 87, 0.3);
       border-radius: 50%;
-      border-top-color: white;
+      border-top-color: #535557;
       animation: spin 0.6s linear infinite;
       margin-right: 8px;
     }
-
+ 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+ 
+    @media (max-width: 480px) {
+      .login-body { padding: 20px; }
+      .dropdown-option { padding: 10px 12px; }
+    }
   </style>
 </head>
+ 
 <body>
-
-<div class="bg-animation" id="bgAnimation"></div>
-
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <img src="../../assets/logo.png" alt="Logo" height="100" class="me-2">
-      <h2>Grafix Print Hub</h2>
-      <p>Job Card Management System</p>
-    </div>
-    
-    <div class="login-body">
-      <div class="role-selection">
-        <span class="role-title">Select Your Role</span>
-        <div class="role-grid" id="roleGrid">
-          <div class="role-card" data-role="order_manager">
-            <p class="role-name">Owner</p>
-          </div>
-          <div class="role-card" data-role="financial_manager">
-            <p class="role-name">Receptionist</p>
-          </div>
-          <div class="role-card" data-role="resource_manager">
-            <p class="role-name">Front Office Manager</p>
-          </div>
-          <div class="role-card" data-role="customer_manager">
-            <p class="role-name">Shop Keeper</p>
-          </div>
-          
-        </div>
+ 
+  <div class="bg-animation" id="bgAnimation"></div>
+ 
+  <div class="login-container">
+    <div class="login-card">
+ 
+      <div class="login-header">
+        <img src="../../assets/logo.png" alt="Logo" height="100" class="me-2" onerror="this.style.display='none'">
+        <h2>Grafix Print Hub</h2>
+        <p>Job Card Management System</p>
       </div>
-
-      <div id="alertMessage"></div>
-
-      <form id="loginForm">
-        <div class="form-group">
-          <label>Email Address</label>
-          <div class="input-group-custom">
-            <i class="bi bi-envelope"></i>
-            <input type="email" id="email" placeholder="Enter your email" required>
+ 
+      <div class="login-body">
+ 
+        <div class="role-selection">
+          <span class="role-title"><i class="bi bi-person-badge"></i> Select Your Role</span>
+          <div class="custom-dropdown" id="roleDropdown">
+            <div class="dropdown-selected" id="dropdownSelected">
+              <span><i class="bi bi-people"></i> Choose a role</span>
+              <i class="bi bi-chevron-down dropdown-arrow"></i>
+            </div>
+            <div class="dropdown-menu-custom" id="dropdownMenu">
+              <div class="dropdown-option" data-role="order_manager" data-name="Owner">
+                <div>
+                  <div class="option-text">Owner</div>
+                  <div class="option-desc">Full access, manage orders &amp; reports</div>
+                </div>
+              </div>
+              <div class="dropdown-option" data-role="financial_manager" data-name="Receptionist">
+                <div>
+                  <div class="option-text">Receptionist</div>
+                  <div class="option-desc">Handle billing, invoices &amp; payments</div>
+                </div>
+              </div>
+              <div class="dropdown-option" data-role="resource_manager" data-name="Front Office Manager">
+                <div>
+                  <div class="option-text">Front Office Manager</div>
+                  <div class="option-desc">Manage resources &amp; front desk</div>
+                </div>
+              </div>
+              <div class="dropdown-option" data-role="customer_manager" data-name="Shop Keeper">
+                <div>
+                  <div class="option-text">Shop Keeper</div>
+                  <div class="option-desc">Customer orders &amp; walk-ins</div>
+                </div>
+              </div>
+            </div>
           </div>
+          <input type="hidden" id="selectedRoleInput" value="">
         </div>
-
-        <div class="form-group">
-          <label>Password</label>
-          <div class="input-group-custom">
-            <i class="bi bi-lock"></i>
-            <input type="password" id="password" placeholder="Enter your password" required>
+ 
+        <div id="alertMessage"></div>
+ 
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Email Address</label>
+            <div class="input-group-custom">
+              <i class="bi bi-envelope"></i>
+              <input type="email" id="email" placeholder="Enter your email" autocomplete="email" required>
+            </div>
           </div>
-        </div>
-
-        <button type="submit" class="login-btn" id="loginBtn">
-          <i class="bi bi-box-arrow-in-right"></i> Login
-        </button>
-      </form>
-
+ 
+          <div class="form-group">
+            <label>Password</label>
+            <div class="input-group-custom">
+              <i class="bi bi-lock"></i>
+              <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+            </div>
+          </div>
+ 
+          <button type="submit" class="login-btn" id="loginBtn">
+            <i class="bi bi-box-arrow-in-right"></i> Login
+          </button>
+        </form>
+ 
+      </div>
     </div>
   </div>
-</div>
-        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-        <script src="../js/firebase-config.js"></script>
-        <script src="js/signin.js"></script>
-    
+ 
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="js/signin.js"></script>
+ 
 </body>
-
 </html>
