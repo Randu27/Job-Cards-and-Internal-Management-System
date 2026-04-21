@@ -1,26 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Module | Grafix Print Hub</title>
-    
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+
     <!-- Chart.js for Dashboard Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
+
     <link rel="stylesheet" href="../../css/CRMIndex.css">
     <link rel="stylesheet" href="../../css/menu.css">
 </head>
+
 <body>
     <nav class="navbar navbar-dark shadow-sm sticky-top">
         <div class="container">
             <div class="d-flex align-items-center">
-                <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas"
+                    data-bs-target="#sidebarMenu">
                     <i class="bi bi-list fs-4"></i>
                 </button>
                 <a class="navbar-brand d-flex align-items-center" href="#">
@@ -87,7 +90,7 @@
             </div>
         </div>
 
-    
+
 
         <!-- Three Function Cards -->
         <div class="row g-4 mb-5">
@@ -118,20 +121,22 @@
             <button class="back-btn" onclick="showPage('home')">
                 <i class="bi bi-arrow-left"></i> Back to Dashboard
             </button>
-            
+
             <div class="card-custom">
                 <div class="card-header-custom">
                     <i class="bi bi-person-gear me-2 text-primary"></i> Customer Profiles
-                    <button class="btn btn-success btn-sm float-end" onclick="openAddCustomerModal()" style="border-radius: 20px; padding: 5px 15px;">
+                    <button class="btn btn-success btn-sm float-end" onclick="openAddCustomerModal()"
+                        style="border-radius: 20px; padding: 5px 15px;">
                         <i class="bi bi-plus-circle"></i> Add New
                     </button>
                 </div>
-                
+
                 <!-- Search and Filter Bar -->
                 <div class="search-filter-bar">
                     <div class="search-box">
                         <i class="bi bi-search"></i>
-                        <input type="text" id="customerSearch" placeholder="Search by name, email, company, or phone..." onkeyup="applyFilters()">
+                        <input type="text" id="customerSearch" placeholder="Search by name, email, company, or phone..."
+                            onkeyup="applyFilters()">
                     </div>
                     <div class="filter-group">
                         <select id="filterType" class="filter-select" onchange="applyFilters()">
@@ -159,7 +164,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="card-body-custom">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
@@ -177,7 +182,9 @@
                                 </tr>
                             </thead>
                             <tbody id="customerTableBody">
-                                <tr><td colspan="9" class="text-center py-4">Loading...<\/td><\/tr>
+                                <tr>
+                                    <td colspan="9" class="text-center py-4">Loading...<\ /td>
+                                            <\ /tr>
                             </tbody>
                         </table>
                     </div>
@@ -192,7 +199,7 @@
             <button class="back-btn" onclick="showPage('home')">
                 <i class="bi bi-arrow-left"></i> Back to Dashboard
             </button>
-            
+
             <div class="card-custom">
                 <div class="card-header-custom">
                     <i class="bi bi-chat-dots me-2 text-warning"></i> Customer Feedbacks & Reviews
@@ -206,107 +213,109 @@
         </div>
     </div>
 
-   <!-- ==================== PAGE 3: GENERATE REPORT (REDESIGNED) ==================== -->
-<div id="reportsPage" class="page-container">
-    <div class="container">
-        <button class="back-btn" onclick="showPage('home')">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
-        </button>
- 
-        
-        <div class="report-generation-card">
-            <div class="report-header">
-                <div class="report-header-icon">
-                    <i class="bi bi-printer"></i>
-                </div>
-                <div>
-                    <h3>Generate Reports</h3>
+    <!-- ==================== PAGE 3: GENERATE REPORT (REDESIGNED) ==================== -->
+    <div id="reportsPage" class="page-container">
+        <div class="container">
+            <button class="back-btn" onclick="showPage('home')">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </button>
 
+
+            <div class="report-generation-card">
+                <div class="report-header">
+                    <div class="report-header-icon">
+                        <i class="bi bi-printer"></i>
+                    </div>
+                    <div>
+                        <h3>Generate Reports</h3>
+
+                    </div>
+                </div>
+
+                <div class="report-body">
+                    <form id="reportForm">
+                        <!-- Report Type Selection -->
+                        <div class="report-section">
+                            <label class="report-label">Report Type</label>
+                            <div class="report-options-group">
+                                <div class="report-option" onclick="selectReportType('all')" id="reportTypeAll">
+                                    <i class="bi bi-file-text"></i>
+                                    <div>
+                                        <strong>All Customers Summary</strong>
+                                    </div>
+                                    <span class="check-icon">✓</span>
+                                </div>
+                                <div class="report-option" onclick="selectReportType('feedback')"
+                                    id="reportTypeFeedback">
+                                    <i class="bi bi-star"></i>
+                                    <div>
+                                        <strong>Feedback Analysis Report</strong>
+                                    </div>
+                                    <span class="check-icon">✓</span>
+                                </div>
+                                <div class="report-option" onclick="selectReportType('individual')"
+                                    id="reportTypeIndividual">
+                                    <i class="bi bi-person"></i>
+                                    <div>
+                                        <strong>Individual Customer Report</strong>
+                                    </div>
+                                    <span class="check-icon">✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Individual Customer Selection (hidden by default) -->
+                        <div class="report-section" id="customerSelectSection" style="display: none;">
+                            <label class="report-label">Select Customer</label>
+                            <div class="customer-select-wrapper">
+                                <i class="bi bi-search"></i>
+                                <select id="individualCustomerSelect" class="customer-select">
+                                    <option value="">-- Select a customer --</option>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Date Range Section -->
+                        <div class="report-section">
+                            <label class="report-label">Time Period</label>
+                            <div class="date-range-group">
+                                <div class="date-input-wrapper">
+                                    <i class="bi bi-calendar"></i>
+                                    <input type="date" id="fromDate" class="date-input" placeholder="From Date">
+                                </div>
+                                <span class="date-separator">—</span>
+                                <div class="date-input-wrapper">
+                                    <i class="bi bi-calendar"></i>
+                                    <input type="date" id="toDate" class="date-input" placeholder="To Date">
+                                </div>
+                            </div>
+                            <small class="date-hint">Leave empty to include all data</small>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="report-actions">
+                            <button type="button" class="btn-generate" onclick="generateSelectedReport()">
+                                <i class="bi bi-download"></i> GENERATE REPORT
+                            </button>
+                            <button type="button" class="btn-cancel" onclick="showPage('home')">
+                                Cancel & Return
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            
-            <div class="report-body">
-                <form id="reportForm">
-                    <!-- Report Type Selection -->
-                    <div class="report-section">
-                        <label class="report-label">Report Type</label>
-                        <div class="report-options-group">
-                            <div class="report-option" onclick="selectReportType('all')" id="reportTypeAll">
-                                <i class="bi bi-file-text"></i>
-                                <div>
-                                    <strong>All Customers Summary</strong>
-                                </div>
-                                <span class="check-icon">✓</span>
-                            </div>
-                            <div class="report-option" onclick="selectReportType('feedback')" id="reportTypeFeedback">
-                                <i class="bi bi-star"></i>
-                                <div>
-                                    <strong>Feedback Analysis Report</strong>
-                                </div>
-                                <span class="check-icon">✓</span>
-                            </div>
-                            <div class="report-option" onclick="selectReportType('individual')" id="reportTypeIndividual">
-                                <i class="bi bi-person"></i>
-                                <div>
-                                    <strong>Individual Customer Report</strong>
-                                </div>
-                                <span class="check-icon">✓</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Individual Customer Selection (hidden by default) -->
-<div class="report-section" id="customerSelectSection" style="display: none;">
-    <label class="report-label">Select Customer</label>
-    <div class="customer-select-wrapper">
-        <i class="bi bi-search"></i>
-        <select id="individualCustomerSelect" class="customer-select">
-            <option value="">-- Select a customer --</option>
-            <!-- Options will be populated by JavaScript -->
-        </select>
-    </div>
-</div>
-                    
-                    <!-- Date Range Section -->
-                    <div class="report-section">
-                        <label class="report-label">Time Period</label>
-                        <div class="date-range-group">
-                            <div class="date-input-wrapper">
-                                <i class="bi bi-calendar"></i>
-                                <input type="date" id="fromDate" class="date-input" placeholder="From Date">
-                            </div>
-                            <span class="date-separator">—</span>
-                            <div class="date-input-wrapper">
-                                <i class="bi bi-calendar"></i>
-                                <input type="date" id="toDate" class="date-input" placeholder="To Date">
-                            </div>
-                        </div>
-                        <small class="date-hint">Leave empty to include all data</small>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="report-actions">
-                        <button type="button" class="btn-generate" onclick="generateSelectedReport()">
-                            <i class="bi bi-download"></i> GENERATE REPORT
-                        </button>
-                        <button type="button" class="btn-cancel" onclick="showPage('home')">
-                            Cancel & Return
-                        </button>
-                    </div>
-                </form>
+
+            <!-- Report Preview Section -->
+            <div id="reportPreviewContainer" style="display: none; margin-top: 30px;">
+                <div class="preview-header">
+                    <h5><i class="bi bi-eye"></i> Report Preview</h5>
+                    <button class="btn-close-preview" onclick="closePreview()">×</button>
+                </div>
+                <div id="reportPreviewContent" class="preview-content"></div>
             </div>
         </div>
-        
-        <!-- Report Preview Section -->
-        <div id="reportPreviewContainer" style="display: none; margin-top: 30px;">
-            <div class="preview-header">
-                <h5><i class="bi bi-eye"></i> Report Preview</h5>
-                <button class="btn-close-preview" onclick="closePreview()">×</button>
-            </div>
-            <div id="reportPreviewContent" class="preview-content"></div>
-        </div>
     </div>
-</div>
 
     <!-- View Customer Modal -->
     <div class="modal fade" id="viewCustomerModal" tabindex="-1">
@@ -343,7 +352,8 @@
                                 <input type="text" class="form-control" id="customerName" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Company Name <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold">Company Name <span
+                                        class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="customerCompany" required>
                             </div>
                             <div class="col-md-6">
@@ -429,7 +439,7 @@
         <small>&copy; Grafix Print Hub | CRM Module</small>
     </footer>
 
-    
+
 
     <script src="../../js/navbar-loader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -440,7 +450,9 @@
     <script src="../../js/firebase-config.js"></script>
     <script src="../../js/CRMIndex.js"></script>
     <script src="../../js/signin.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => guardPage('crm'));</script>
 
-  
+
 </body>
+
 </html>

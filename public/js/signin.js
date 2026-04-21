@@ -50,13 +50,60 @@ function _getRouteFromKey(key) {
   return map[key] || _deniedPath();
 }
 
+function _showAccessDeniedPopup() {
+  const existing = document.getElementById('_accessDeniedOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = '_accessDeniedOverlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+  `;
+  overlay.innerHTML = `
+    <style>
+      @keyframes _popIn { from { opacity:0; transform:scale(0.85) translateY(20px) } to { opacity:1; transform:scale(1) translateY(0) } }
+      #_accessDeniedBox { background:#fff; border-radius:20px; padding:36px 32px 28px; max-width:380px; width:90%; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:_popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+      #_accessDeniedBox ._ad-icon { width:72px; height:72px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+      #_accessDeniedBox ._ad-icon i { font-size:2rem; color:#dc2626; }
+      #_accessDeniedBox h5 { font-size:1.2rem; font-weight:700; color:#111827; margin-bottom:10px; }
+      #_accessDeniedBox p { font-size:0.9rem; color:#6b7280; margin-bottom:24px; }
+      #_accessDeniedBox ._ad-btn { background:linear-gradient(135deg,#ffe785,#34495e); color:#1f2937; border:none; border-radius:10px; padding:10px 28px; font-size:0.9rem; font-weight:600; cursor:pointer; }
+    </style>
+    <div id="_accessDeniedBox">
+      <div class="_ad-icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <h5>Access Restricted</h5>
+      <p>Sorry. You cannot access this system.</p>
+      <button class="_ad-btn" id="_adDismissBtn">Go Back</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  document.getElementById('_adDismissBtn').addEventListener('click', () => {
+    overlay.remove();
+    const granted = _getGrantedPages();
+    if (granted.length > 0) {
+      window.location.href = _getRouteFromKey(granted[0]);
+    } else {
+      window.location.href = _loginPath();
+    }
+  });
+}
+
 // ─── Page Guard ───────────────────────────────────────────────────────────────
 window.guardPage = function (pageKey) {
   const role = sessionStorage.getItem('userRole');
   if (!role) { window.location.href = _loginPath(); return; }
   if (role === 'order_manager') return;
   const granted = _getGrantedPages();
-  if (!granted.includes(pageKey)) { window.location.href = _deniedPath(); }
+  if (!granted.includes(pageKey)) {
+    document.body.style.visibility = 'hidden';
+    setTimeout(() => {
+      document.body.style.visibility = '';
+      _showAccessDeniedPopup();
+    }, 80);
+  }
 };
 
 // ─── Background Animation ─────────────────────────────────────────────────────
@@ -144,9 +191,12 @@ if (loginForm) {
         showAlert('Login successful! Redirecting...', 'success');
         setTimeout(() => {
           if (grantedPages.length > 0) {
-            window.location.href = _getRouteFromKey(grantedPages[0]);
+            const firstKey = ALL_PAGE_KEYS.find(k => grantedPages.includes(k));
+            window.location.href = _getRouteFromKey(firstKey || grantedPages[0]);
           } else {
-            window.location.href = _deniedPath();
+            showAlert('No pages assigned. Please contact admin.', 'error');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
           }
         }, 1500);
 
@@ -179,10 +229,11 @@ if (typeof firebase !== 'undefined') {
     if (user && loginForm) {
       const savedRole = sessionStorage.getItem('userRole');
       const savedGranted = _getGrantedPages();
-      if (savedRole && savedGranted.length > 0) {
-        window.location.href = _getRouteFromKey(savedGranted[0]);
-      } else if (savedRole === 'order_manager') {
+      if (savedRole === 'order_manager') {
         window.location.href = PAGE_ROUTES.order_manager;
+      } else if (savedRole && savedGranted.length > 0) {
+        const firstKey = ALL_PAGE_KEYS.find(k => savedGranted.includes(k));
+        window.location.href = _getRouteFromKey(firstKey || savedGranted[0]);
       }
     }
   });
