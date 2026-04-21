@@ -296,20 +296,8 @@
             style="display:none; margin-top:15px; padding:14px; background:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
 
             <div class="mb-2">
-              <label class="form-label">Job Role</label>
-              <select id="jobRole" class="form-select">
-                <option value="" disabled selected>Select Role</option>
-                <option value="financial_manager">Receptionist</option>
-                <option value="resource_manager">Front Office Manager</option>
-                <option value="customer_manager">Shop Keeper</option>
-              </select>
-            </div>
-
-            <!-- CHANGED: Login Email is now fixed to Owner's email -->
-            <div class="mb-2">
-              <label class="form-label">Login Email <span style="color:#dc2626; font-size:0.8rem;">(Owner's Email -
-                  Password resets go here)</span></label>
-              <input type="email" id="loginEmail" class="form-control" readonly>
+              <label class="form-label">Login Email</label>
+              <input type="email" id="loginEmail" class="form-control" placeholder="Employee's login email">
             </div>
 
             <div class="mb-2">
@@ -322,7 +310,7 @@
               </div>
             </div>
 
-            <!-- ── Page Access ──────────────────────────────────────── -->
+            <!-- Page Access -->
             <div class="pas-section-title">
               <i class="bi bi-grid-3x3-gap"></i> Page Access
             </div>
@@ -331,7 +319,6 @@
             </p>
 
             <div class="pas-grid" id="pageAccessGrid">
-
               <label class="pas-item" for="pa_om">
                 <input class="pas-check" type="checkbox" id="pa_om" value="order_management"
                   onchange="updatePasCount()">
@@ -384,15 +371,13 @@
                   <div class="pas-desc">Materials &amp; inventory</div>
                 </div>
               </label>
-
-            </div><!-- /pas-grid -->
+            </div>
 
             <div class="pas-footer">
               <button type="button" class="pas-btn" onclick="pasAll(true)">Select all</button>
               <button type="button" class="pas-btn" onclick="pasAll(false)">Clear all</button>
               <div class="pas-count"><b id="pasCountNum">0</b> of 5 selected</div>
             </div>
-            <!-- ───────────────────────────────────────────────────── -->
 
           </div>
 
@@ -435,21 +420,11 @@
   <script src="../../js/signin.js"></script>
 
   <script>
-    // ── Access section toggle ──────────────────────────────────────────────────
     function toggleAccessSection(cb) {
       document.getElementById('accessSection').style.display = cb.checked ? 'block' : 'none';
       if (!cb.checked) pasAll(false);
     }
 
-    // ── Password visibility (existing button, wired here) ─────────────────────
-    document.getElementById('togglePasswordBtn').addEventListener('click', function () {
-      const inp = document.getElementById('loginPassword');
-      const ico = document.getElementById('toggleIcon');
-      inp.type = inp.type === 'password' ? 'text' : 'password';
-      ico.className = inp.type === 'password' ? 'bi bi-eye-slash' : 'bi bi-eye';
-    });
-
-    // ── Photo preview ──────────────────────────────────────────────────────────
     document.getElementById('empImage').addEventListener('change', function () {
       const preview = document.getElementById('imagePreview');
       if (this.files && this.files[0]) {
@@ -459,7 +434,6 @@
       }
     });
 
-    // ── Page access helpers ────────────────────────────────────────────────────
     function updatePasCount() {
       const n = document.querySelectorAll('#pageAccessGrid .pas-check:checked').length;
       document.getElementById('pasCountNum').textContent = n;
@@ -470,33 +444,15 @@
       updatePasCount();
     }
 
-    // Exposed so hr-script.js can call window.getSelectedPages() when saving to Firestore
-    // In hr-script.js addEmployee(), include:  grantedPages: window.getSelectedPages()
     window.getSelectedPages = function () {
       return Array.from(document.querySelectorAll('#pageAccessGrid .pas-check:checked'))
         .map(c => c.value);
     };
 
-    // ── Owner-only guard ───────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
       const role = sessionStorage.getItem('userRole');
       if (role && role !== 'order_manager') {
-        window.location.href = '../../auth/login/access-denied.html';
-      }
-    });
-
-    // ── Auto-fill Login Email with Owner's email when access is enabled ─────
-    document.getElementById('hasAccess').addEventListener('change', function () {
-      const loginEmailInput = document.getElementById('loginEmail');
-      if (this.checked) {
-        const ownerEmail = sessionStorage.getItem('userEmail');   // Owner who is logged in
-        if (ownerEmail) {
-          loginEmailInput.value = ownerEmail;
-        } else {
-          loginEmailInput.value = '';
-        }
-      } else {
-        loginEmailInput.value = '';
+        window.location.href = _deniedPath();
       }
     });
   </script>
