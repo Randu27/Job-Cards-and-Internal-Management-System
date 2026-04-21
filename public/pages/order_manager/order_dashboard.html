@@ -94,15 +94,31 @@
                             <label class="form-label fw-semibold">Customer Name</label>
                             <input type="text" id="customerName" class="form-control" placeholder="Name">
                         </div>
+
+                        <!-- ..............Contact number validation to trigger ............. -->
+
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Contact Number</label>
                             <input type="tel" id="contactNumber" class="form-control" placeholder="Mobile number"
-                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                maxlength="10"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); validateContact(this);"
+                                onblur="validateContact(this)">
+                            <div class="invalid-feedback" id="contactError">Contact number must be exactly 10 digits.
+                            </div>
                         </div>
+
+
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Email Address</label>
-                            <input type="email" id="emailAddress" class="form-control" placeholder="Email">
+
+                            <!-- ...............email validation to trigger............. -->
+
+                            <input type="email" id="emailAddress" class="form-control" placeholder="Email"
+                                onblur="validateEmail(this)" oninput="clearFieldError(this)">
+                            <div class="invalid-feedback" id="emailError">Please enter a valid email address.</div>
                         </div>
+
+
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Address</label>
                             <input type="text" id="address" class="form-control"
@@ -117,14 +133,30 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Payment Method</label>
-                            <div class="position-relative">
-                                <select id="paymentMethod" class="form-select pe-5">
-                                    <option value="" disabled selected>Select Full payment or Advanced payment</option>
-                                    <option>Full Payment</option>
-                                    <option>Advanced Payment</option>
-                                </select>
-                                <i
-                                    class="bi bi-chevron-down position-absolute top-50 end-0 translate-middle-y me-3 text-muted payment-chevron"></i>
+                            <div class="payment-method-wrapper">
+                                <div class="payment-option" id="payOpt_full" onclick="selectPayment('Full Payment')">
+                                    <div class="payment-icon-box">
+                                        <i class="bi bi-cash-stack"></i>
+                                    </div>
+                                    <div class="payment-label">
+                                        <span class="payment-title">Full Payment</span>
+                                        <span class="payment-sub">Pay the total amount now</span>
+                                    </div>
+                                    <i class="bi bi-check-circle-fill payment-check"></i>
+                                </div>
+                                <div class="payment-option" id="payOpt_advanced"
+                                    onclick="selectPayment('Advanced Payment')">
+                                    <div class="payment-icon-box">
+                                        <i class="bi bi-wallet2"></i>
+                                    </div>
+                                    <div class="payment-label">
+                                        <span class="payment-title">Advanced Payment</span>
+                                        <span class="payment-sub">Pay a half amount upfront</span>
+                                    </div>
+                                    <i class="bi bi-check-circle-fill payment-check"></i>
+                                </div>
+                                <!-- Hidden input to store the value -->
+                                <input type="hidden" id="paymentMethod" value="">
                             </div>
                         </div>
                         <div class="mb-4">
@@ -132,9 +164,10 @@
                             <div class="input-group">
                                 <span class="input-group-text" id="currencyPrefix">Rs.</span>
                                 <input type="number" id="amountPaid" class="form-control" placeholder="Amount" min="0"
+                                    step="0.01"
                                     onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault();"
                                     onfocus="document.getElementById('currencyPrefix').style.display='flex'; this.placeholder='0.00';"
-                                    onblur="if(!this.value){ document.getElementById('currencyPrefix').style.display='none'; this.placeholder='Amount';}">
+                                    onblur="formatAmountPaid()">
                             </div>
                         </div>
 

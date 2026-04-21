@@ -908,3 +908,91 @@ body {
 #productWidthUnit {
     max-width: 80px;
 }
+
+/* .............. Payment Method Cards .............. */
+
+.payment-method-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 2px solid #e0e3ef;
+    background: #f7f8fc;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.payment-option:hover {
+    border-color: #6366f1;
+    background: #f0f0ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12);
+}
+
+.payment-option.selected {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.18);
+}
+
+.payment-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #6366f1;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+    flex-shrink: 0;
+    transition: background 0.25s ease;
+}
+
+.payment-option.selected .payment-icon-box {
+    background: #6366f1;
+    color: #fff;
+}
+
+.payment-label {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.payment-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #22244a;
+}
+
+.payment-sub {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.payment-option.selected .payment-title {
+    color: #4338ca;
+}
+
+.payment-check {
+    font-size: 1.2rem;
+    color: #c7d2fe;
+    transition: color 0.25s ease, transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.payment-option.selected .payment-check {
+    color: #6366f1;
+    transform: scale(1.15);
+}

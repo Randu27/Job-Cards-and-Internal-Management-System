@@ -111,6 +111,64 @@ function closeValidationModal() {
     document.getElementById('validationModal').style.display = 'none';
 }
 
+// .....................validation option for contact number and Email ..................//
+
+function validateContact(input) {
+    const val = input.value.trim();
+    if (val.length > 0 && val.length < 10) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+    } else if (val.length === 10) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+    } else {
+        input.classList.remove('is-invalid', 'is-valid');
+    }
+}
+
+function validateEmail(input) {
+    const val = input.value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (val.length > 0 && !emailRegex.test(val)) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+    } else if (val.length > 0 && emailRegex.test(val)) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+    } else {
+        input.classList.remove('is-invalid', 'is-valid');
+    }
+}
+
+function clearFieldError(input) {
+    if (input.classList.contains('is-invalid')) {
+        input.classList.remove('is-invalid');
+    }
+}
+
+//......................//
+
+function formatAmountPaid() {
+    const input = document.getElementById('amountPaid');
+    const val = input.value.trim();
+
+    if (!val) {
+        document.getElementById('currencyPrefix').style.display = 'none';
+        input.placeholder = 'Amount';
+        return;
+    }
+
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+        // If no decimal given, add .00 — if decimal given, keep as is
+        if (Number.isInteger(num)) {
+            input.value = num.toFixed(2);
+        } else {
+            input.value = num.toFixed(2);
+        }
+    }
+}
+
 //...............Submit loading state .....................//
 
 function setSubmitLoading(isLoading) {
@@ -140,8 +198,16 @@ function submitOrder() {
     const designDescription = document.getElementById('designDescription').value.trim();
 
     if (!customerName) { showValidationModal('Please enter the Customer Name.'); return; }
+
+    // ..................validation for contact number and email .................//
+
     if (!contactNumber) { showValidationModal('Please enter the Contact Number.'); return; }
+    if (contactNumber.length !== 10) { showValidationModal('Contact number must be exactly 10 digits.'); return; }
     if (!emailAddress) { showValidationModal('Please enter the Email Address.'); return; }
+    const emailRegexSubmit = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegexSubmit.test(emailAddress)) { showValidationModal('Please enter a valid email address.'); return; }
+
+
     if (!address) { showValidationModal('Please enter the Address.'); return; }
     if (!companyName) { showValidationModal('Please enter the Company Name.'); return; }
     if (!paymentMethod) { showValidationModal('Please select a Payment Method.'); return; }
@@ -581,7 +647,12 @@ function editOrder(id) {
     document.getElementById('emailAddress').value = order.emailAddress || '';
     document.getElementById('address').value = order.address || '';
     document.getElementById('companyName').value = order.companyName || '';
-    document.getElementById('paymentMethod').value = order.paymentMethod || '';
+    if (order.paymentMethod) {
+        selectPayment(order.paymentMethod);
+    } else {
+        document.getElementById('paymentMethod').value = '';
+        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+    }
     document.getElementById('amountPaid').value = order.amountPaid || '';
 
     if (order.amountPaid) {
@@ -636,7 +707,15 @@ function saveEditedOrder() {
 
     if (!customerName) { showValidationModal('Please enter the Customer Name.'); return; }
     if (!contactNumber) { showValidationModal('Please enter the Contact Number.'); return; }
+
+    // .....................validation massages.........//
+
+    if (contactNumber.length !== 10) { showValidationModal('Contact number must be exactly 10 digits.'); return; }
     if (!emailAddress) { showValidationModal('Please enter the Email Address.'); return; }
+    const emailRegexEdit = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegexEdit.test(emailAddress)) { showValidationModal('Please enter a valid email address.'); return; }
+
+
     if (!address) { showValidationModal('Please enter the Address.'); return; }
     if (!companyName) { showValidationModal('Please enter the Company Name.'); return; }
     if (!paymentMethod) { showValidationModal('Please select a Payment Method.'); return; }
@@ -726,12 +805,30 @@ function clearFormFields() {
         'amountPaid', 'productHeight', 'productWidth', 'designDescription'].forEach(id => {
             document.getElementById(id).value = '';
         });
-    document.getElementById('paymentMethod').selectedIndex = 0;
+    document.getElementById('paymentMethod').value = '';
+    document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
     document.getElementById('productHeightUnit').selectedIndex = 0;
     document.getElementById('productWidthUnit').selectedIndex = 0;
     document.getElementById('sketchPhoto').value = '';
     document.getElementById('currencyPrefix').style.display = 'none';
 }
+
+// dropdown payment method ...//
+
+function selectPayment(method) {
+    document.getElementById('paymentMethod').value = method;
+
+    document.querySelectorAll('.payment-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+
+    if (method === 'Full Payment') {
+        document.getElementById('payOpt_full').classList.add('selected');
+    } else {
+        document.getElementById('payOpt_advanced').classList.add('selected');
+    }
+}
+
 // ........................ Success Modal ......................................//
 
 function showSuccessModal() {
@@ -993,6 +1090,7 @@ async function exportOrderToPDF() {
         y += imgH + 10;
     }
 
+
     //........................FOOTER .........................//
 
     const pageCount = doc.internal.getNumberOfPages();
@@ -1011,3 +1109,4 @@ async function exportOrderToPDF() {
     const safeName = (data.name || 'Order').replace(/[^a-z0-9_\- ]/gi, '_').replace(/\s+/g, '_');
     doc.save(`GrafixPrintHub_${safeName}_Order.pdf`);
 }
+
