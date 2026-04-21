@@ -207,8 +207,15 @@
 
       try {
         // Re-authenticate first
-        const credential = firebase.auth.EmailAuthProvider.credential(email, currentPw);
+        const currentEmail = sessionStorage.getItem('userEmail');
+        const credential = firebase.auth.EmailAuthProvider.credential(currentEmail, currentPw);
         await firebase.auth().currentUser.reauthenticateWithCredential(credential);
+
+        // Update password
+        if (email !== currentEmail) {
+          await firebase.auth().currentUser.updateEmail(email);
+          sessionStorage.setItem('userEmail', email);
+        }
 
         // Update password
         await firebase.auth().currentUser.updatePassword(newPw);
