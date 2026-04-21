@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Add Employee | Grafix Print Hub</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-<link rel="stylesheet" href="../../css/hr-style.css">
-<link rel="stylesheet" href="../../css/menu.css">
-
-<style>
-    /* Page Access Selector Styles */
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Employee | Grafix Print Hub</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../../css/hr-style.css">
+  <link rel="stylesheet" href="../../css/menu.css">
+ 
+  <style>
+    /* ── Page Access Selector ─────────────────────────────────────── */
     .pas-section-title {
       font-size: .75rem;
       font-weight: 700;
@@ -23,7 +23,7 @@
       gap: 6px;
     }
     .pas-section-title i { color: #ffe785; font-size: .85rem; }
-
+ 
     .pas-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -42,12 +42,13 @@
       border-right: 1px solid #f0f2f5;
       transition: background .15s;
     }
-    .pas-item:nth-child(even) { border-right: none; }
-    .pas-item:nth-last-child(-n+2) { border-bottom: none; }
-    .pas-item:last-child { grid-column: 1 / -1; border-right: none; border-bottom: none; }
-    .pas-item:hover { background: #fffbeb; }
-
+    .pas-item:nth-child(even)       { border-right: none; }
+    .pas-item:nth-last-child(-n+2)  { border-bottom: none; }
+    .pas-item:last-child            { grid-column: 1 / -1; border-right: none; border-bottom: none; }
+    .pas-item:hover                 { background: #fffbeb; }
+ 
     .pas-check { display: none; }
+ 
     .pas-tick {
       width: 17px; height: 17px; border-radius: 5px;
       border: 2px solid #d1d5db; flex-shrink: 0; margin-top: 2px;
@@ -59,153 +60,352 @@
       width: 24px; height: 24px; border-radius: 6px;
       background: #f3f4f6; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: .8rem; color: #6b7280;
+      font-size: .8rem; color: #6b7280; transition: background .15s, color .15s;
     }
     .pas-text { flex: 1; min-width: 0; }
     .pas-label { font-size: .78rem; font-weight: 600; color: #111827; line-height: 1.2; }
-    .pas-desc { font-size: .68rem; color: #9ca3af; margin-top: 1px; }
-
-    .pas-check:checked ~ .pas-tick { background: #34495e; border-color: #34495e; color: white; }
-    .pas-check:checked ~ .pas-icon { background: #ffe785; color: #34495e; }
-    .pas-item:has(.pas-check:checked) { background: #fffef0; }
-
+    .pas-desc  { font-size: .68rem; color: #9ca3af; margin-top: 1px; }
+ 
+    .pas-check:checked ~ .pas-tick           { background: #34495e; border-color: #34495e; color: white; }
+    .pas-check:checked ~ .pas-icon           { background: #ffe785; color: #34495e; }
+    .pas-item:has(.pas-check:checked)        { background: #fffef0; }
+ 
     .pas-footer { display: flex; align-items: center; margin-top: 5px; }
     .pas-btn { background: none; border: none; font-size: .73rem; font-weight: 600;
                color: #6b7280; cursor: pointer; text-decoration: underline; padding: 0 8px 0 0; }
     .pas-btn:hover { color: #34495e; }
     .pas-count { font-size: .71rem; color: #6b7280; margin-left: auto; }
     .pas-count b { color: #34495e; }
-</style>
+  </style>
 </head>
-
+ 
 <body>
-
+ 
 <nav class="navbar navbar-dark shadow-sm sticky-top">
-<div class="container">
-<div class="d-flex align-items-center">
-<button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-<i class="bi bi-list fs-4"></i>
-</button>
-<a class="navbar-brand d-flex align-items-center" href="#">
-<img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
+  <div class="container">
+    <div class="d-flex align-items-center">
+      <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="../../assets/logo.png" alt="Logo" height="65" class="me-2">
         Grafix Print Hub
-</a>
-</div>
-</div>
+      </a>
+    </div>
+  </div>
 </nav>
-
+ 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu"></div>
-
+ 
 <div id="logoutModal" class="modal-overlay" style="display:none;">
-<div class="modal-box">
-<h5>Confirm Logout</h5>
-<p>Are you sure you want to leave?</p>
-<button onclick="logout()" class="modal-btn-confirm-red">Logout</button>
-<button onclick="closeLogoutModal()" class="modal-btn-cancel">Cancel</button>
+  <div class="modal-box">
+    <h5>Confirm Logout</h5>
+    <p>Are you sure you want to leave?</p>
+    <button onclick="logout()" class="modal-btn-confirm-red">Logout</button>
+    <button onclick="closeLogoutModal()" class="modal-btn-cancel">Cancel</button>
+  </div>
 </div>
-</div>
-
+ 
 <div class="hero-section">
-<div class="container text-center">
-<h1 class="display-4">Add New Employee</h1>
+  <div class="container text-center">
+    <h1 class="display-4">Add New Employee</h1>
+  </div>
 </div>
-</div>
-
+ 
 <div class="container mt-3">
-<a href="hr-index.html" class="btn btn-outline-secondary back-btn">
-<i class="bi bi-arrow-left"></i> Back to Dashboard
-</a>
+  <a href="hr-index.html" class="btn btn-outline-secondary back-btn">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
 </div>
-
+ 
 <br>
-
+ 
 <form id="addEmployeeForm" class="container form-container needs-validation" novalidate>
+ 
+  <div id="notificationArea"></div>
+ 
+  <div class="row g-4">
+ 
+    <!-- LEFT — Personal Info -->
+    <div class="col-md-6">
+      <div class="form-box">
+ 
+        <div class="mb-3">
+          <label class="form-label">Employee Name</label>
+          <input type="text" id="empName" class="form-control" placeholder="e.g. Kamal Perera" required>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Employee ID</label>
+          <input type="text" id="empId" class="form-control" placeholder="e.g. EMP-001" required>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select id="empStatus" class="form-select" required>
+            <option value="" disabled selected>Select Status</option>
+            <option value="Full Time">Full Time</option>
+            <option value="Part Time">Part Time</option>
+          </select>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Department</label>
+          <select id="empDepartment" class="form-select" required>
+            <option value="" disabled selected>Select Department</option>
+            <option value="Front Office">Front Office</option>
+            <option value="Workshop">Workshop</option>
+          </select>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Date Joined</label>
+          <input type="date" id="empJoinDate" class="form-control" required>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">NIC</label>
+          <input type="text" id="empNic" class="form-control" placeholder="e.g. 901234567V or 200012345678" required>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Address</label>
+          <input type="text" id="empAddress" class="form-control" placeholder="Street, City" required>
+        </div>
+ 
+      </div>
+    </div>
+ 
+    <!-- RIGHT — Contact & Details -->
+    <div class="col-md-6">
+      <div class="form-box">
+ 
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" id="empEmail" class="form-control" placeholder="name@example.com" required>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Contact Number</label>
+          <input type="text" id="empContact" class="form-control" placeholder="e.g. 0771234567" required>
+        </div>
+ 
+        <div class="mb-3">
+          <label class="form-label">Remarks</label>
+          <textarea id="empRemarks" class="form-control" rows="3" placeholder="Optional notes…"></textarea>
+        </div>
+ 
+        <!-- Website Access -->
+<div class="form-check mt-3">
+  <input class="form-check-input" type="checkbox" id="hasAccess" onchange="toggleAccessSection(this)">
+  <label class="form-check-label" for="hasAccess" style="font-weight:600; color:#374151;">
+    Give Website Access
+  </label>
+</div>
 
-<div id="notificationArea"></div>
+<div id="accessSection" style="display:none; margin-top:15px; padding:14px; background:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
 
-<div class="row g-4">
-
-<!-- LEFT — Personal Info -->
-<div class="col-md-6">
-<div class="form-box">
-  <div class="mb-3">
-    <label class="form-label">Employee Name</label>
-    <input type="text" id="empName" class="form-control" placeholder="e.g. Kamal Perera" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Employee ID</label>
-    <input type="text" id="empId" class="form-control" placeholder="e.g. EMP-001" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Status</label>
-    <select id="empStatus" class="form-select" required>
-      <option value="" disabled selected>Select Status</option>
-      <option value="Full Time">Full Time</option>
-      <option value="Part Time">Part Time</option>
+  <div class="mb-2">
+    <label class="form-label">Job Role</label>
+    <select id="jobRole" class="form-select">
+      <option value="" disabled selected>Select Role</option>
+      <option value="financial_manager">Receptionist</option>
+      <option value="resource_manager">Front Office Manager</option>
+      <option value="customer_manager">Shop Keeper</option>
     </select>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Department</label>
-    <select id="empDepartment" class="form-select" required>
-      <option value="" disabled selected>Select Department</option>
-      <option value="Front Office">Front Office</option>
-      <option value="Workshop">Workshop</option>
-    </select>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Date Joined</label>
-    <input type="date" id="empJoinDate" class="form-control" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">NIC</label>
-    <input type="text" id="empNic" class="form-control" placeholder="e.g. 901234567V or 200012345678" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Address</label>
-    <input type="text" id="empAddress" class="form-control" placeholder="Street, City" required>
-  </div>
-</div>
-</div>
 
-<!-- RIGHT — Contact & Details -->
-<div class="col-md-6">
-<div class="form-box">
-  <div class="mb-3">
-    <label class="form-label">Email</label>
-    <input type="email" id="empEmail" class="form-control" placeholder="name@example.com" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Contact Number</label>
-    <input type="text" id="empContact" class="form-control" placeholder="e.g. 0771234567" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Remarks</label>
-    <textarea id="empRemarks" class="form-control" rows="3" placeholder="Optional notes…"></textarea>
+  <!-- CHANGED: Login Email is now fixed to Owner's email -->
+  <div class="mb-2">
+    <label class="form-label">Login Email <span style="color:#dc2626; font-size:0.8rem;">(Owner's Email - Password resets go here)</span></label>
+    <input type="email" id="loginEmail" class="form-control" readonly>
   </div>
 
-  <!-- Website Access -->
-  <div class="form-check mt-3">
-    <input class="form-check-input" type="checkbox" id="hasAccess" onchange="toggleAccessSection(this)">
-    <label class="form-check-label" for="hasAccess" style="font-weight:600; color:#374151;">
-      Give Website Access
-    </label>
-  </div>
-
-  <div id="accessSection" style="display:none; margin-top:15px; padding:14px; background:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
-    <div class="mb-2">
-      <label class="form-label">Job Role</label>
-      <select id="jobRole" class="form-select">
-        <option value="" disabled selected>Select Role</option>
-        <option value="financial_manager">Receptionist</option>
-        <option value="resource_manager">Front Office Manager</option>
-        <option value="customer_manager">Shop Keeper</option>
-      </select>
+  <div class="mb-2">
+    <label class="form-label">Login Password</label>
+    <div class="input-group">
+      <input type="password" id="loginPassword" class="form-control" placeholder="Min. 6 characters">
+      <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" tabindex="-1">
+        <i class="bi bi-eye-slash" id="toggleIcon"></i>
+      </button>
     </div>
-
-    <div class="mb-2">
-      <label class="form-label">Login Email <span style="color:#dc2626; font-size:0.75rem;">(Owner's Email)</span></label>
-      <input type="email" id="loginEmail" class="form-control" readonly>
+  </div>
+ 
+          <!-- ── Page Access ──────────────────────────────────────── -->
+          <div class="pas-section-title">
+            <i class="bi bi-grid-3x3-gap"></i> Page Access
+          </div>
+          <p style="font-size:.71rem; color:#9ca3af; margin-bottom:8px;">
+            Choose which pages this employee can access after login.
+          </p>
+ 
+          <div class="pas-grid" id="pageAccessGrid">
+ 
+            <label class="pas-item" for="pa_om">
+              <input class="pas-check" type="checkbox" id="pa_om" value="order_management" onchange="updatePasCount()">
+              <div class="pas-tick"><i class="bi bi-check-lg"></i></div>
+              <div class="pas-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="pas-text">
+                <div class="pas-label">Order Management</div>
+                <div class="pas-desc">Job cards &amp; production</div>
+              </div>
+            </label>
+ 
+            <label class="pas-item" for="pa_crm">
+              <input class="pas-check" type="checkbox" id="pa_crm" value="crm" onchange="updatePasCount()">
+              <div class="pas-tick"><i class="bi bi-check-lg"></i></div>
+              <div class="pas-icon"><i class="bi bi-people"></i></div>
+              <div class="pas-text">
+                <div class="pas-label">CRM</div>
+                <div class="pas-desc">Clients &amp; walk-ins</div>
+              </div>
+            </label>
+ 
+            <label class="pas-item" for="pa_fin">
+              <input class="pas-check" type="checkbox" id="pa_fin" value="financial_management" onchange="updatePasCount()">
+              <div class="pas-tick"><i class="bi bi-check-lg"></i></div>
+              <div class="pas-icon"><i class="bi bi-cash-coin"></i></div>
+              <div class="pas-text">
+                <div class="pas-label">Financial Management</div>
+                <div class="pas-desc">Invoices &amp; payments</div>
+              </div>
+            </label>
+ 
+            <label class="pas-item" for="pa_hr">
+              <input class="pas-check" type="checkbox" id="pa_hr" value="human_resources" onchange="updatePasCount()">
+              <div class="pas-tick"><i class="bi bi-check-lg"></i></div>
+              <div class="pas-icon"><i class="bi bi-person-badge"></i></div>
+              <div class="pas-text">
+                <div class="pas-label">Human Resources</div>
+                <div class="pas-desc">Employee records</div>
+              </div>
+            </label>
+ 
+            <label class="pas-item" for="pa_rc">
+              <input class="pas-check" type="checkbox" id="pa_rc" value="resource_coordinator" onchange="updatePasCount()">
+              <div class="pas-tick"><i class="bi bi-check-lg"></i></div>
+              <div class="pas-icon"><i class="bi bi-boxes"></i></div>
+              <div class="pas-text">
+                <div class="pas-label">Resource Coordinator</div>
+                <div class="pas-desc">Materials &amp; inventory</div>
+              </div>
+            </label>
+ 
+          </div><!-- /pas-grid -->
+ 
+          <div class="pas-footer">
+            <button type="button" class="pas-btn" onclick="pasAll(true)">Select all</button>
+            <button type="button" class="pas-btn" onclick="pasAll(false)">Clear all</button>
+            <div class="pas-count"><b id="pasCountNum">0</b> of 5 selected</div>
+          </div>
+          <!-- ───────────────────────────────────────────────────── -->
+ 
+        </div>
+ 
+        <!-- Photo -->
+        <div class="mb-3 mt-3">
+          <label class="form-label">Add Photo (Optional)</label>
+          <input type="file" id="empImage" class="form-control" accept="image/*">
+          <img id="imagePreview" src="" alt="Preview"
+               style="display:none; margin-top:10px; max-width:100%; max-height:180px; object-fit:cover; border-radius:10px; border:1px solid #e5e7eb;">
+        </div>
+ 
+      </div>
     </div>
+ 
+  </div>
+ 
+  <div class="text-center mt-4">
+    <button type="submit" class="btn btn-primary add-btn">
+      <i class="bi bi-person-plus me-2"></i>Add Employee
+    </button>
+  </div>
+ 
+</form>
+ 
+<footer class="text-center text-muted mt-5 py-3">
+  <small>&copy; Grafix Print Hub</small>
+</footer>
+ 
+<!-- Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+<script src="../../js/firebase-config.js"></script>
+<!-- All HR logic — NO inline script needed -->
+<script src="../../js/hr-script.js"></script>
+<script src="../../js/navbar-loader.js"></script>
+<script src="../../js/signin.js"></script>
+ 
+<script>
+  // ── Access section toggle ──────────────────────────────────────────────────
+  function toggleAccessSection(cb) {
+    document.getElementById('accessSection').style.display = cb.checked ? 'block' : 'none';
+    if (!cb.checked) pasAll(false);
+  }
+ 
+  // ── Password visibility (existing button, wired here) ─────────────────────
+  document.getElementById('togglePasswordBtn').addEventListener('click', function () {
+    const inp = document.getElementById('loginPassword');
+    const ico = document.getElementById('toggleIcon');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    ico.className = inp.type === 'password' ? 'bi bi-eye-slash' : 'bi bi-eye';
+  });
+ 
+  // ── Photo preview ──────────────────────────────────────────────────────────
+  document.getElementById('empImage').addEventListener('change', function () {
+    const preview = document.getElementById('imagePreview');
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+      reader.readAsDataURL(this.files[0]);
+    }
+  });
+ 
+  // ── Page access helpers ────────────────────────────────────────────────────
+  function updatePasCount() {
+    const n = document.querySelectorAll('#pageAccessGrid .pas-check:checked').length;
+    document.getElementById('pasCountNum').textContent = n;
+  }
+ 
+  function pasAll(checked) {
+    document.querySelectorAll('#pageAccessGrid .pas-check').forEach(c => c.checked = checked);
+    updatePasCount();
+  }
+ 
+  // Exposed so hr-script.js can call window.getSelectedPages() when saving to Firestore
+  // In hr-script.js addEmployee(), include:  grantedPages: window.getSelectedPages()
+  window.getSelectedPages = function () {
+    return Array.from(document.querySelectorAll('#pageAccessGrid .pas-check:checked'))
+                .map(c => c.value);
+  };
+ 
+  // ── Owner-only guard ───────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const role = sessionStorage.getItem('userRole');
+    if (role && role !== 'order_manager') {
+      window.location.href = '../../auth/login/access-denied.html';
+    }
+  });
 
-    <div class="mb-2">
-      <label class="form-label
+  // ── Auto-fill Login Email with Owner's email when access is enabled ─────
+document.getElementById('hasAccess').addEventListener('change', function () {
+  const loginEmailInput = document.getElementById('loginEmail');
+  if (this.checked) {
+    const ownerEmail = sessionStorage.getItem('userEmail');   // Owner who is logged in
+    if (ownerEmail) {
+      loginEmailInput.value = ownerEmail;
+    } else {
+      loginEmailInput.value = '';
+    }
+  } else {
+    loginEmailInput.value = '';
+  }
+});
+</script>
+ 
+</body>
+</html>
