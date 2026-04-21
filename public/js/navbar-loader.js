@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     // Logout Click Handler
-    document.getElementById('logoutTrigger').addEventListener('click', function(e) {
+    document.getElementById('logoutTrigger').addEventListener('click', function (e) {
         e.preventDefault();
         confirmLogout();
     });
@@ -61,6 +61,9 @@ function closeLogoutModal() {
 }
 
 function logout() {
+    if (typeof firebase !== 'undefined') {
+        firebase.auth().signOut();
+    }
     sessionStorage.clear();
-    window.location.href = '../../index.html';
+    window.location.href = _loginPath();
 }
