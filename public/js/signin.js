@@ -159,8 +159,13 @@ function _showAccessDeniedPopup() {
 window.guardPage = function (pageKey) {
   const role = sessionStorage.getItem('userRole');
   if (!role) { window.location.href = _loginPath(); return; }
-  if (role === 'order_manager') return;
+
   const granted = _getGrantedPages();
+
+  // Owner bypass — only if session truly has __all__
+  if (role === 'order_manager' && granted.includes('__all__')) return;
+
+  // Everyone else must have the specific page granted
   if (!granted.includes(pageKey)) {
     document.body.style.visibility = 'hidden';
     setTimeout(() => {
@@ -231,7 +236,7 @@ if (loginForm) {
       if (email === "randulamunasinghe727@gmail.com") {
         sessionStorage.setItem('userRole', 'order_manager');
         sessionStorage.setItem('userEmail', email);
-        sessionStorage.setItem('grantedPages', JSON.stringify(ALL_PAGE_KEYS));
+        sessionStorage.setItem('grantedPages', JSON.stringify(['__all__']));
 
         sendLoginConfirmationEmail(email, 'Owner', 'OWNER', 'Administration', 'Full Time', ALL_PAGE_KEYS);
 
