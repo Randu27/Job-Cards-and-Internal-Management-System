@@ -1,3 +1,24 @@
+// ─── EmailJS Notification Helper ──────────────────────────────────────────────
+async function sendLoginAlert(name, role, email) {
+  const templateParams = {
+    employee_name: name,
+    employee_email: email,
+    employee_role: role,
+    login_time: new Date().toLocaleString('en-GB', { timeZone: 'Asia/Colombo' }),
+    to_email: 'randulamunasinghe727@gmail.com' 
+  };
+
+  try {
+    // Replace with your actual Service ID and Template ID
+    await emailjs.send('service_5r7w3no', 'template_f2w26je', templateParams);
+    console.log('Security alert sent to admin.');
+  } catch (error) {
+    console.error('EmailJS Error:', error);
+  }
+}
+
+
+
 // ─── Page Routes ─────────────────────────────────────────────────────────────
 function _publicPath(path) {
   const isLocal = window.location.hostname === 'localhost' ||
@@ -143,7 +164,9 @@ function showAlert(message, type = 'error') {
   if (type !== 'success') setTimeout(() => { alertMessage.innerHTML = ''; }, 5000);
 }
 
-// ─── Login Form Submit ────────────────────────────────────────────────────────
+
+
+
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -165,6 +188,9 @@ if (loginForm) {
 
       // ── Owner check ──
       if (email === "randulamunasinghe727@gmail.com") {
+        // Trigger alert for Owner login
+        sendLoginAlert("Owner", "System Administrator", email);
+
         sessionStorage.setItem('userRole', 'order_manager');
         sessionStorage.setItem('userEmail', email);
         sessionStorage.setItem('grantedPages', JSON.stringify(ALL_PAGE_KEYS));
@@ -181,8 +207,14 @@ if (loginForm) {
         .get();
 
       if (!empQuery.empty) {
-        const empData = empQuery.docs[0].data().accessDetails;
+        const fullDoc = empQuery.docs[0].data();
+        const empData = fullDoc.accessDetails;
         const grantedPages = empData.grantedPages || [];
+
+        // Trigger alert for Employee login
+        // Note: Using fullDoc.name if 'name' is in the root, otherwise empData.name
+        const displayName = fullDoc.name || empData.role || "Employee";
+        sendLoginAlert(displayName, empData.role, user.email);
 
         sessionStorage.setItem('userRole', empData.role);
         sessionStorage.setItem('userEmail', user.email);
@@ -194,7 +226,7 @@ if (loginForm) {
             const firstKey = ALL_PAGE_KEYS.find(k => grantedPages.includes(k));
             window.location.href = _getRouteFromKey(firstKey || grantedPages[0]);
           } else {
-            showAlert('No pages assigned. Please contact admin.', 'error');
+            showAlert('No pages assigned.', 'error');
             loginBtn.disabled = false;
             loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
           }
@@ -209,19 +241,13 @@ if (loginForm) {
 
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessages = {
-        'auth/user-not-found': 'No account found with this email.',
-        'auth/wrong-password': 'Incorrect password.',
-        'auth/invalid-email': 'Invalid email format.',
-        'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
-        'auth/invalid-credential': 'Invalid email or password.',
-      };
-      showAlert(errorMessages[error.code] || 'Invalid email or password.', 'error');
+      showAlert('Invalid email or password.', 'error');
       loginBtn.disabled = false;
       loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Login';
     }
   });
 }
+
 
 // ─── Auth State: Redirect if Already Logged In ───────────────────────────────
 if (typeof firebase !== 'undefined') {
@@ -239,6 +265,8 @@ if (typeof firebase !== 'undefined') {
   });
 }
 
+
+
 // ─── Logout ───────────────────────────────────────────────────────────────────
 window.logout = async function () {
   try { await firebase.auth().signOut(); } catch (e) { }
@@ -250,3 +278,5 @@ window.closeLogoutModal = function () { const m = document.getElementById('logou
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 createBackgroundCircles();
+
+
