@@ -1,3 +1,67 @@
+// ─── EmailJS Init ─────────────────────────────────────────────────────────────
+emailjs.init('T4m2kh3u39gu5FwQ3');
+
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
+  let browser = 'Unknown Browser';
+  let os = 'Unknown OS';
+
+  if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+  else if (ua.includes('Edg')) browser = 'Edge';
+  else if (ua.includes('OPR') || ua.includes('Opera')) browser = 'Opera';
+
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac')) os = 'MacOS';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+
+  return `${browser} on ${os}`;
+}
+
+function getLoginTime() {
+  return new Date().toLocaleString('en-GB', {
+    weekday: 'long', day: '2-digit', month: 'long',
+    year: 'numeric', hour: '2-digit', minute: '2-digit',
+    second: '2-digit', hour12: true,
+  });
+}
+
+function formatGrantedPages(pages) {
+  if (!pages || pages.length === 0) return 'None';
+  const labels = {
+    'order_management': 'Order Management',
+    'crm': 'Customer Management',
+    'financial_management': 'Financial Management',
+    'human_resources': 'Human Resources',
+    'resource_coordinator': 'Resource Coordinator',
+  };
+  return pages.map(p => labels[p] || p).join(', ');
+}
+
+async function sendLoginConfirmationEmail(toEmail, toName, employeeId, department, empStatus, grantedPages) {
+  try {
+    await emailjs.send('service_zd1etjd', 'template_se22qh8', {
+      to_email: toEmail,
+      to_name: toName,
+      employee_id: employeeId,
+      department: department,
+      emp_status: empStatus,
+      login_time: getLoginTime(),
+      device: getDeviceInfo(),
+      granted_pages: formatGrantedPages(grantedPages),
+      email: toEmail,
+    });
+    console.log('✅ Confirmation email sent.');
+  } catch (err) {
+    console.error('❌ Email failed:', err);
+  }
+}
+
+
+
 // ─── Page Routes ─────────────────────────────────────────────────────────────
 function _publicPath(path) {
   const isLocal = window.location.hostname === 'localhost' ||
@@ -168,6 +232,9 @@ if (loginForm) {
         sessionStorage.setItem('userRole', 'order_manager');
         sessionStorage.setItem('userEmail', email);
         sessionStorage.setItem('grantedPages', JSON.stringify(ALL_PAGE_KEYS));
+
+        sendLoginConfirmationEmail(email, 'Owner', 'OWNER', 'Administration', 'Full Time', ALL_PAGE_KEYS);
+
         showAlert('Login successful! Redirecting...', 'success');
         setTimeout(() => { window.location.href = PAGE_ROUTES.order_manager; }, 1500);
         return;
@@ -187,6 +254,18 @@ if (loginForm) {
         sessionStorage.setItem('userRole', empData.role);
         sessionStorage.setItem('userEmail', user.email);
         sessionStorage.setItem('grantedPages', JSON.stringify(grantedPages));
+
+        // ...............Comformation email set .........//
+
+        const empDoc = empQuery.docs[0].data();
+        sendLoginConfirmationEmail(
+          user.email,
+          empDoc.name,
+          empQuery.docs[0].id,
+          empDoc.department,
+          empDoc.status === 'FullTime' ? 'Full Time' : 'Part Time',
+          grantedPages
+        );
 
         showAlert('Login successful! Redirecting...', 'success');
         setTimeout(() => {
