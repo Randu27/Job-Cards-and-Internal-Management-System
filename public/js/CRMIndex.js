@@ -1100,7 +1100,7 @@ function setupEventListeners() {
     }
 }
 
-// ==================== WINDOW EXPORTS ====================
+//  WINDOW EXPORTS
 
 window.openAddCustomerModal   = openAddCustomerModal;
 window.showPage               = showPage;
