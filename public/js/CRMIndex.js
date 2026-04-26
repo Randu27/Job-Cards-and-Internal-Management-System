@@ -387,7 +387,7 @@ async function saveCustomer() {
     }
 }
 
-// ==================== VIEW CUSTOMER ====================
+// ======== VIEW CUSTOMER =========
 
 function viewCustomer(id) {
     const c = customers.find(c => c.id === id);
