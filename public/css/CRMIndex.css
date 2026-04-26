@@ -1,9 +1,4 @@
-/* ============================================================
-   CRM MODULE - CUSTOMER RELATIONSHIP MANAGEMENT
-   Developed by: R.G.S. Nadeesha (Cyber Serpents WD-41)
-   ============================================================ */
-
-:root {
+ :root {
     --primary-color: #ffe785;
     --secondary-color: #fdfcf0;
     --dark-color: #2c3e50;
@@ -932,7 +927,7 @@ footer {
     max-height: 500px;
     overflow-y: auto;
 }
-/* ========= FORM VALIDATION STYLES ======== */
+/* ==================== FORM VALIDATION STYLES ==================== */
 
 .is-invalid-custom {
     border-color: #dc3545 !important;
