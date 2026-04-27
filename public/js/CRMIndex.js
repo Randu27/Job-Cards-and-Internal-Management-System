@@ -13,14 +13,12 @@ let currentFilter = { search: '', type: '', rating: '', status: '' };
 const CUSTOMER_CODE_CONFIG = {
     prefix: 'GPH-CUST-',
     
-    // Generate a unique code based on timestamp + random numbers
     generateCode: function() {
         const timestamp = Date.now().toString().slice(-6);
         const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         return this.prefix + timestamp + random;
     },
     
-    // Generate sequential code
     generateSequentialCode: async function() {
         try {
             const snapshot = await db.collection('customers')
@@ -146,9 +144,7 @@ function formatDisplayDate(dateStr) {
 
 function validatePhone(phone) {
     if (!phone) return false;
-    // Remove any non-digit characters for validation
     const cleaned = phone.toString().replace(/[\s\-().+]/g, '');
-    // Check if it's exactly 10 digits (Sri Lankan format) OR 7-15 digits (international)
     return /^\d{10}$/.test(cleaned) || /^\d{7,15}$/.test(cleaned);
 }
 
@@ -157,11 +153,9 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Real-time validation functions
 function validateField(field, isValid, errorMessage) {
     if (!field) return;
     
-    // Remove existing error message
     const existingError = field.parentElement.querySelector('.invalid-feedback-custom');
     if (existingError) existingError.remove();
     
@@ -224,6 +218,8 @@ document.addEventListener('DOMContentLoaded', function () {
     showPage('home');
     initializeEmailJS();
     populateDynamicDropdowns();
+    setupFeedbackButton();  // Setup feedback button
+    setupStarRating();
 });
 
 function initializeEmailJS() {
@@ -241,7 +237,7 @@ function populateDynamicDropdowns() {
     if (customerTypeSelect) customerTypeSelect.innerHTML = CUSTOMER_TYPE_CONFIG.getOptionsHtml();
 }
 
-// ==================== EMAIL ====================
+// ==================== EMAIL TO CUSTOMER (WELCOME) ====================
 
 async function sendCustomerEmail(customerData, isNew = true) {
     const emailParams = {
@@ -261,11 +257,228 @@ async function sendCustomerEmail(customerData, isNew = true) {
 
     try {
         await emailjs.send('service_xl37j5s', 'template_ovx89ee', emailParams);
-        console.log('Email sent successfully to:', customerData.email);
+        console.log('Welcome email sent to:', customerData.email);
         return true;
     } catch (error) {
-        console.error('Email failed — Status:', error.status, '| Error:', error.text);
+        console.error('Email failed:', error);
         return false;
+    }
+}
+
+// ==================== EMAIL TO ADMIN (FEEDBACK FROM CUSTOMER) ====================
+
+async function sendFeedbackToAdmin(feedbackData) {
+    const emailParams = {
+        to_email: 'sewminin76@gmail.com',  // YOUR email address
+        from_name: feedbackData.name,
+        from_email: feedbackData.email,
+        rating: feedbackData.ratingText,
+        message: feedbackData.message,
+        feedback_date: new Date().toLocaleString()
+    };
+
+    try {
+        await emailjs.send('service_xl37j5s', 'template_r5j64pq', emailParams);
+        console.log('Feedback sent to admin from:', feedbackData.email);
+        return true;
+    } catch (error) {
+        console.error('Feedback email failed:', error);
+        return false;
+    }
+}
+
+// ==================== FEEDBACK MODAL FUNCTIONS ====================
+
+let selectedFeedbackRating = 0;
+
+function openFeedbackModal() {
+    // Clear form
+    const nameInput = document.getElementById('fbName');
+    const emailInput = document.getElementById('fbEmail');
+    const messageInput = document.getElementById('fbMessage');
+    
+    if (nameInput) nameInput.value = '';
+    if (emailInput) emailInput.value = '';
+    if (messageInput) messageInput.value = '';
+    
+    // Reset stars
+    selectedFeedbackRating = 0;
+    document.getElementById('fbRating').value = '0';
+    document.getElementById('ratingTextDisplay').innerText = 'Click a star to rate';
+    
+    const allStars = document.querySelectorAll('.rating-star-feedback');
+    allStars.forEach(star => {
+        star.classList.remove('selected');
+        star.style.color = '#ddd';
+    });
+    
+    // Try to pre-fill from Firebase if user is logged in
+    const user = firebase.auth().currentUser;
+    if (user && user.email) {
+        if (emailInput) emailInput.value = user.email;
+        if (nameInput) nameInput.value = user.displayName || '';
+    } else {
+        // Try to get from localStorage
+        const savedEmail = localStorage.getItem('userEmail');
+        const savedName = localStorage.getItem('userName');
+        if (savedEmail && emailInput) emailInput.value = savedEmail;
+        if (savedName && nameInput) nameInput.value = savedName;
+    }
+    
+    new bootstrap.Modal(document.getElementById('feedbackModal')).show();
+}
+
+// Setup star rating for feedback modal
+function setupStarRating() {
+    const stars = document.querySelectorAll('.rating-star-feedback');
+    const ratingInput = document.getElementById('fbRating');
+    const ratingTextDisplay = document.getElementById('ratingTextDisplay');
+    
+    // Rating labels based on star count
+    const ratingLabels = {
+        1: '⭐ - Very Poor',
+        2: '⭐⭐ - Poor',
+        3: '⭐⭐⭐ - Average',
+        4: '⭐⭐⭐⭐ - Good',
+        5: '⭐⭐⭐⭐⭐ - Excellent'
+    };
+    
+    stars.forEach(star => {
+        // Click event
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            selectedFeedbackRating = rating;
+            ratingInput.value = rating;
+            
+            // Update stars appearance
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('selected');
+                    s.style.color = '#ffc107';
+                } else {
+                    s.classList.remove('selected');
+                    s.style.color = '#ddd';
+                }
+            });
+            
+            // Update text display
+            ratingTextDisplay.innerText = ratingLabels[rating] || `${rating} Stars selected`;
+        });
+        
+        // Hover effect
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.style.color = '#ffc107';
+                } else {
+                    s.style.color = '#ddd';
+                }
+            });
+        });
+        
+        star.addEventListener('mouseleave', function() {
+            stars.forEach((s, index) => {
+                if (index < selectedFeedbackRating) {
+                    s.style.color = '#ffc107';
+                } else {
+                    s.style.color = '#ddd';
+                }
+            });
+        });
+    });
+}
+
+async function sendFeedback() {
+    const name = document.getElementById('fbName').value.trim();
+    const email = document.getElementById('fbEmail').value.trim();
+    const rating = parseInt(document.getElementById('fbRating').value);
+    const message = document.getElementById('fbMessage').value.trim();
+    
+    // Validation
+    if (!name) {
+        showToast('Please enter your name!', 'danger');
+        return;
+    }
+    if (!email) {
+        showToast('Please enter your email address!', 'danger');
+        return;
+    }
+    if (!isValidEmail(email)) {
+        showToast('Please enter a valid email address!', 'danger');
+        return;
+    }
+    if (rating === 0 || isNaN(rating)) {
+        showToast('Please select a rating by clicking on the stars!', 'danger');
+        return;
+    }
+    if (!message) {
+        showToast('Please enter your feedback message!', 'danger');
+        return;
+    }
+    
+    // Rating text mapping
+    const ratingLabels = {
+        5: '⭐⭐⭐⭐⭐ - Excellent (5 Stars)',
+        4: '⭐⭐⭐⭐ - Good (4 Stars)',
+        3: '⭐⭐⭐ - Average (3 Stars)',
+        2: '⭐⭐ - Poor (2 Stars)',
+        1: '⭐ - Very Poor (1 Star)'
+    };
+    
+    const ratingText = ratingLabels[rating] || `${rating} Stars`;
+    
+    // Save to localStorage for future
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userName', name);
+    
+    const sendBtn = document.getElementById('sendFeedbackBtn');
+    const originalText = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending...';
+    sendBtn.disabled = true;
+    
+    try {
+        const success = await sendFeedbackToAdmin({
+            name: name,
+            email: email,
+            ratingText: ratingText,
+            message: message
+        });
+        
+        if (success) {
+            showToast('✅ Thank you! Your feedback has been sent successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('feedbackModal')).hide();
+            
+            // Reset form
+            document.getElementById('fbName').value = '';
+            document.getElementById('fbEmail').value = '';
+            document.getElementById('fbMessage').value = '';
+            document.getElementById('fbRating').value = '0';
+            selectedFeedbackRating = 0;
+            
+            // Reset stars
+            const allStars = document.querySelectorAll('.rating-star-feedback');
+            allStars.forEach(star => {
+                star.classList.remove('selected');
+                star.style.color = '#ddd';
+            });
+            document.getElementById('ratingTextDisplay').innerText = 'Click a star to rate';
+        } else {
+            showToast('Failed to send feedback. Please try again.', 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to send feedback. Please try again.', 'danger');
+    } finally {
+        sendBtn.innerHTML = originalText;
+        sendBtn.disabled = false;
+    }
+}
+
+function setupFeedbackButton() {
+    const sendFeedbackBtn = document.getElementById('sendFeedbackBtn');
+    if (sendFeedbackBtn) {
+        sendFeedbackBtn.addEventListener('click', sendFeedback);
     }
 }
 
@@ -310,10 +523,8 @@ async function saveCustomer() {
     const feedbackVal = document.getElementById('customerFeedback').value;
     const type        = document.getElementById('customerType').value;
 
-    // Run all validations
     let isValid = true;
     
-    // Required field validations
     if (!name) {
         showToast('Please enter customer name!', 'danger');
         isValid = false;
@@ -333,19 +544,16 @@ async function saveCustomer() {
     
     if (!isValid) return;
     
-    // Email format validation
     if (!isValidEmail(email)) {
-        showToast('Please enter a valid email address (e.g., name@example.com)!', 'danger');
+        showToast('Please enter a valid email address!', 'danger');
         return;
     }
     
-    // Phone validation
     if (!validatePhone(phone)) {
         showToast('Please enter a valid phone number (10 digits for Sri Lanka)!', 'danger');
         return;
     }
     
-    // Orders validation
     if (orders < 0) {
         showToast('Orders cannot be negative!', 'danger');
         return;
@@ -387,7 +595,7 @@ async function saveCustomer() {
     }
 }
 
-// ======== VIEW CUSTOMER =========
+// ==================== VIEW CUSTOMER ====================
 
 function viewCustomer(id) {
     const c = customers.find(c => c.id === id);
@@ -472,7 +680,6 @@ function resetModalForm() {
     document.getElementById('customerFeedback').value = '5 ★';
     document.getElementById('customerType').value     = 'Regular';
     
-    // Remove all validation error messages
     document.querySelectorAll('.invalid-feedback-custom').forEach(el => el.remove());
 }
 
@@ -531,7 +738,7 @@ function renderFilteredCustomersTable() {
     if (!tableBody) return;
     const list = filterCustomers();
     if (list.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No customers found.</table></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No customers found.</td></tr>';
         return;
     }
     tableBody.innerHTML = '';
@@ -711,6 +918,7 @@ function getRatingText(rating) {
     return rating + ' Stars - ' + RATING_CONFIG.getRatingLabel(rating);
 }
 
+// ==================== REPORT FUNCTIONS (YOUR EXISTING IMPLEMENTATIONS) ====================
 // ==================== ALL CUSTOMERS REPORT ====================
 
 function generateAllCustomersReport(fromDate, toDate) {
@@ -1029,6 +1237,7 @@ function generateIndividualReport(customer, fromDate, toDate) {
     showToast('Report downloaded successfully!', 'success');
 }
 
+
 // ==================== HELPER FUNCTIONS ====================
 
 function getStarsFromFeedback(feedback) {
@@ -1054,7 +1263,6 @@ function showToast(message, type = 'success') {
     new bootstrap.Toast(toast).show();
 }
 
-// Real-time validation setup
 function setupEventListeners() {
     const saveBtn     = document.getElementById('saveCustomerBtn');
     const confirmBtn  = document.getElementById('confirmDeleteBtn');
@@ -1067,7 +1275,6 @@ function setupEventListeners() {
     if (confirmBtn) confirmBtn.addEventListener('click', deleteCustomer);
     if (addModal)   addModal.addEventListener('hidden.bs.modal', resetModalForm);
 
-    // Real-time validation on input
     if (phoneInput) {
         phoneInput.addEventListener('input', function() {
             validatePhoneField();
@@ -1113,3 +1320,5 @@ window.toggleCustomerStatus   = toggleCustomerStatus;
 window.selectReportType       = selectReportType;
 window.generateSelectedReport = generateSelectedReport;
 window.closePreview           = closePreview;
+window.openFeedbackModal      = openFeedbackModal;
+window.sendFeedback           = sendFeedback;
