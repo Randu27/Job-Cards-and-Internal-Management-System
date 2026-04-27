@@ -8,10 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFinanceRecords();
 
 
-    //Check if the previous month report has been sent to email
-    autoCheckMonthlyReport(); 
-
-
     // SET DASHBOARD DATE RANGE TEXT
     const dateRangeElement = document.getElementById('dateRangeText');
     if (dateRangeElement) {
@@ -83,6 +79,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    
+
+    //Check if the previous month report has been sent to email
+    autoCheckMonthlyReport(); 
     
 });
 
@@ -697,8 +697,7 @@ async function generatePDF() {
 }
 
 
-//emailjs initialization
-emailjs.init("Wfjkc7_4ZTEVdz8y0");
+
 
 //Send previous month report on Click to email
 async function triggerMonthlyReport() {
