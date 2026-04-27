@@ -82,8 +82,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     //Check if the previous month report has been sent to email
-    autoCheckMonthlyReport(); 
-    
+    firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        autoCheckMonthlyReport();
+        }
+    });
+
 });
 
 
