@@ -3,10 +3,7 @@
     font-family: Arial;
   }
 
-  .container {
-    display: flex;
-    flex-wrap: wrap;
-  }
+  
 
   .box {
     flex: 1 1 300px;
@@ -305,6 +302,11 @@
       position: relative;
       flex-shrink: 0;
     }
+
+    .dir-list-container {
+  display: flex;
+  flex-wrap: wrap;
+}
 
     .dir-modal-avatar {
       width: 84px;
@@ -815,3 +817,31 @@
     .pas-edit-count b {
       color: #4f46e5;
     }
+
+    /* Center page content */
+.container {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Filter bar even spread */
+.filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-row .search-col {
+  flex: 2 1 260px;
+}
+
+.filter-row .filter-col {
+  flex: 1 1 140px;
+}
+
+.filter-row .count-col {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
