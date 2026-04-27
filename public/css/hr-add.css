@@ -1,0 +1,170 @@
+/* ── Page Access Selector ─────────────────────────────────────── */
+    body {
+    margin: 0;
+    font-family: Arial;
+  }
+
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .box {
+    flex: 1 1 300px;
+    padding: 20px;
+    background: lightblue;
+    margin: 10px;
+  }
+
+    .pas-section-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: #374151;
+      margin: 14px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pas-section-title i {
+      color: #ffe785;
+      font-size: .85rem;
+    }
+
+    .pas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .pas-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 11px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f2f5;
+      border-right: 1px solid #f0f2f5;
+      transition: background .15s;
+    }
+
+    .pas-item:nth-child(even) {
+      border-right: none;
+    }
+
+    .pas-item:nth-last-child(-n+2) {
+      border-bottom: none;
+    }
+
+    .pas-item:last-child {
+      grid-column: 1 / -1;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .pas-item:hover {
+      background: #fffbeb;
+    }
+
+    .pas-check {
+      display: none;
+    }
+
+    .pas-tick {
+      width: 17px;
+      height: 17px;
+      border-radius: 5px;
+      border: 2px solid #d1d5db;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .6rem;
+      color: transparent;
+      background: white;
+      transition: all .15s;
+    }
+
+    .pas-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #f3f4f6;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      color: #6b7280;
+      transition: background .15s, color .15s;
+    }
+
+    .pas-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pas-label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #111827;
+      line-height: 1.2;
+    }
+
+    .pas-desc {
+      font-size: .68rem;
+      color: #9ca3af;
+      margin-top: 1px;
+    }
+
+    .pas-check:checked~.pas-tick {
+      background: #34495e;
+      border-color: #34495e;
+      color: white;
+    }
+
+    .pas-check:checked~.pas-icon {
+      background: #ffe785;
+      color: #34495e;
+    }
+
+    .pas-item:has(.pas-check:checked) {
+      background: #fffef0;
+    }
+
+    .pas-footer {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+
+    .pas-btn {
+      background: none;
+      border: none;
+      font-size: .73rem;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0 8px 0 0;
+    }
+
+    .pas-btn:hover {
+      color: #34495e;
+    }
+
+    .pas-count {
+      font-size: .71rem;
+      color: #6b7280;
+      margin-left: auto;
+    }
+
+    .pas-count b {
+      color: #34495e;
+    }
