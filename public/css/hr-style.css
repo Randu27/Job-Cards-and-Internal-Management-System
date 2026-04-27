@@ -1,4 +1,4 @@
-/*mobile responsive*/
+/*---mobile responsive---*/
 * {
             margin: 0;
             padding: 0;
@@ -54,9 +54,7 @@
     --glow-teal: 0 0 0 3.5px rgba(13,148,136,0.14), 0 4px 20px rgba(13,148,136,0.16);
 }
 
-/* ==========================
-   BODY
-=========================== */
+/*---BODY---*/
 body {
     background-color: #f8f9fa;
     font-family: var(--font-main);
@@ -157,9 +155,8 @@ body {
 }
 
 
-/* ==========================
-   FEATURE CARDS — original index design
-=========================== */
+/*---
+   FEATURE CARDS — original index design---*/
 .feature-card {
     background: white;
     border-radius: 20px;
@@ -200,12 +197,7 @@ body {
     color: var(--primary-color);
 }
 
-/* ==========================
-   CARD COLOR VARIANTS (index page)
-   2nd = Update (green)
-   3rd = View Records (amber/orange)
-   4th = Print (sky blue)
-=========================== */
+/*---CARD COLOR VARIANTS (index page), 2nd = Update (green), 3rd = View Records (amber/orange), 4th = Print (sky blue)---*/
 /* --- 1st card: Add Employee — sky blue icon matching its top bar --- */
 .feature-card:nth-child(1) .icon-box {
     color: #0284c7;
@@ -258,10 +250,8 @@ body {
     color: white; transform: translateY(-1px);
 }
 
-/* ==========================
-   ADD PAGE — SCOPED BODY UPGRADES
-   Add class="add-page" to <body> in hr-add.html only
-=========================== */
+/*---ADD PAGE — SCOPED BODY UPGRADES
+   Add class="add-page" to <body> in hr-add.html only---*/
 body.add-page {
     background-color: #eef1fb;
     background-image:
@@ -329,9 +319,7 @@ body.add-page::after {
     color: white;
 }
 
-/* ==========================
-   FINANCIAL CARDS
-=========================== */
+/*---FINANCIAL CARDS---*/
 .finance-card {
     background: var(--surface);
     border-radius: var(--radius-xl);
@@ -379,9 +367,7 @@ body.add-page::after {
 }
 .finance-card .btn i { color: #ffbc64; margin-right: 0.5rem; }
 
-/* ==========================
-   FORM WRAPPER — GLASSMORPHISM
-=========================== */
+/*---FORM WRAPPER — GLASSMORPHISM---*/
 #addEmployeeForm,
 #employeeForm {
     background: transparent;
@@ -413,9 +399,7 @@ body.add-page::after {
     z-index: 1;
 }
 
-/* ==========================
-   FORM PANEL COLUMNS
-=========================== */
+/*---FORM PANEL COLUMNS---*/
 #addEmployeeForm .form-box,
 #employeeForm .form-box {
     padding: 2.4rem;
@@ -497,9 +481,7 @@ body.add-page::after {
     width: fit-content;
 }
 
-/* ==========================
-   FORM LABELS
-=========================== */
+/*---FORM LABELS---*/
 #addEmployeeForm .form-label,
 #employeeForm .form-label {
     font-family: var(--font-main);
@@ -534,9 +516,7 @@ body.add-page::after {
     flex-shrink: 0;
 }
 
-/* ==========================
-   INPUTS, SELECTS, TEXTAREAS
-=========================== */
+/*---INPUTS, SELECTS, TEXTAREAS---*/
 #addEmployeeForm .form-control,
 #addEmployeeForm .form-select,
 #employeeForm input,
@@ -611,16 +591,12 @@ body.add-page::after {
     border-color: var(--accent-violet);
 }
 
-/* ==========================
-   IMAGE PREVIEW
-=========================== */
+/*---IMAGE PREVIEW---*/
 #imagePreview {
     display: none;
 }
 
-/* ==========================
-   ADD MEMBER BUTTON — ANIMATED
-=========================== */
+/*---ADD MEMBER BUTTON — ANIMATED---*/
 .add-btn {
     font-family: var(--font-main) !important;
     font-weight: 700 !important;
@@ -662,9 +638,7 @@ body.add-page::after {
 }
 .add-btn:active { transform: translateY(0) scale(0.99) !important; }
 
-/* ==========================
-   EDIT / UPDATE / DELETE
-=========================== */
+/* EDIT / UPDATE / DELET */
 #editBtn {
     font-family: var(--font-main);
     font-weight: 600;
@@ -739,9 +713,8 @@ body.add-page::after {
     color: white;
 }
 
-/* ==========================
-   SEARCH BUTTON — UPDATE PAGE (green)
-=========================== */
+/* 
+SEARCH BUTTON — UPDATE PAGE (green) */
 button#searchBtn,
 a#searchBtn,
 #searchBtn {
@@ -771,9 +744,7 @@ button#searchBtn:hover,
     border-top: 1px solid rgba(124,58,237,0.1);
 }
 
-/* ==========================
-   ROW FLUSH GUTTERS
-=========================== */
+/* ROW FLUSH GUTTERS */
 #addEmployeeForm .row.g-4,
 #employeeForm .row.g-4 {
     margin: 0;
@@ -781,9 +752,7 @@ button#searchBtn:hover,
     --bs-gutter-y: 0;
 }
 
-/* ==========================
-   NOTIFICATION AREA
-=========================== */
+/* NOTIFICATION AREA */
 #notificationArea .alert {
     border-radius: var(--radius-md);
     border: none;
@@ -791,9 +760,7 @@ button#searchBtn:hover,
     padding: 1rem 1.5rem;
 }
 
-/* ==========================
-   TOAST & MODAL
-=========================== */
+/* TOAST & MODAL */
 .toast {
     background: linear-gradient(135deg, var(--accent-violet), #312e81) !important;
     color: white;
@@ -815,9 +782,7 @@ button#searchBtn:hover,
     border-bottom: none;
 }
 
-/* ==========================
-   VALIDATION
-=========================== */
+/*  VALIDATION  */
 .form-control.is-invalid,
 .form-select.is-invalid {
     border-color: var(--accent-rose) !important;
@@ -829,9 +794,7 @@ button#searchBtn:hover,
     box-shadow: 0 0 0 3.5px rgba(13,148,136,0.12) !important;
 }
 
-/* ==========================
-   POPUP NOTIFICATION
-=========================== */
+/* POPUP NOTIFICATION */
 .hr-popup-overlay {
     position: fixed;
     top: 80px;
@@ -921,9 +884,7 @@ button#searchBtn:hover,
 }
 .hr-popup-close:hover { color: var(--text-dark); }
 
-/* ==========================
-   EMPLOYEE INFO VIEW MODE
-=========================== */
+/* EMPLOYEE INFO VIEW MODE */
 .emp-info-item {
     display: flex;
     flex-direction: column;
@@ -959,9 +920,7 @@ button#searchBtn:hover,
     color: var(--accent-teal);
 }
 
-/* ==========================
-   VIEW RECORDS PAGE
-=========================== */
+/* VIEW RECORDS PAGE*/
 .view-topbar {
     display: flex;
     align-items: center;
@@ -1249,9 +1208,7 @@ button#searchBtn:hover,
     color: var(--text-mid);
 }
 
-/* ==========================
-   PRINT REPORT PAGE
-=========================== */
+/* PRINT REPORT PAGE */
 .print-controls-bar {
     display: flex;
     align-items: flex-end;

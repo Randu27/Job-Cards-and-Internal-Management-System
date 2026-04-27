@@ -1,6 +1,5 @@
-// ============================================================
-// HR — Shared Helpers  (loaded on every HR page)
-// ============================================================
+// ================== HR — Shared Helpers  (loaded on every HR page)
+
 
 function showPopup(type, title, message) {
   const existing = document.getElementById("hrPopupOverlay");
@@ -81,9 +80,8 @@ function getFirebaseErrorMessage(code) {
 }
 
 
-// ============================================================
-// ADD EMPLOYEE PAGE
-// ============================================================
+// ==============================ADD EMPLOYEE PAGE
+
 (function initAddPage() {
   const form = document.getElementById("addEmployeeForm");
   if (!form) return;
@@ -256,9 +254,8 @@ function getFirebaseErrorMessage(code) {
 })();
 
 
-// ============================================================
-// EMPLOYEE DIRECTORY PAGE
-// ============================================================
+// ==============================================EMPLOYEE DIRECTORY PAGE
+
 (function initDirectoryPage() {
   if (!document.getElementById("dirList")) return;
 
@@ -627,9 +624,8 @@ function getFirebaseErrorMessage(code) {
 })();
 
 
-// ============================================================
-// PRINT REPORT PAGE
-// ============================================================
+// ================================================PRINT REPORT PAGE
+
 (function initPrintPage() {
   if (!document.getElementById("reportArea")) return;
 
