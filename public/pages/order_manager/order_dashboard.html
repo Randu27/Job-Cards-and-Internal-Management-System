@@ -90,6 +90,23 @@
                 <div id="step1" class="form-step">
                     <div class="card border-0 p-4">
                         <h5 class="fw-bold mb-4"><i class="bi bi-person-fill me-2"></i>Customer Information</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Customer Code <span
+                                    class="optional-label">(optional)</span></label>
+                            <div class="input-group">
+                                <input type="text" id="customerCodeInput" class="form-control"
+                                    placeholder="e.g. GPH-CUST-000001" oninput="this.value = this.value.toUpperCase()"
+                                    onkeydown="if(event.key==='Enter'){event.preventDefault();lookupCustomerCode();}">
+                                <button class="btn btn-outline-primary" type="button" onclick="lookupCustomerCode()"
+                                    id="lookupBtn">
+                                    <i class="bi bi-search me-1"></i> Lookup
+                                </button>
+                            </div>
+                            <div id="customerCodeStatus" class="mt-1" style="font-size:0.82rem;"></div>
+                        </div>
+
+                        <hr class="my-3 opacity-25">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Customer Name</label>
                             <input type="text" id="customerName" class="form-control" placeholder="Name">

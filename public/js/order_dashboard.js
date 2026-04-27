@@ -255,6 +255,11 @@ function submitOrder() {
 function orderSuccess() {
     setSubmitLoading(false);
 
+    if (!customerFoundViaCRM) {
+        addNewCustomerToCRM();
+    }
+    customerFoundViaCRM = false;
+
     //................... Send order confirmation email.................//
 
     emailjs.init('yLpLLBwVoNFsO3ql7');
@@ -279,6 +284,8 @@ function orderSuccess() {
     document.getElementById('productHeightUnit').selectedIndex = 0;
     document.getElementById('productWidthUnit').selectedIndex = 0;
     document.getElementById('sketchPhoto').value = '';
+    document.getElementById('customerCodeInput').value = '';
+    document.getElementById('customerCodeStatus').innerHTML = '';
     document.getElementById('currencyPrefix').style.display = 'none';
     loadCompanies();
     goToStep1();
@@ -634,6 +641,7 @@ function closeViewDetailModal() {
 
 let editingOrderId = null;
 let justFinishedEdit = false;
+let customerFoundViaCRM = false;
 
 function editOrder(id) {
     const order = allOrders.find(o => o.id === id);
@@ -811,6 +819,10 @@ function clearFormFields() {
     document.getElementById('productWidthUnit').selectedIndex = 0;
     document.getElementById('sketchPhoto').value = '';
     document.getElementById('currencyPrefix').style.display = 'none';
+
+    document.getElementById('customerCodeInput').value = '';
+    document.getElementById('customerCodeStatus').innerHTML = '';
+    customerFoundViaCRM = false;
 }
 
 // dropdown payment method ...//
@@ -1110,3 +1122,123 @@ async function exportOrderToPDF() {
     doc.save(`GrafixPrintHub_${safeName}_Order.pdf`);
 }
 
+
+// ................. Get customer info from CRM .................//
+
+function lookupCustomerCode() {
+    const code = document.getElementById('customerCodeInput').value.trim().toUpperCase();
+    const statusEl = document.getElementById('customerCodeStatus');
+    if (!code) { statusEl.innerHTML = ''; return; }
+
+    const lookupBtn = document.getElementById('lookupBtn');
+    lookupBtn.disabled = true;
+    lookupBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Searching…`;
+
+    db.collection('customers').where('customerCode', '==', code).limit(1).get()
+        .then(snapshot => {
+            lookupBtn.disabled = false;
+            lookupBtn.innerHTML = `<i class="bi bi-search me-1"></i> Lookup`;
+
+            if (snapshot.empty) {
+                customerFoundViaCRM = false;
+                statusEl.innerHTML = `
+                    <span style="color:#dc3545;">
+                        <i class="bi bi-x-circle-fill me-1"></i>
+                        Customer not found. Fill in details below — 
+                        they'll be added to CRM automatically on submit.
+                    </span>`;
+            } else {
+                customerFoundViaCRM = true;
+                const data = snapshot.docs[0].data();
+
+                // Auto-fill the 5 fields
+                document.getElementById('customerName').value = data.name || '';
+                document.getElementById('contactNumber').value = data.phone || '';
+                document.getElementById('emailAddress').value = data.email || '';
+                document.getElementById('address').value = data.address || '';
+                document.getElementById('companyName').value = data.company || '';
+
+                // Trigger validation styles
+                validateContact(document.getElementById('contactNumber'));
+                validateEmail(document.getElementById('emailAddress'));
+
+                statusEl.innerHTML = `
+                    <span style="color:#198754;">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        Customer found: <strong>${data.name}</strong> 
+                        (${data.customerCode}) — fields filled automatically.
+                    </span>`;
+            }
+        })
+        .catch(() => {
+            lookupBtn.disabled = false;
+            lookupBtn.innerHTML = `<i class="bi bi-search me-1"></i> Lookup`;
+            customerFoundViaCRM = false;
+            statusEl.innerHTML = `
+                <span style="color:#dc3545;">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Lookup failed. Try again.
+                </span>`;
+        });
+}
+
+
+function addNewCustomerToCRM() {
+    const name = document.getElementById('customerName').value.trim();
+    const phone = document.getElementById('contactNumber').value.trim();
+    const email = document.getElementById('emailAddress').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const company = document.getElementById('companyName').value.trim();
+
+    if (!name || !phone) {
+        console.warn('CRM: Missing name or phone, skipping.');
+        return;
+    }
+
+    // Check if customer already exists by phone
+    db.collection('customers')
+        .where('phone', '==', phone)
+        .limit(1)
+        .get()
+        .then(snapshot => {
+            if (!snapshot.empty) {
+                console.log('CRM: Customer already exists, skipping.');
+                return;
+            }
+
+            // Get all customers to find highest code number
+            return db.collection('customers')
+                .get()
+                .then(allSnap => {
+                    let maxNum = 0;
+                    allSnap.forEach(doc => {
+                        const code = doc.data().customerCode || '';
+                        const num = parseInt(code.replace('GPH-CUST-', '')) || 0;
+                        if (num > maxNum) maxNum = num;
+                    });
+
+                    const customerCode = 'GPH-CUST-' + String(maxNum + 1).padStart(6, '0');
+
+                    // ✅ Match exact CRM field structure
+                    return db.collection('customers').add({
+                        customerCode,
+                        name,
+                        phone,
+                        email,
+                        address: address || 'Not specified',
+                        company,
+                        orders: 0,
+                        feedback: '5 ★',
+                        type: 'New',
+                        status: 'Active',
+                        dateAdded: new Date().toISOString().split('T')[0], // ✅ matches CRM's dateAdded
+                    });
+                })
+                .then(docRef => {
+                    console.log('CRM: New customer saved with ID:', docRef.id);
+                });
+        })
+        .catch(err => {
+            console.error('CRM add failed:', err);
+        });
+}
