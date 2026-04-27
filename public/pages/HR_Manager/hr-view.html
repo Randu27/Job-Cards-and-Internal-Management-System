@@ -10,6 +10,22 @@
   <link rel="stylesheet" href="../../css/hr-style.css">
   <link rel="stylesheet" href="../../css/menu.css">
   <style>
+    body {
+    margin: 0;
+    font-family: Arial;
+  }
+
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .box {
+    flex: 1 1 300px;
+    padding: 20px;
+    background: lightblue;
+    margin: 10px;
+  }
     :root {
       --dir-accent: #4f46e5;
       --dir-accent-soft: #eef2ff;
@@ -892,9 +908,7 @@
     <small>&copy; Grafix Print Hub</small>
   </footer>
 
-  <!-- ═══════════════════════════════════════════════════════
-     DETAIL / EDIT MODAL
-════════════════════════════════════════════════════════ -->
+  <!--DETAIL / EDIT MODAL -->
   <div id="empModal" class="modal-backdrop-custom" style="display:none;" onclick="handleModalBgClick(event)">
     <div class="dir-modal" onclick="event.stopPropagation()">
 
@@ -908,13 +922,13 @@
         <button class="btn-modal-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
       </div>
 
-      <!-- ── VIEW SECTION ───────────────────────────────── -->
+      <!--  VIEW SECTION  -->
       <div class="dir-modal-body view-section" id="viewSection">
         <div class="detail-grid" id="detailGrid"></div>
         <div style="height:8px;"></div>
       </div>
 
-      <!-- ── EDIT SECTION ───────────────────────────────── -->
+      <!--  EDIT SECTION  -->
       <div class="dir-modal-body edit-section" id="editSection">
 
         <!-- Photo -->
@@ -965,7 +979,7 @@
           <div class="full-col"><label>Remarks</label><textarea id="editRemarks" rows="3"></textarea></div>
         </div>
 
-        <!-- ══ WEBSITE ACCESS EDIT ══════════════════════ -->
+        <!--  WEBSITE ACCESS EDIT -->
         <div class="form-section-label">Website Access</div>
         <div class="edit-form-grid">
           <div class="full-col">
@@ -1000,7 +1014,7 @@
                 </button>
               </div>
 
-              <!-- ── Page Access in Edit Modal (NEW) ────────────────── -->
+              <!-- Page Access in Edit Modal (NEW) -->
               <div class="pas-edit-title">
                 <i class="bi bi-grid-3x3-gap"></i> Page Access
               </div>
@@ -1047,19 +1061,20 @@
                   <div class="pas-edit-label">Resource Coordinator</div>
                 </label>
 
-              </div><!-- /pas-edit-grid -->
+              </div>
 
+              <!-- /pas-edit-grid -->
               <div class="pas-edit-footer">
                 <button type="button" class="pas-edit-btn" onclick="editPasAll(true)">Select all</button>
                 <button type="button" class="pas-edit-btn" onclick="editPasAll(false)">Clear all</button>
                 <div class="pas-edit-count"><b id="editPasCountNum">0</b> of 5 selected</div>
               </div>
-              <!-- ────────────────────────────────────────────────── -->
+             
 
             </div>
           </div>
         </div>
-        <!-- ════════════════════════════════════════════ -->
+      
 
         <div style="height:8px;"></div>
       </div><!-- end edit-section -->
