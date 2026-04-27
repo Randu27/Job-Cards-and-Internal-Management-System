@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-//Dashboard Page controllers
+//Dashboard Page controllers (Hidden Page Rendering)
 function navigateTo(viewId) {
     // CLear for after adding bill
     if (viewId === 'add-bill-view') {
