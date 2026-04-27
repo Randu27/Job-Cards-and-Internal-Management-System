@@ -1,14 +1,13 @@
-// --- 1. INITIALIZATION & VIEW NAVIGATION ---
-
+//Saved Finance views
 document.addEventListener('DOMContentLoaded', function() {
-    // A. RESTORE SAVED VIEW
+    // RESTORE SAVED VIEW
     const savedView = localStorage.getItem('currentFinanceView') || 'dashboard-view';
     navigateTo(savedView);
 
-    // B. INITIALIZE FIREBASE DATA
+    // INITIALIZE FIREBASE DATA
     loadFinanceRecords();
 
-    // C. SET DASHBOARD DATE RANGE TEXT
+    // SET DASHBOARD DATE RANGE TEXT
     const dateRangeElement = document.getElementById('dateRangeText');
     if (dateRangeElement) {
         const today = new Date();
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dateRangeElement.innerText = `Showing data from: ${thirtyDaysAgo.toLocaleDateString(undefined, options)} to ${today.toLocaleDateString(undefined, options)}`;
     }
 
-    // D. INITIALIZE CHART
+    // NITIALIZE CHART
     const chartCtx = document.getElementById('profitChart');
     if (chartCtx) {
         new Chart(chartCtx.getContext('2d'), {
@@ -50,14 +49,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    //Check if the previous month report has been sent to email
     window.onload = () => {
-    // Other initialization code...
     autoCheckMonthlyReport(); 
 };
 
 
 
-    // E. RESTRICT DATES TO PAST & PRESENT ONLY
+    // RESTRICT DATES TO PAST & PRESENT ONLY for the Add bill form
     const todayStr = new Date().toISOString().split('T')[0];
     const dateInputs = ['billDate', 'filterDateStart', 'filterDateEnd'];
     
@@ -68,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // E. BLOCK MINUS SIGN (Move this here!)
+    // BLOCK MINUS SIGN in Add bill page
     const amountInput = document.getElementById('billAmount');
     if (amountInput) {
         amountInput.addEventListener('keydown', function(e) {
@@ -91,9 +90,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
+//Dashboard Page controllers
 function navigateTo(viewId) {
-    // If going to add-bill-view via the "+" button, reset it to default
+    // CLear for after adding bill
     if (viewId === 'add-bill-view') {
         resetFormToDefault();
     }
@@ -135,10 +134,14 @@ function navigateTo(viewId) {
     }
 }
 
-// --- 2. FIREBASE DATA LOADING & FILTERING ---
+
+
+//Firebase Connectioon ot live  records
 
 let masterRecords = []; 
 
+
+//Load orders and bills from the database real-time
 async function loadFinanceRecords() {
     const tableBody = document.getElementById('financeRecordsTableBody');
     if (!tableBody) return;
@@ -184,6 +187,7 @@ async function loadFinanceRecords() {
 
 
 
+//Transaction Page data Filters and table rendering
 function applyFilters() {
     const typeFilter = document.getElementById('filterType')?.value || 'All';
     const startDate = document.getElementById('filterDateStart')?.value;
@@ -247,22 +251,14 @@ function applyFilters() {
         </tr>`;
 });
 
+
+    //Update Summary section according to renderd details
     updateHistorySummary(currentIncome, currentOutgoings);
 }
 
 
 
-
-
-
-
-
-
-
-
-
-// --- 3. HELPER FUNCTIONS ---
-
+//Summary Calculator for the Transaction Page and Dahshboard view
 function updateHistorySummary(income, outgoings) {
     const net = income - outgoings;
     const sets = [
@@ -278,7 +274,7 @@ function updateHistorySummary(income, outgoings) {
 }
 
 
-
+//Filter reset
 function resetFilters() {
     if (document.getElementById('filterType')) document.getElementById('filterType').value = "All";
     if (document.getElementById('filterDateStart')) document.getElementById('filterDateStart').value = "";
@@ -288,6 +284,7 @@ function resetFilters() {
 
 
 
+//View a Specific record detail
 function viewRecord(docId) {
     // 1. Find the specific record from our loaded data
     const record = masterRecords.find(r => r.docId === docId);
@@ -366,7 +363,7 @@ function deleteAndClose(id, type) {
 
 
 
-
+//Delet Bills
 function deleteRecord(docId, type) {
     const coll = (type === 'Order') ? "orders" : "Bills";
     if (confirm(`Are you sure you want to delete this ${type}?`)) {
@@ -380,7 +377,7 @@ function deleteRecord(docId, type) {
 
 
 
-
+//Edit Record
 function editRecord(docId) {
     // 1. Find the specific record
     const record = masterRecords.find(r => r.docId === docId);
@@ -411,7 +408,7 @@ function editRecord(docId) {
 
 
 
-
+//Update Bill
 async function updateTransaction(docId) {
     const amount = document.getElementById('billAmount').value;
     const date = document.getElementById('billDate').value;
@@ -445,7 +442,7 @@ function resetFormToDefault() {
 }
 
 
-
+//Save Bill
 async function saveTransaction() {
     
     // 1. Get references to elements and values
@@ -507,11 +504,8 @@ async function saveTransaction() {
 
 
 
-
-/**
- * Helper: Calculates Income, Expenses, and Profit for the last 6 months
- * based on the current date (April 2026).
- */
+//Helper Fucntion for report generation
+//Calculate income, Expenses, profit for the last 6 months based on the current month
 function getMonthlyData() {
     const months = [];
     const incomeData = [];
@@ -526,37 +520,6 @@ function getMonthlyData() {
         months.push(mName);
         
         // Filter masterRecords for this specific month
-        const monthly = masterRecords.filter(r => r.date.startsWith(ym));
-        let inc = 0, exp = 0;
-        
-        monthly.forEach(r => {
-            if (r.type === 'Order') inc += r.amount;
-            else exp += r.amount;
-        });
-
-        incomeData.push(inc);
-        expenseData.push(exp);
-    }
-    return { months, incomeData, expenseData };
-}
-
-
-
-//Helper Function to genereate PDF to collect the six months dates
-function getMonthlyData() {
-    const months = [];
-    const incomeData = [];
-    const expenseData = [];
-
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const mName = d.toLocaleString('default', { month: 'short' });
-        const ym = d.toISOString().substring(0, 7); // "2026-04"
-        
-        months.push(mName);
-        
-        // Filter masterRecords for the specific month
         const monthly = masterRecords.filter(r => r.date.startsWith(ym));
         let inc = 0, exp = 0;
         
@@ -736,7 +699,7 @@ async function generatePDF() {
 
 
 
-
+//Send previous month report on Click to email
 async function triggerMonthlyReport() {
     try {
         const now = new Date();
@@ -821,7 +784,7 @@ async function triggerMonthlyReport() {
 
 
 
-
+//Check "Sent" on data base for previous month report on login to dashboard
 async function autoCheckMonthlyReport() {
     try {
         const now = new Date();
