@@ -55,32 +55,32 @@
 
   <!-- Search + Filters -->
   <div class="container mt-4">
-    <div class="row g-3 align-items-end">
-      <div class="col-md-5">
-        <div class="search-wrap">
-          <i class="bi bi-search"></i>
-          <input type="text" id="dirSearch" class="form-control" placeholder="Search by name, ID, email…">
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <select id="filterDept" class="form-select filter-select">
-          <option value="">All Departments</option>
-          <option value="Front Office">Front Office</option>
-          <option value="Workshop">Workshop</option>
-        </select>
-      </div>
-      <div class="col-md-2 col-6">
-        <select id="filterStatus" class="form-select filter-select">
-          <option value="">All Status</option>
-          <option value="Full Time">Full Time</option>
-          <option value="Part Time">Part Time</option>
-        </select>
-      </div>
-      <div class="col-md-2 d-flex align-items-center justify-content-end">
-        <div id="resultCount"><i class="bi bi-people"></i> <span id="countNum">0</span> employees</div>
+  <div class="filter-row">
+    <div class="search-col">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" id="dirSearch" class="form-control" placeholder="Search by name, ID, email…">
       </div>
     </div>
+    <div class="filter-col">
+      <select id="filterDept" class="form-select filter-select">
+        <option value="">All Departments</option>
+        <option value="Front Office">Front Office</option>
+        <option value="Workshop">Workshop</option>
+      </select>
+    </div>
+    <div class="filter-col">
+      <select id="filterStatus" class="form-select filter-select">
+        <option value="">All Status</option>
+        <option value="Full Time">Full Time</option>
+        <option value="Part Time">Part Time</option>
+      </select>
+    </div>
+    <div class="count-col">
+      <div id="resultCount"><i class="bi bi-people"></i> <span id="countNum">0</span> employees</div>
+    </div>
   </div>
+</div>
 
   <!-- Directory List -->
   <div class="container mt-4 mb-5">
