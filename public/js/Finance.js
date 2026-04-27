@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // INITIALIZE FIREBASE DATA
     loadFinanceRecords();
 
+
     // SET DASHBOARD DATE RANGE TEXT
     const dateRangeElement = document.getElementById('dateRangeText');
     if (dateRangeElement) {
@@ -49,12 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    //Check if the previous month report has been sent to email
-    window.onload = () => {
-    autoCheckMonthlyReport(); 
-};
-
-
 
     // RESTRICT DATES TO PAST & PRESENT ONLY for the Add bill form
     const todayStr = new Date().toISOString().split('T')[0];
@@ -85,6 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     
+
+    //Check if the previous month report has been sent to email
+    firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        autoCheckMonthlyReport();
+        }
+    });
+
 });
 
 
@@ -696,6 +699,7 @@ async function generatePDF() {
     // Save PDF with unique timestamp
     doc.save(`Grafix_Audit_${type}_${new Date().getTime()}.pdf`);
 }
+
 
 
 
