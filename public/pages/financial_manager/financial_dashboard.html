@@ -16,6 +16,7 @@
 <body>
 
 
+    <!--Navigation Bar--->
     <nav class="navbar navbar-dark shadow-sm sticky-top">
         <div class="container">
             <div class="d-flex align-items-center">
@@ -33,6 +34,7 @@
 
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu"></div>
 
+    <!--Logout Section--->
     <div id="logoutModal" class="modal-overlay" style="display:none;">
         <div class="modal-box">
             <h5>Confirm Logout</h5>
@@ -61,6 +63,8 @@
                             <div class="badge bg-dark p-2 px-3">Last 30 Days</div>
                         </div>
 
+
+                        <!--Dashboard Page Summary--->
                         <div class="row g-4 align-items-stretch">
                             <div class="col-lg-3">
                                 <div class="p-3 mb-2 bg-light rounded-3 border-start border-success border-4">
@@ -83,6 +87,9 @@
                                 </div>
                             </div>
 
+
+
+                            <!--Dashboard Page Links to Other pages--->
                             <div class="col-lg-3">
                                 <div class="d-flex flex-column justify-content-between h-100 gap-2">
                                     <a href="javascript:void(0)" onclick="navigateTo('add-bill-view')"
@@ -125,6 +132,8 @@
                 </div>
             </div>
 
+
+            <!--Send Previous month Report to Email--->
             <div class="row mt-3">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm p-3"
@@ -132,8 +141,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="fw-bold mb-0">Owner Reporting</h6>
-                                <small class="text-muted">Send the current financial summary directly to the management
-                                    email.</small>
+                                <small class="text-muted">Send the Completed Financial Summary of the Previous Month to the Main  E-MAil.</small>
                             </div>
                             <button onclick="triggerMonthlyReport()" class="btn btn-dark px-4 py-2 fw-bold">
                                 <i class="bi bi-envelope-check-fill me-2"></i> Send Monthly Report
@@ -144,11 +152,15 @@
             </div>
         </div>
 
+
+        <!--Add Bill Page--->
         <div id="add-bill-view" class="content-view d-none">
             <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
                 <div class="card shadow-sm border-0 p-4" style="border-radius: 20px;">
                     <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-receipt me-2"></i>Record New Bill</h4>
 
+
+                    <!--Add bill form--->
                     <form id="billEntryForm">
                         <input type="hidden" id="entryType" value="Bill">
 
@@ -194,6 +206,9 @@
             </div>
         </div>
 
+
+
+        <!--Transaction Page Summary--->
         <div id="history-view" class="content-view d-none">
             <div class="container-fluid p-4 bg-light rounded-4 shadow-sm">
 
@@ -208,6 +223,8 @@
                         </div>
                     </div>
 
+
+                    <!--Search Filters--->
                     <div class="col-lg-9">
                         <div class="d-flex gap-2 justify-content-end align-items-center flex-wrap">
                             <input type="date" id="filterDateStart" class="form-control rounded-pill w-auto border-dark"
@@ -230,6 +247,8 @@
                     </div>
                 </div>
 
+
+                <!--Transaction History Table--->
                 <div class="table-responsive">
                     <table class="table table-bordered border-dark text-center align-middle">
                         <thead style="background-color: #e9ecef;">
@@ -250,11 +269,16 @@
             </div>
         </div>
 
+
+        <!--Chart Generation for the PDF--->
         <div id="print-view" class="content-view d-none">
             <div style="position: absolute; left: -9999px; top: -9999px;">
                 <canvas id="pdfBarChart" width="1200" height="600"></canvas>
                 <canvas id="pdfPieChart" width="600" height="600"></canvas>
             </div>
+
+
+            <!--Report Geneartion Page--->
             <div class="container d-flex justify-content-center">
                 <div class="card shadow-sm border-0 p-4" style="border-radius: 20px; max-width: 600px; width: 100%;">
                     <div class="text-center mb-4">
@@ -305,6 +329,7 @@
 
 
 
+    <!--Transaction Page--->
     <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-dark shadow-lg">
