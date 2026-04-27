@@ -456,7 +456,7 @@ function printOrderTable() {
     const ML = 14, MR = 14;
     const now = new Date();
 
-    // ── Apply same date filter that's currently active ────────────────
+    // ................ Apply same date filter that's currently active ....................//
 
     const displayOrders = [...currentDisplayedOrders];
     const timePeriod = currentFilterLabel;
@@ -466,7 +466,7 @@ function printOrderTable() {
         return;
     }
 
-    // ── HEADER ───────────────────────────────────────────────────────
+    // .................. HEADER ...........................//
     doc.setFillColor(33, 37, 41);
     doc.rect(0, 0, PW, 45, 'F');
 
@@ -482,7 +482,7 @@ function printOrderTable() {
     doc.text(`${timePeriod}`, PW - 8, 20, { align: 'right', maxWidth: 120 });
     doc.text(`GENERATED: ${now.toLocaleString()}`, PW - 8, 27, { align: 'right' });
 
-    // ── TABLE ─────────────────────────────────────────────────────────
+    //.............................. TABLE........................................//
     const tableRows = displayOrders.map((order) => {
         const orderNo = String(allOrders.findIndex(o => o.id === order.id) + 1).padStart(2, '0');
         const amount = order.amountPaid ? `Rs. ${parseFloat(order.amountPaid).toLocaleString()}` : '—';
@@ -1219,7 +1219,7 @@ function addNewCustomerToCRM() {
 
                     const customerCode = 'GPH-CUST-' + String(maxNum + 1).padStart(6, '0');
 
-                    // ✅ Match exact CRM field structure
+                    //  Match exact CRM field structure
                     return db.collection('customers').add({
                         customerCode,
                         name,
