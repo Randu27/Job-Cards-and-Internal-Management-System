@@ -1,3 +1,7 @@
+
+//Check auot email
+emailjs.init("Wfjkc7_4ZTEVdz8y0");
+
 //Saved Finance views
 document.addEventListener('DOMContentLoaded', function() {
     // RESTORE SAVED VIEW
@@ -89,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
-
 
 
 
@@ -706,6 +709,9 @@ async function generatePDF() {
 //Send previous month report on Click to email
 async function triggerMonthlyReport() {
     try {
+        // Reinitialize EmailJS to ensure correct account is active
+        emailjs.init("Wfjkc7_4ZTEVdz8y0");
+
         const now = new Date();
         const reportDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const compareDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -718,11 +724,13 @@ async function triggerMonthlyReport() {
         const reportMonthName = reportDate.toLocaleString('default', { month: 'long', year: 'numeric' });
         const compareMonthName = compareDate.toLocaleString('default', { month: 'long' });
 
+        console.log("Step 1: Fetching Firestore data...");
         const billsSnap = await db.collection("Bills").get();
         const ordersSnap = await db.collection("orders").get(); 
+        console.log("Step 2: Firestore fetched. Bills:", billsSnap.size, "Orders:", ordersSnap.size);
 
         let reportInc = 0, reportExp = 0, compareInc = 0, compareExp = 0;
-        let reportOrderCount = 0; // New variable to track order count
+        let reportOrderCount = 0;
 
         // 1. Process Bills
         billsSnap.forEach(doc => {
@@ -746,7 +754,7 @@ async function triggerMonthlyReport() {
 
                 if (y === reportYear && m === reportMonthNum) {
                     reportInc += parseFloat(data.amountPaid) || 0;
-                    reportOrderCount++; // Increment count for each March order found
+                    reportOrderCount++;
                 }
                 if (y === compareYear && m === compareMonthNum) {
                     compareInc += parseFloat(data.amountPaid) || 0;
@@ -767,22 +775,25 @@ async function triggerMonthlyReport() {
             trendText = `${Math.abs(diff)}% ${direction}`;
         }
 
-        // 4. Send to EmailJS
+        // 4. Build template params
         const templateParams = {
             month_name: reportMonthName,
             income: reportInc.toLocaleString(),
             outgoings: reportExp.toLocaleString(),
             profit: reportProfit.toLocaleString(),
-            profit_trend: trendText,    // Matches {{profit_trend}}
-            order_count: reportOrderCount // Matches {{order_count}}
+            profit_trend: trendText,
+            order_count: reportOrderCount
         };
 
+        console.log("Step 3: Sending email with params:", templateParams);
         await emailjs.send("service_1fljhbq", "template_mnwlhwn", templateParams);
+        console.log("Step 4: Email sent successfully!");
         alert(`Report for ${reportMonthName} has been sent to email Successfully`);
 
     } catch (error) {
-        console.error("Error:", error);
-        alert("Error: " + error.message);
+        console.error("triggerMonthlyReport EXACT ERROR:", error);
+        alert("Error sending report: " + error.message);
+        throw error; // ← This ensures autoCheckMonthlyReport doesn't mark as sent on failure
     }
 }
 
