@@ -699,6 +699,8 @@ async function generatePDF() {
 
 
 
+emailjs.init("Wfjkc7_4ZTEVdz8y0");
+
 //Send previous month report on Click to email
 async function triggerMonthlyReport() {
     try {
