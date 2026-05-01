@@ -13,14 +13,12 @@ let currentFilter = { search: '', type: '', rating: '', status: '' };
 const CUSTOMER_CODE_CONFIG = {
     prefix: 'GPH-CUST-',
     
-    // Generate a unique code based on timestamp + random numbers
     generateCode: function() {
         const timestamp = Date.now().toString().slice(-6);
         const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         return this.prefix + timestamp + random;
     },
     
-    // Generate sequential code
     generateSequentialCode: async function() {
         try {
             const snapshot = await db.collection('customers')
@@ -146,9 +144,7 @@ function formatDisplayDate(dateStr) {
 
 function validatePhone(phone) {
     if (!phone) return false;
-    // Remove any non-digit characters for validation
     const cleaned = phone.toString().replace(/[\s\-().+]/g, '');
-    // Check if it's exactly 10 digits (Sri Lankan format) OR 7-15 digits (international)
     return /^\d{10}$/.test(cleaned) || /^\d{7,15}$/.test(cleaned);
 }
 
@@ -157,11 +153,9 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Real-time validation functions
 function validateField(field, isValid, errorMessage) {
     if (!field) return;
     
-    // Remove existing error message
     const existingError = field.parentElement.querySelector('.invalid-feedback-custom');
     if (existingError) existingError.remove();
     
@@ -224,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
     showPage('home');
     initializeEmailJS();
     populateDynamicDropdowns();
+    setupNoticeButton();
 });
 
 function initializeEmailJS() {
@@ -241,7 +236,7 @@ function populateDynamicDropdowns() {
     if (customerTypeSelect) customerTypeSelect.innerHTML = CUSTOMER_TYPE_CONFIG.getOptionsHtml();
 }
 
-// ==================== EMAIL ====================
+// ==================== EMAIL TO CUSTOMER (WELCOME) ====================
 
 async function sendCustomerEmail(customerData, isNew = true) {
     const emailParams = {
@@ -261,11 +256,129 @@ async function sendCustomerEmail(customerData, isNew = true) {
 
     try {
         await emailjs.send('service_xl37j5s', 'template_ovx89ee', emailParams);
-        console.log('Email sent successfully to:', customerData.email);
+        console.log('Welcome email sent to:', customerData.email);
         return true;
     } catch (error) {
-        console.error('Email failed — Status:', error.status, '| Error:', error.text);
+        console.error('Email failed:', error);
         return false;
+    }
+}
+
+// ==================== SPECIAL NOTICE TO CUSTOMERS (REUSING FEEDBACK TEMPLATE) ====================
+
+async function sendNoticeToCustomers(noticeData, customerList) {
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const customer of customerList) {
+        const emailParams = {
+            to_email: customer.email,
+            from_name: customer.name,
+            from_email: 'admin@grafixprint.com',
+            rating: noticeData.title,      // Just the title text
+            message: noticeData.message,    // Just the message text
+            customer_code: customer.customerCode || 'Not assigned',
+            feedback_date: new Date().toLocaleString()
+        };
+
+        try {
+            await emailjs.send('service_xl37j5s', 'template_r5j64pq', emailParams);
+            successCount++;
+            console.log('Notice sent to:', customer.email);
+        } catch (error) {
+            failCount++;
+            console.error('Failed to send to:', customer.email, error);
+        }
+    }
+    
+    return { success: successCount, fail: failCount };
+}
+
+
+function openSpecialNoticeModal() {
+    // Clear form
+    const titleInput = document.getElementById('noticeTitle');
+    const messageInput = document.getElementById('noticeMessage');
+    const recipientSelect = document.getElementById('noticeRecipient');
+    
+    if (titleInput) titleInput.value = '';
+    if (messageInput) messageInput.value = '';
+    if (recipientSelect) recipientSelect.value = 'all';
+    
+    new bootstrap.Modal(document.getElementById('specialNoticeModal')).show();
+}
+
+async function sendSpecialNotice() {
+    const title = document.getElementById('noticeTitle').value.trim();
+    const message = document.getElementById('noticeMessage').value.trim();
+    const recipient = document.getElementById('noticeRecipient').value;
+    
+    // Validation
+    if (!title) {
+        showToast('Please enter a notice title!', 'danger');
+        return;
+    }
+    if (!message) {
+        showToast('Please enter your notice message!', 'danger');
+        return;
+    }
+    
+    // Filter customers based on recipient selection
+    let targetCustomers = [];
+    
+    switch(recipient) {
+        case 'vip':
+            targetCustomers = customers.filter(c => c.type === 'VIP');
+            break;
+        case 'corporate':
+            targetCustomers = customers.filter(c => c.type === 'Corporate');
+            break;
+        case 'regular':
+            targetCustomers = customers.filter(c => c.type === 'Regular');
+            break;
+        case 'new':
+            targetCustomers = customers.filter(c => c.type === 'New');
+            break;
+        default:
+            targetCustomers = [...customers];
+    }
+    
+    if (targetCustomers.length === 0) {
+        showToast('No customers found for the selected category!', 'danger');
+        return;
+    }
+    
+    const sendBtn = document.getElementById('sendNoticeBtn');
+    const originalText = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending to ' + targetCustomers.length + ' customers...';
+    sendBtn.disabled = true;
+    
+    try {
+        const result = await sendNoticeToCustomers({
+            title: title,
+            message: message
+        }, targetCustomers);
+        
+        showToast(`✅ Notice sent! Sent: ${result.success} | Failed: ${result.fail}`, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('specialNoticeModal')).hide();
+        
+        // Clear form
+        document.getElementById('noticeTitle').value = '';
+        document.getElementById('noticeMessage').value = '';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to send notices. Please try again.', 'danger');
+    } finally {
+        sendBtn.innerHTML = originalText;
+        sendBtn.disabled = false;
+    }
+}
+
+function setupNoticeButton() {
+    const sendNoticeBtn = document.getElementById('sendNoticeBtn');
+    if (sendNoticeBtn) {
+        sendNoticeBtn.addEventListener('click', sendSpecialNotice);
     }
 }
 
@@ -310,10 +423,8 @@ async function saveCustomer() {
     const feedbackVal = document.getElementById('customerFeedback').value;
     const type        = document.getElementById('customerType').value;
 
-    // Run all validations
     let isValid = true;
     
-    // Required field validations
     if (!name) {
         showToast('Please enter customer name!', 'danger');
         isValid = false;
@@ -333,19 +444,16 @@ async function saveCustomer() {
     
     if (!isValid) return;
     
-    // Email format validation
     if (!isValidEmail(email)) {
-        showToast('Please enter a valid email address (e.g., name@example.com)!', 'danger');
+        showToast('Please enter a valid email address!', 'danger');
         return;
     }
     
-    // Phone validation
     if (!validatePhone(phone)) {
         showToast('Please enter a valid phone number (10 digits for Sri Lanka)!', 'danger');
         return;
     }
     
-    // Orders validation
     if (orders < 0) {
         showToast('Orders cannot be negative!', 'danger');
         return;
@@ -387,7 +495,7 @@ async function saveCustomer() {
     }
 }
 
-// ======== VIEW CUSTOMER =========
+// ==================== VIEW CUSTOMER ====================
 
 function viewCustomer(id) {
     const c = customers.find(c => c.id === id);
@@ -472,7 +580,6 @@ function resetModalForm() {
     document.getElementById('customerFeedback').value = '5 ★';
     document.getElementById('customerType').value     = 'Regular';
     
-    // Remove all validation error messages
     document.querySelectorAll('.invalid-feedback-custom').forEach(el => el.remove());
 }
 
@@ -531,7 +638,7 @@ function renderFilteredCustomersTable() {
     if (!tableBody) return;
     const list = filterCustomers();
     if (list.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No customers found.</table></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No customers found.</td></tr>';
         return;
     }
     tableBody.innerHTML = '';
@@ -711,6 +818,7 @@ function getRatingText(rating) {
     return rating + ' Stars - ' + RATING_CONFIG.getRatingLabel(rating);
 }
 
+// ==================== REPORT FUNCTIONS (YOUR EXISTING IMPLEMENTATIONS) ====================
 // ==================== ALL CUSTOMERS REPORT ====================
 
 function generateAllCustomersReport(fromDate, toDate) {
@@ -1054,7 +1162,6 @@ function showToast(message, type = 'success') {
     new bootstrap.Toast(toast).show();
 }
 
-// Real-time validation setup
 function setupEventListeners() {
     const saveBtn     = document.getElementById('saveCustomerBtn');
     const confirmBtn  = document.getElementById('confirmDeleteBtn');
@@ -1067,7 +1174,6 @@ function setupEventListeners() {
     if (confirmBtn) confirmBtn.addEventListener('click', deleteCustomer);
     if (addModal)   addModal.addEventListener('hidden.bs.modal', resetModalForm);
 
-    // Real-time validation on input
     if (phoneInput) {
         phoneInput.addEventListener('input', function() {
             validatePhoneField();
@@ -1113,3 +1219,5 @@ window.toggleCustomerStatus   = toggleCustomerStatus;
 window.selectReportType       = selectReportType;
 window.generateSelectedReport = generateSelectedReport;
 window.closePreview           = closePreview;
+window.openSpecialNoticeModal = openSpecialNoticeModal;
+window.sendSpecialNotice      = sendSpecialNotice;

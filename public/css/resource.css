@@ -1,62 +1,205 @@
-/* Custom Properties */
+/* ================================================================
+   resource.css — Grafix Print Hub | Resource Coordination
+   Location: public/css/resource.css
+   ================================================================ */
+
 :root {
     --primary-color: #ffe785;
     --secondary-color: #fdfcf0;
     --dark-bg: #2c3e50;
 }
 
-/* Hero Section */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ── Navbar ── */
+.navbar                      { background-color: var(--primary-color); }
+.navbar-brand                { color: #000 !important; font-weight: 700; }
+.bi-list                     { color: #000 !important; }
+
+/* ── Sidebar / Offcanvas ── */
+.offcanvas                   { background-color: var(--primary-color); width: 280px !important; }
+.nav-link {
+    color: #000;
+    padding: 15px 20px;
+    transition: 0.3s;
+    text-decoration: none;
+    display: block;
+}
+.nav-link:hover,
+.nav-link.active             { color: #fff !important; background: #34495e; }
+
+/* ── Hero Section ── */
 .hero-section {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     padding: 20px 0;
 }
 
-/* Table Row Update Animation */ 
-@keyframes highlightUpdate {
-    0% { background-color: rgba(255, 231, 133, 0.5); }
-    100% { background-color: transparent; }
-}
-
-.updated-row {
-    animation: highlightUpdate 1.5s ease-out;
-}
-
-/* Activity Log Styling */
-#activityLog {
-    max-height: 250px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-/* Custom Scrollbar for Log */
-#activityLog::-webkit-scrollbar {
-    width: 5px;
-}
-
-#activityLog::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
-}
-
-/* UI Enhancements */
+/* ── Feature Cards ── */
 .feature-card {
     border: none;
     border-radius: 15px;
     transition: transform 0.3s, box-shadow 0.3s;
 }
-
-.badge {
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-weight: 500;
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
-.btn-dark {
-    background-color: var(--dark-bg);
+/* ── Badges & Dark Button ── */
+.badge                       { padding: 8px 12px; border-radius: 6px; font-weight: 500; }
+.btn-dark                    { background-color: var(--dark-bg); border: none; }
+.btn-dark:hover              { background-color: #1a252f; }
+
+/* ── Activity Log ── */
+#activityLog                 { max-height: 250px; overflow-y: auto; padding-right: 5px; }
+#activityLog::-webkit-scrollbar       { width: 5px; }
+#activityLog::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+.log-entry                   { padding: 5px 0; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+
+/* ── Row highlight animation ── */
+@keyframes highlightUpdate {
+    0%   { background-color: rgba(255, 231, 133, 0.6); }
+    100% { background-color: transparent; }
+}
+.updated-row                 { animation: highlightUpdate 1.5s ease-out; }
+
+/* ── Loading Overlay ── */
+#loadingOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+#loadingOverlay.show         { display: flex; }
+
+/* ── Logout Modal ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+.modal-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 350px;
+    width: 90%;
+    text-align: center;
+}
+.modal-btn-confirm-red {
+    background: #dc3545;
+    color: #fff;
     border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+.modal-btn-cancel {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    cursor: pointer;
 }
 
-.btn-dark:hover {
-    background-color: #1a252f;
+/* ── View Modal Detail Rows ── */
+.view-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
 }
+.view-detail-label           { color: #6c757d; font-size: 0.85rem; }
+.view-detail-value           { font-weight: 600; }
+
+/* ── PDF Button ── */
+.btn-pdf {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    width: 100%;
+    cursor: pointer;
+}
+.btn-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    color: white;
+}
+
+/* ── Alert Button ── */
+.btn-alert {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    width: 100%;
+    cursor: pointer;
+}
+.btn-alert:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+    color: white;
+}
+
+/* ── Action Button Group (table) ── */
+.action-btn-group            { display: flex; gap: 4px; justify-content: center; }
+
+/* ── Toast Notifications ── */
+#toastContainer {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.toast-msg {
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: white;
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+.toast-success               { background: #27ae60; }
+.toast-warning               { background: #e67e22; }
+.toast-danger                { background: #e74c3c; }
+.toast-info                  { background: #2980b9; }
+
+/* ── Low Stock Banner ── */
+#lowStockBanner {
+    display: none;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+#lowStockBanner.show         { display: block; }

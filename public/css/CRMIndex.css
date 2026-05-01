@@ -949,3 +949,89 @@ footer {
     border-color: #dc3545;
     box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
 }
+/* Feedback Button Card */
+.feedback-button-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 25px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.feedback-button-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.feedback-button-card i {
+    color: white;
+}
+
+.feedback-button-card h4 {
+    color: white;
+}
+
+.feedback-button-card p {
+    color: rgba(255, 255, 255, 0.9);
+}
+/* ==================== STAR RATING FOR FEEDBACK MODAL ==================== */
+
+.star-rating-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.rating-star-feedback {
+    font-size: 35px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #ddd;
+}
+
+.rating-star-feedback:hover,
+.rating-star-feedback.active {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.rating-star-feedback.selected {
+    color: #ffc107;
+}
+
+#ratingTextDisplay {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+}
+/* Notice Button Card */
+.notice-button-card {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    border-radius: 20px;
+    padding: 25px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(39, 174, 96, 0.3);
+    color: white;
+}
+
+.notice-button-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(39, 174, 96, 0.4);
+}
+
+.notice-button-card i {
+    color: white;
+}
+
+.notice-button-card h4 {
+    color: white;
+    margin: 0;
+}
+
+.notice-button-card p {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
