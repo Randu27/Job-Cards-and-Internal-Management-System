@@ -16,3 +16,7 @@ A comprehensive and modular Management System designed for a Graphic Print Hub. 
 1. Clone this repository
 2. Open `index.html` in your browser
 3. Login to access dashboard
+
+## Live Web Link
+https://grafix-print-hub.web.app/
+Password: owner2
